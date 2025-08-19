@@ -13,7 +13,10 @@ return new class extends Migration
     {
         Schema::create('drivers', function (Blueprint $table) {
             $table->id();
-            $table->timestamps();
+            $table->string('name'); // Para o nome completo do motorista
+            $table->string('document')->unique(); // Para CPF ou Matrícula. unique() garante que não haja duplicados
+            $table->string('type'); // Para o tipo (Servidor, Aluno, Terceirizado, etc.)
+            $table->timestamps(); // Colunas created_at e updated_at
         });
     }
 

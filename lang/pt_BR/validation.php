@@ -159,6 +159,8 @@ return [
         'vehicle_model' => 'modelo do veículo',
         'license_plate' => 'placa',
         'entry_reason' => 'motivo da entrada',
+        'color' => 'cor',
+        'model' => 'modelo',
     ],
 
 ];

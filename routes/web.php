@@ -1,11 +1,11 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Livewire\CreatePrivateEntry; // Importamos nosso componente aqui
+use App\Livewire\CreatePrivateEntry;
+use App\Livewire\DriverManagement;
+use App\Livewire\VehicleManagement; // Adicione esta linha
 
-// Quando alguém acessar a página inicial '/', carregue o componente CreatePrivateEntry
 Route::get('/', CreatePrivateEntry::class);
+Route::get('/motoristas', DriverManagement::class);
 
-
-
-?>
+Route::get('/veiculos', VehicleManagement::class); // Adicione esta nova rota
