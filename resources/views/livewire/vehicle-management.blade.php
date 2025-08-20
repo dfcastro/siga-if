@@ -5,17 +5,9 @@
             <button wire:click="create" class="btn btn-primary">Cadastrar Novo Veículo</button>
         </div>
         <div class="card-body">
-            @if ($successMessage)
-            <div
-                x-data="{ show: true }"
-                x-show="show"
-                x-init="setTimeout(() => show = false, 3000)" {{-- Some em 3 segundos --}}
-                x-transition:leave="transition ease-in duration-300"
-                x-transition:leave-start="opacity-100"
-                x-transition:leave-end="opacity-0"
-                class="alert alert-success"
-                role="alert">
-                {{ $successMessage }}
+            @if (session('success'))
+            <div class="alert alert-success">
+                {{ session('success') }}
             </div>
             @endif
 
@@ -63,71 +55,57 @@
                 </div>
                 <form wire:submit="store">
                     <div class="modal-body">
+                        {{-- ESTRUTURA HTML CORRIGIDA AQUI --}}
                         <div class="mb-3">
                             <label for="license_plate" class="form-label">Placa</label>
                             <input type="text" id="license_plate" class="form-control @error('license_plate') is-invalid @enderror" wire:model="license_plate"
                                 x-data
                                 @input="$el.value = $el.value.toUpperCase()"
                                 x-mask:dynamic="$input.length > 4 && ($input.at(4) >= '0' && $input.at(4) <= '9') ? 'aaa-9999' : 'aaa9a99'">
-                            <div class="mb-3">
-                                <label for="model" class="form-label">Modelo</label>
-                                <input type="text" id="model" class="form-control @error('model') is-invalid @enderror" wire:model="model">
-                                {{-- CORREÇÃO ESTAVA AQUI --}}
-                                @error('model') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                            </div>
-                            <div class="mb-3">
-                                <label for="color" class="form-label">Cor</label>
-                                <input type="text" id="color" class="form-control @error('color') is-invalid @enderror" wire:model="color">
-                                @error('color') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="driver_id" class="form-label">Proprietário (Motorista)</label>
-
-                                {{-- O wire:ignore agora protege apenas o select, que é o que o JS manipula --}}
-                                <div wire:ignore>
-                                    <select id="select-driver" class="form-select @error('driver_id') is-invalid @enderror">
-                                        <option value="">Selecione um motorista</option>
-                                        @foreach ($drivers as $driver)
-                                        <option value="{{ $driver->id }}">{{ $driver->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-
-                                {{-- A mensagem de erro fica FORA do wire:ignore, para que o Livewire possa exibi-la --}}
-                                @error('driver_id')
-                                {{-- Adicionamos a classe d-block para garantir que a mensagem sempre apareça --}}
-                                <div class="invalid-feedback d-block">{{ $message }}</div>
-                                @enderror
-                            </div>
+                            @error('license_plate') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" wire:click="closeModal">Fechar</button>
-                            <button type="submit" class="btn btn-primary">{{ $vehicleId ? 'Atualizar Veículo' : 'Salvar Veículo' }}</button>
+
+                        <div class="mb-3">
+                            <label for="model" class="form-label">Modelo</label>
+                            <input type="text" id="model" class="form-control @error('model') is-invalid @enderror" wire:model="model">
+                            @error('model') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
+
+                        <div class="mb-3">
+                            <label for="color" class="form-label">Cor</label>
+                            <input type="text" id="color" class="form-control @error('color') is-invalid @enderror" wire:model="color">
+                            @error('color') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+                        @if(auth()->user()->role === 'admin' || auth()->user()->role === 'fiscal')
+                        <div class="mb-3">
+                            <label for="type" class="form-label">Tipo de Veículo</label>
+                            <select id="type" class="form-select @error('type') is-invalid @enderror" wire:model="type">
+                                <option value="Particular">Particular</option>
+                                <option value="Oficial">Oficial</option>
+                            </select>
+                            @error('type') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+                        @endif
+                        <div class="mb-3">
+                            <label for="driver_id" class="form-label">Proprietário (Motorista)</label>
+                            <div wire:ignore>
+                                <select id="select-driver" class="form-select @error('driver_id') is-invalid @enderror">
+                                    <option value="">Selecione um motorista</option>
+                                    @foreach ($drivers as $driver)
+                                    <option value="{{ $driver->id }}">{{ $driver->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            @error('driver_id')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" wire:click="closeModal">Fechar</button>
+                        <button type="submit" class="btn btn-primary">{{ $vehicleId ? 'Atualizar Veículo' : 'Salvar Veículo' }}</button>
+                    </div>
                 </form>
-            </div>
-        </div>
-    </div>
-    <div class="modal-backdrop fade show"></div>
-    @endif
-
-    @if($isConfirmModalOpen)
-    <div class="modal fade show" tabindex="-1" style="display: block;" wire:keydown.escape.window="closeConfirmModal">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Confirmar Exclusão</h5>
-                    <button type="button" class="btn-close" wire:click="closeConfirmModal"></button>
-                </div>
-                <div class="modal-body">
-                    <p>Você tem certeza que deseja excluir o veículo de placa <strong>{{ $vehiclePlateToDelete ?? '' }}</strong>?</p>
-                    <p class="text-danger">Esta ação não pode ser desfeita.</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" wire:click="closeConfirmModal">Cancelar</button>
-                    <button type="button" class="btn btn-danger" wire:click="deleteVehicle">Confirmar Exclusão</button>
-                </div>
             </div>
         </div>
     </div>
@@ -137,48 +115,42 @@
 
 @push('scripts')
 <script>
-    // Armazena a instância do TomSelect fora para poder acessá-la
-    let tomSelectInstance = null;
+    document.addEventListener('livewire:initialized', () => {
+        let tomSelectInstance = null;
 
-    // A função de inicialização
-    function initTomSelect(driverId = null) {
-        // Se já existe uma instância, destrua-a primeiro para evitar duplicatas
-        if (tomSelectInstance) {
-            tomSelectInstance.destroy();
-        }
-
-        tomSelectInstance = new TomSelect('#select-driver', {
-            create: false,
-            sortField: {
-                field: "text",
-                direction: "asc"
+        // Ouve o evento que o PHP dispara quando o modal é aberto
+        Livewire.on('init-tom-select', (data) => {
+            // Garante que qualquer instância anterior seja destruída para evitar conflitos
+            if (tomSelectInstance) {
+                tomSelectInstance.destroy();
             }
+
+            // Usa um pequeno "timeout" para garantir que o DOM foi 100% atualizado pelo Livewire
+            setTimeout(() => {
+                tomSelectInstance = new TomSelect('#select-driver', {
+                    create: false,
+                    sortField: {
+                        field: "text",
+                        direction: "asc"
+                    },
+                    render: {
+                        no_results: function(data, escape) {
+                            return '<div class="no-results">Nenhum motorista encontrado.</div>';
+                        }
+                    }
+                });
+
+                // Se estivermos editando, o PHP envia o ID do motorista, e nós o definimos aqui
+                if (data && data.driverId) {
+                    tomSelectInstance.setValue(data.driverId);
+                }
+
+                // Adiciona o listener para enviar a mudança de volta ao Livewire
+                tomSelectInstance.on('change', (value) => {
+                    @this.set('driver_id', value);
+                });
+            }, 100); // 100ms é um tempo seguro
         });
-
-        // Se um ID de motorista foi passado (no modo de edição), defina o valor
-        if (driverId) {
-            tomSelectInstance.setValue(driverId);
-        }
-
-        // Adiciona o listener para comunicar a mudança de volta ao Livewire
-        tomSelectInstance.on('change', (value) => {
-            @this.set('driver_id', value);
-        });
-    }
-
-    // Ouve o evento do Livewire para INICIAR o TomSelect
-    Livewire.on('init-tom-select', (event) => {
-        // Usa um pequeno timeout para garantir que o DOM do Livewire foi atualizado
-        setTimeout(() => {
-            initTomSelect(event.driverId);
-        }, 100);
-    });
-
-    // Ouve o evento do Livewire para LIMPAR o TomSelect
-    Livewire.on('reset-tom-select', () => {
-        if (tomSelectInstance) {
-            tomSelectInstance.clear();
-        }
     });
 </script>
 @endpush

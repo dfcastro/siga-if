@@ -1,14 +1,14 @@
 <div>
     {{-- MENSAGEM DE SUCESSO --}}
     @if (session('success'))
-    <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)" x-transition class="alert alert-success">
+    <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 30000)" x-transition class="alert alert-success">
         {{ session('success') }}
     </div>
     @endif
 
     <div class="card shadow-sm">
         <div class="card-header">
-            <h1 class="h4 mb-0">SIGA-IF :: Registrar Entrada e Saída</h1>
+            <h1 class="h4 mb-0">Registro Entrada e Saída</h1>
         </div>
         <div class="card-body">
             {{-- SEÇÃO DE BUSCA --}}
@@ -69,6 +69,13 @@
                                 sortField: {
                                     field: "text",
                                     direction: "asc"
+                                },
+                                // Adicione esta opção para traduzir
+                                render: {
+                                    no_results: function(data, escape) {
+                                        // Personalizamos a mensagem para incluir a opção de criar
+                                        return '<div class="no-results">Nenhum resultado. Pressione Enter para adicionar.</div>';
+                                    }
                                 }
                             });
 

@@ -5,7 +5,9 @@ namespace App\Livewire;
 use App\Models\Driver;
 use Livewire\Component;
 use Illuminate\Validation\Rule; // Importante para a validação de 'unique' na edição
+use Livewire\Attributes\Layout;
 
+#[Layout('layouts.app')]
 class DriverManagement extends Component
 {
     // Propriedades para o formulário do modal
@@ -24,10 +26,22 @@ class DriverManagement extends Component
     public $driverIdToDelete;
     public $driverNameToDelete;
     // Método que renderiza a view
+    public bool $is_authorized = false;
+
+    public function layoutData()
+    {
+        return [
+            'header' => 'Gerenciamento de Motoristas',
+        ];
+    }
+
     public function render()
     {
         $drivers = Driver::orderBy('name')->get();
-        return view('livewire.driver-management', ['drivers' => $drivers]);
+        // Ponto de verificação #3: O return deve ser simples, SEM o ->layout()
+        return view('livewire.driver-management', [
+            'drivers' => $drivers,
+        ]);
     }
 
     // Regras de validação
@@ -55,15 +69,14 @@ class DriverManagement extends Component
     {
         $this->validate();
 
-        // Se tivermos um driverId, atualizamos. Senão, criamos.
         Driver::updateOrCreate(['id' => $this->driverId], [
             'name' => $this->name,
             'document' => $this->document,
             'type' => $this->type,
+            'is_authorized' => $this->is_authorized, // Adicione esta linha
         ]);
 
-        session()->flash('success', $this->driverId ? 'Motorista atualizado com sucesso!' : 'Motorista cadastrado com sucesso!');
-
+        session()->flash('success', $this->driverId ? 'Motorista atualizado!' : 'Motorista cadastrado!');
         $this->closeModal();
     }
 
@@ -82,7 +95,7 @@ class DriverManagement extends Component
         $this->name = $driver->name;
         $this->document = $driver->document;
         $this->type = $driver->type;
-
+        $this->is_authorized = $driver->is_authorized;
         $this->isModalOpen = true;
     }
 
@@ -96,9 +109,10 @@ class DriverManagement extends Component
     // Método auxiliar para limpar os campos
     private function resetInputFields()
     {
-        $this->reset(['name', 'document', 'type', 'driverId']);
+        $this->reset(['name', 'document', 'type', 'driverId', 'is_authorized']); // Adicione 'is_authorized'
         $this->resetErrorBag();
     }
+
     public function deleteDriver()
     {
         $driver = Driver::find($this->driverIdToDelete);

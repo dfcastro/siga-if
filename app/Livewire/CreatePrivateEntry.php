@@ -7,7 +7,9 @@ use App\Models\PrivateEntry;
 use App\Models\Vehicle;
 use Livewire\Component;
 use Illuminate\Validation\Rule;
+use Livewire\Attributes\Layout;
 
+#[Layout('layouts.app')] 
 class CreatePrivateEntry extends Component
 {
     // Propriedades para o formulário
@@ -21,11 +23,13 @@ class CreatePrivateEntry extends Component
     public $searchResults = [];
     public $selectedVehicleId = null; // ID do veículo pré-cadastrado, se aplicável
 
+    
     public function render()
     {
         $currentVehicles = PrivateEntry::with(['vehicle.driver', 'driver'])->whereNull('exit_at')->latest('entry_at')->get();
-        $drivers = Driver::orderBy('name')->get(); // Para o select de motorista de visitante
+        $drivers = Driver::orderBy('name')->get();
 
+        // A linha de retorno volta a ser a original, simples
         return view('livewire.create-private-entry', [
             'currentVehicles' => $currentVehicles,
             'drivers' => $drivers

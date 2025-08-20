@@ -13,9 +13,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Driver extends Model
 {
     use HasFactory;
-
     protected $guarded = [];
 
+    // Adicione esta propriedade
+    protected $casts = [
+        'is_authorized' => 'boolean',
+    ];
     public function vehicles(): HasMany
     {
         return $this->hasMany(Vehicle::class);
@@ -30,7 +33,7 @@ class Driver extends Model
         return Attribute::make(
             // A função 'set' é o nosso "porteiro". Ela recebe o valor e o modifica.
             // Str::title() é uma função do Laravel que coloca a primeira letra de cada palavra em maiúsculo.
-            set: fn (string $value) => Str::title($value),
+            set: fn(string $value) => Str::title($value),
         );
     }
 }
