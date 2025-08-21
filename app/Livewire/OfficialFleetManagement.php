@@ -39,7 +39,7 @@ class OfficialFleetManagement extends Component
         $ongoingTrips = OfficialTrip::with(['vehicle', 'driver'])->whereNull('arrival_datetime')->latest('departure_datetime')->get();
         $completedTrips = OfficialTrip::with(['vehicle', 'driver'])->whereNotNull('arrival_datetime')->latest('arrival_datetime')->take(5)->get();
         $officialVehicles = Vehicle::where('type', 'Oficial')->orderBy('license_plate')->get();
-        
+
         // MELHORIA: Busca apenas motoristas autorizados
         $drivers = Driver::where('is_authorized', true)->orderBy('name')->get();
 
@@ -66,15 +66,33 @@ class OfficialFleetManagement extends Component
             'departure_datetime' => now(),
             'guard_on_departure' => auth()->user()->name, // MELHORIA: Usa o nome do usuário logado
         ]));
-        
+
         $this->successMessage = 'Saída de veículo registrada com sucesso!';
         $this->closeDepartureModal();
     }
 
-    public function create() { $this->resetDepartureFields(); $this->isDepartureModalOpen = true; }
-    public function closeDepartureModal() { $this->isDepartureModalOpen = false; }
-    private function resetDepartureFields() { $this->reset(['vehicle_id', 'driver_id', 'destination', 'departure_odometer', 'passengers']); $this->resetErrorBag(); }
+    public function create()
+    {
+        $this->resetDepartureFields();
+        $this->isDepartureModalOpen = true;
+        // AVISA O BROWSER PARA INICIAR OS SELETORES
+        $this->dispatch('init-fleet-selectors');
+    }
 
+
+
+    public function closeDepartureModal()
+    {
+        $this->isDepartureModalOpen = false;
+    }
+
+    private function resetDepartureFields()
+    {
+        $this->reset(['vehicle_id', 'driver_id', 'destination', 'departure_odometer', 'passengers', 'successMessage']);
+        $this->resetErrorBag();
+        // AVISA O BROWSER PARA LIMPAR OS SELETORES
+        $this->dispatch('init-fleet-selectors');
+    }
     // --- NOVOS MÉTODOS PARA REGISTRO DE CHEGADA ---
     public function storeArrival()
     {
@@ -90,11 +108,11 @@ class OfficialFleetManagement extends Component
             'arrival_datetime' => now(),
             'guard_on_arrival' => 'Porteiro IFNMG',
         ]);
-        
+
         session()->flash('success', 'Chegada de veículo registrada com sucesso!');
         $this->closeArrivalModal();
     }
-    
+
     public function openArrivalModal($tripId)
     {
         $this->tripToUpdate = OfficialTrip::with(['vehicle', 'driver'])->findOrFail($tripId);

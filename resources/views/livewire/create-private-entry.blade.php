@@ -1,8 +1,16 @@
 <div>
     {{-- MENSAGEM DE SUCESSO --}}
-    @if (session('success'))
-    <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 30000)" x-transition class="alert alert-success">
-        {{ session('success') }}
+    @if ($successMessage)
+    <div
+        x-data="{ show: true }"
+        x-show="show"
+        x-init="setTimeout(() => show = false, 3000)"
+        x-transition:leave="transition ease-in duration-300"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        class="alert alert-success"
+        role="alert">
+        {{ $successMessage }}
     </div>
     @endif
 
@@ -58,6 +66,16 @@
                         </select>
                         @error('selected_driver_id') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
                     </div>
+                    @if($isNewVisitor)
+                    <div class="row justify-content-end" x-data x-transition>
+                        <div class="col-md-6 mb-3">
+                            <label for="visitor_document" class="form-label">Documento (CPF) do Visitante</label>
+                            <input type="text" id="visitor_document" class="form-control @error('visitor_document') is-invalid @enderror" wire:model="visitor_document"
+                                x-mask="999.999.999-99" placeholder="___.___.___-__">
+                            @error('visitor_document') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+                    </div>
+                    @endif
 
                     {{-- Adicione este script no FINAL do arquivo --}}
 
@@ -96,11 +114,27 @@
                     @endpush
                 </div>
                 <div class="mb-3">
-                    <label for="reason" class="form-label">Motivo da Entrada</label>
-                    <textarea id="reason" class="form-control @error('entry_reason') is-invalid @enderror" wire:model="entry_reason"></textarea>
+                    <label for="entry_reason" class="form-label">Motivo da Entrada</label>
+                    <select id="entry_reason" class="form-select @error('entry_reason') is-invalid @enderror" wire:model.live="entry_reason">
+                        <option value="">Selecione um motivo...</option>
+                        @foreach ($predefinedReasons as $reason)
+                        <option value="{{ $reason }}">{{ $reason }}</option>
+                        @endforeach
+                        <option value="Outro">Outro...</option>
+                    </select>
                     @error('entry_reason') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 </div>
-                <button type="submit" class="btn btn-primary">Registrar Entrada</button>
+                @if ($entry_reason === 'Outro')
+                <div class="mb-3" x-data x-transition>
+                    <label for="other_reason" class="form-label">Por favor, especifique o motivo:</label>
+                    <input type="text" id="other_reason" class="form-control @error('other_reason') is-invalid @enderror" wire:model="other_reason">
+                    @error('other_reason') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
+                @endif
+                <button type="submit" class="btn btn-primary" wire:loading.attr="disabled">
+                    <span wire:loading wire:target="save">Registrando...</span>
+                    <span wire:loading.remove wire:target="save">Registrar Entrada</span>
+                </button>
                 <button type="button" class="btn btn-secondary" wire:click="resetForm">Limpar</button>
             </form>
         </div>
@@ -111,6 +145,7 @@
     <div class="card shadow-sm">
         <div class="card-header">
             <h2 class="h5 mb-0">Veículos Atualmente no Campus</h2>
+            <input type="text" class="form-control" style="max-width: 250px;" placeholder="Filtrar por placa ou motorista..." wire:model.live.debounce.300ms="exitSearch">
         </div>
         <div class="card-body">
             <div class="table-responsive">
@@ -133,7 +168,9 @@
                             <td>{{ $entry->driver->name ?? 'Não identificado' }}</td>
                             <td>{{ $entry->entry_at->format('d/m/Y H:i') }}</td>
                             <td>
-                                <button wire:click="registerExit({{ $entry->id }})" class="btn btn-sm btn-danger">Registrar Saída</button>
+                                <button wire:click="registerExit({{ $entry->id }})" class="btn btn-sm btn-danger" wire:loading.attr="disabled" wire:target="registerExit({{ $entry->id }})">
+                                    Registrar Saída
+                                </button>
                             </td>
                         </tr>
                         @empty

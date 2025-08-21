@@ -44,7 +44,7 @@ class VehicleManagement extends Component
             'license_plate' => ['required', 'min:7', Rule::unique('vehicles')->ignore($this->vehicleId)],
             'model' => 'required|min:2',
             'color' => 'required|min:3',
-            'driver_id' => 'required|exists:drivers,id',
+            'driver_id' => 'required_if:type,Particular|nullable|exists:drivers,id',
             'type' => ['required', Rule::in(['Particular', 'Oficial'])], // NOVO: Regra de validação para o tipo
         ];
     }

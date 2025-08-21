@@ -96,23 +96,27 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="vehicle_id" class="form-label">Veículo</label>
-                                <select id="vehicle_id" class="form-select @error('vehicle_id') is-invalid @enderror" wire:model="vehicle_id">
-                                    <option value="">Selecione um veículo</option>
-                                    @foreach ($officialVehicles as $vehicle)
-                                    <option value="{{ $vehicle->id }}">{{ $vehicle->model }} ({{ $vehicle->license_plate }})</option>
-                                    @endforeach
-                                </select>
-                                @error('vehicle_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                <div wire:ignore>
+                                    <select id="select-vehicle-fleet" class="form-select @error('vehicle_id') is-invalid @enderror">
+                                        <option value="">Selecione um veículo</option>
+                                        @foreach ($officialVehicles as $vehicle)
+                                        <option value="{{ $vehicle->id }}">{{ $vehicle->model }} ({{ $vehicle->license_plate }})</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                @error('vehicle_id') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="driver_id" class="form-label">Condutor</label>
-                                <select id="driver_id" class="form-select @error('driver_id') is-invalid @enderror" wire:model="driver_id">
-                                    <option value="">Selecione um condutor</option>
-                                    @foreach ($drivers as $driver)
-                                    <option value="{{ $driver->id }}">{{ $driver->name }}</option>
-                                    @endforeach
-                                </select>
-                                @error('driver_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                <div wire:ignore>
+                                    <select id="select-driver-fleet" class="form-select @error('driver_id') is-invalid @enderror">
+                                        <option value="">Selecione um condutor</option>
+                                        @foreach ($drivers as $driver)
+                                        <option value="{{ $driver->id }}">{{ $driver->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                @error('driver_id') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
                             </div>
                         </div>
                         <div class="row">
@@ -134,7 +138,10 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" wire:click="closeDepartureModal">Fechar</button>
-                        <button type="submit" class="btn btn-primary">Salvar Saída</button>
+                        <button type="submit" class="btn btn-primary" wire:loading.attr="disabled">
+                            <span wire:loading wire:target="storeDeparture">Salvando...</span>
+                            <span wire:loading.remove wire:target="storeDeparture">Salvar Saída</span>
+                        </button>
                     </div>
                 </form>
             </div>
@@ -166,7 +173,10 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" wire:click="closeArrivalModal">Fechar</button>
-                        <button type="submit" class="btn btn-primary">Salvar Chegada</button>
+                        <button type="submit" class="btn btn-primary" wire:loading.attr="disabled">
+                            <span wire:loading wire:target="storeArrival">Salvando...</span>
+                            <span wire:loading.remove wire:target="storeArrival">Salvar Chegada</span>
+                        </button>
                     </div>
                 </form>
             </div>
@@ -174,4 +184,49 @@
     </div>
     <div class="modal-backdrop fade show"></div>
     @endif
+
+
 </div>
+@push('scripts')
+<script>
+    document.addEventListener('livewire:initialized', () => {
+        let vehicleSelect = null;
+        let driverSelect = null;
+
+        // Ouve o evento do PHP para iniciar/reiniciar os seletores
+        Livewire.on('init-fleet-selectors', () => {
+
+            // Adicionamos um pequeno timeout para garantir que o DOM foi atualizado
+            setTimeout(() => {
+                // Destrói instâncias antigas se existirem
+                if (vehicleSelect) vehicleSelect.destroy();
+                if (driverSelect) driverSelect.destroy();
+
+                // Inicializa o seletor de VEÍCULOS
+                vehicleSelect = new TomSelect('#select-vehicle-fleet', {
+                    render: {
+                        no_results: function(d, e) {
+                            return '<div class="no-results">Nenhum veículo encontrado.</div>';
+                        }
+                    }
+                });
+                vehicleSelect.on('change', (value) => {
+                    @this.set('vehicle_id', value);
+                });
+
+                // Inicializa o seletor de CONDUTORES
+                driverSelect = new TomSelect('#select-driver-fleet', {
+                    render: {
+                        no_results: function(d, e) {
+                            return '<div class="no-results">Nenhum condutor encontrado.</div>';
+                        }
+                    }
+                });
+                driverSelect.on('change', (value) => {
+                    @this.set('driver_id', value);
+                });
+            }, 100); // 100 milissegundos é um tempo seguro
+        });
+    });
+</script>
+@endpush

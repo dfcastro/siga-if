@@ -6,9 +6,9 @@
         </div>
         <div class="card-body">
             @if (session('success'))
-                <div class="alert alert-success">
-                    {{ session('success') }}
-                </div>
+            <div class="alert alert-success">
+                {{ session('success') }}
+            </div>
             @endif
 
             <div class="table-responsive">
@@ -24,24 +24,24 @@
                     </thead>
                     <tbody>
                         @forelse ($drivers as $driver)
-                            <tr>
-                                <td>{{ $driver->name }}</td>
-                                <td>{{ $driver->document }}</td>
-                                <td>{{ $driver->type }}</td>
-                                <td>
-                                    <span class="badge {{ $driver->is_authorized ? 'bg-success' : 'bg-secondary' }}">
-                                        {{ $driver->is_authorized ? 'Sim' : 'Não' }}
-                                    </span>
-                                </td>
-                                <td>
-                                    <button wire:click="edit({{ $driver->id }})" class="btn btn-sm btn-secondary">Editar</button>
-                                    <button wire:click="confirmDelete({{ $driver->id }})" class="btn btn-sm btn-danger">Excluir</button>
-                                </td>
-                            </tr>
+                        <tr>
+                            <td>{{ $driver->name }}</td>
+                            <td>{{ $driver->document }}</td>
+                            <td>{{ $driver->type }}</td>
+                            <td>
+                                <span class="badge {{ $driver->is_authorized ? 'bg-success' : 'bg-secondary' }}">
+                                    {{ $driver->is_authorized ? 'Sim' : 'Não' }}
+                                </span>
+                            </td>
+                            <td>
+                                <button wire:click="edit({{ $driver->id }})" class="btn btn-sm btn-secondary">Editar</button>
+                                <button wire:click="confirmDelete({{ $driver->id }})" class="btn btn-sm btn-danger">Excluir</button>
+                            </td>
+                        </tr>
                         @empty
-                            <tr>
-                                <td colspan="5" class="text-center">Nenhum motorista cadastrado.</td>
-                            </tr>
+                        <tr>
+                            <td colspan="5" class="text-center">Nenhum motorista cadastrado.</td>
+                        </tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -83,15 +83,25 @@
 
                         {{-- Checkbox de permissão visível apenas para admin/fiscal --}}
                         @if(auth()->user()->role === 'admin' || auth()->user()->role === 'fiscal')
-                            <div class="form-check form-switch mb-3">
-                                <input class="form-check-input" type="checkbox" role="switch" id="is_authorized" wire:model="is_authorized">
-                                <label class="form-check-label" for="is_authorized">Autorizado a dirigir frota oficial?</label>
-                            </div>
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" role="switch" id="is_authorized" wire:model="is_authorized">
+                            <label class="form-check-label" for="is_authorized">Autorizado a dirigir frota oficial?</label>
+                        </div>
                         @endif
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" wire:click="closeModal">Fechar</button>
-                        <button type="submit" class="btn btn-primary">{{ $driverId ? 'Atualizar Motorista' : 'Salvar Motorista' }}</button>
+                        <button type="submit" class="btn btn-primary" wire:loading.attr="disabled">
+                            {{-- Mostra o spinner e o texto "Salvando..." apenas durante o carregamento da ação 'store' --}}
+                            <span wire:loading wire:target="store">
+                                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                Salvando...
+                            </span>
+                            {{-- Mostra o texto normal quando não estiver carregando --}}
+                            <span wire:loading.remove wire:target="store">
+                                {{ $driverId ? 'Atualizar Motorista' : 'Salvar Motorista' }}
+                            </span>
+                        </button>
                     </div>
                 </form>
             </div>
@@ -114,7 +124,10 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" wire:click="closeConfirmModal">Cancelar</button>
-                    <button type="button" class="btn btn-danger" wire:click="deleteDriver">Confirmar Exclusão</button>
+                    <button type="button" class="btn btn-danger" wire:click="deleteDriver" wire:loading.attr="disabled">
+                        <span wire:loading wire:target="deleteDriver">Excluindo...</span>
+                        <span wire:loading.remove wire:target="deleteDriver">Confirmar Exclusão</span>
+                    </button>
                 </div>
             </div>
         </div>
