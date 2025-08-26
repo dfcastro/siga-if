@@ -1,12 +1,17 @@
 <?php
 
-use App\Http\Controllers\ProfileController; // Necessário para as rotas de perfil
+use App\Http\Controllers\ProfileController;
 use App\Livewire\CreatePrivateEntry;
 use App\Livewire\DriverManagement;
 use App\Livewire\OfficialFleetManagement;
 use App\Livewire\UserManagement;
 use App\Livewire\VehicleManagement;
 use Illuminate\Support\Facades\Route;
+use App\Http\Middleware\CheckIsAdmin;
+use App\Models\PrivateEntry; 
+use App\Models\OfficialTrip; 
+use App\Livewire\Reports;
+use App\Http\Controllers\ReportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,30 +19,41 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-// Rota principal: redireciona para o login
 Route::get('/', function () {
-    return redirect()->route('login');
+    return view('welcome');
 });
 
-// Agrupamos todas as rotas do nosso sistema que precisam de autenticação
-Route::middleware(['auth', 'verified'])->group(function () {
+// Rota do Dashboard Aprimorada
+Route::get('/dashboard', function () {
+    // Conta os veículos particulares que entraram e ainda não saíram
+    $privateVehiclesIn = PrivateEntry::whereNull('exit_at')->count();
 
-    // A tela principal de registro de entrada/saída agora é o nosso "Dashboard"
-    Route::get('/dashboard', CreatePrivateEntry::class)->name('dashboard');
+    // Conta as viagens da frota oficial que começaram e ainda não terminaram
+    $officialTripsOngoing = OfficialTrip::whereNull('arrival_datetime')->count();
 
-    // Nossas outras páginas de gerenciamento
-    Route::get('/motoristas', DriverManagement::class)->name('drivers.index');
-    Route::get('/veiculos', VehicleManagement::class)->name('vehicles.index');
-    Route::get('/frota', OfficialFleetManagement::class)->name('fleet.index');
+    return view('dashboard', [
+        'privateVehiclesIn' => $privateVehiclesIn,
+        'officialTripsOngoing' => $officialTripsOngoing,
+    ]);
+})->middleware(['auth', 'verified'])->name('dashboard');
 
-    // Rota de gerenciamento de usuários, protegida para admins
-    Route::get('/usuarios', UserManagement::class)->name('users.index')->middleware('is_admin');
 
-    // Rotas de Perfil (adicionadas aqui, como você fez)
+Route::middleware('auth')->group(function () {
+    Route::middleware(CheckIsAdmin::class)->group(function () {
+        Route::get('/users', UserManagement::class)->name('users.index');
+        Route::get('/vehicles', VehicleManagement::class)->name('vehicles.index');
+        Route::get('/drivers', DriverManagement::class)->name('drivers.index');
+        Route::get('/reports', Reports::class)->name('reports');
+    });
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::get('/entries/private/create', CreatePrivateEntry::class)->name('entries.create');
+    Route::get('/fleet', OfficialFleetManagement::class)->name('fleet.index');
+
+   //  ROTAS PARA PDF
+    Route::get('/reports/official/pdf', [ReportController::class, 'officialVehiclesPDF'])->name('reports.official.pdf');
+    Route::get('/reports/private/pdf', [ReportController::class, 'privateVehiclesPDF'])->name('reports.private.pdf');
 });
 
-// Esta linha ainda é necessária para carregar /login, /register, /logout, etc.
 require __DIR__ . '/auth.php';

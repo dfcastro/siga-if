@@ -10,21 +10,30 @@ class OfficialTrip extends Model
 {
     use HasFactory;
 
-    protected $guarded = [];
+    // CORREÇÃO APLICADA AQUI
+    protected $fillable = [
+        'vehicle_id',
+        'driver_id',
+        'destination',
+        'departure_datetime',
+        'arrival_datetime',
+        'departure_odometer',
+        'arrival_odometer',
+        'passengers',
+        'guard_on_departure', // Adicionado
+        'guard_on_arrival',   // Adicionado
+    ];
 
-    // Converte automaticamente as colunas de data para objetos Carbon
     protected $casts = [
         'departure_datetime' => 'datetime',
         'arrival_datetime' => 'datetime',
     ];
 
-    // Relacionamento: Uma viagem pertence a um Veículo
     public function vehicle(): BelongsTo
     {
         return $this->belongsTo(Vehicle::class);
     }
 
-    // Relacionamento: Uma viagem pertence a um Motorista
     public function driver(): BelongsTo
     {
         return $this->belongsTo(Driver::class);

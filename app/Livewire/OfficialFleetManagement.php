@@ -8,10 +8,13 @@ use App\Models\Vehicle;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
 use Livewire\Attributes\Layout;
+use Livewire\WithPagination;
 
 #[Layout('layouts.app')] // Garante que o layout principal seja usado
 class OfficialFleetManagement extends Component
 {
+
+    use WithPagination; //USAR A TRAIT DE PAGINAÇÃO
     // Propriedades para o modal de SAÍDA
     public $vehicle_id = '';
     public $driver_id = '';
@@ -28,6 +31,15 @@ class OfficialFleetManagement extends Component
     // Propriedade para a mensagem de sucesso
     public string $successMessage = '';
 
+    //PROPRIEDADE PÚBLICA PARA A BUSCA
+    public string $search = '';
+
+    //MÉTODO PARA RESETAR A PAGINAÇÃO AO BUSCAR
+    public function updatingSearch()
+    {
+        $this->resetPage();
+    }
+
     // Envia o título da página para o layout
     public function layoutData()
     {
@@ -36,41 +48,71 @@ class OfficialFleetManagement extends Component
 
     public function render()
     {
-        $ongoingTrips = OfficialTrip::with(['vehicle', 'driver'])->whereNull('arrival_datetime')->latest('departure_datetime')->get();
-        $completedTrips = OfficialTrip::with(['vehicle', 'driver'])->whereNotNull('arrival_datetime')->latest('arrival_datetime')->take(5)->get();
-        $officialVehicles = Vehicle::where('type', 'Oficial')->orderBy('license_plate')->get();
+        $ongoingTrips = OfficialTrip::whereNull('arrival_datetime')
+            ->with(['vehicle', 'driver'])
+            ->latest('departure_datetime')
+            ->get();
 
-        // MELHORIA: Busca apenas motoristas autorizados
-        $drivers = Driver::where('is_authorized', true)->orderBy('name')->get();
+        // 3. ATUALIZAR A CONSULTA PARA INCLUIR A LÓGICA DE BUSCA
+        $completedTripsQuery = OfficialTrip::whereNotNull('arrival_datetime')
+            ->with(['vehicle', 'driver']);
+
+        if (!empty($this->search)) {
+            $completedTripsQuery->where(function ($query) {
+                $searchTerm = '%' . $this->search . '%';
+                $query->where('destination', 'like', $searchTerm)
+                    ->orWhereHas('vehicle', function ($subQuery) use ($searchTerm) {
+                        $subQuery->where('model', 'like', $searchTerm)
+                            ->orWhere('license_plate', 'like', $searchTerm);
+                    })
+                    ->orWhereHas('driver', function ($subQuery) use ($searchTerm) {
+                        $subQuery->where('name', 'like', $searchTerm);
+                    });
+            });
+        }
+
+        $completedTrips = $completedTripsQuery->latest('arrival_datetime')->paginate(10);
+
+        $officialVehicles = Vehicle::where('type', 'oficial')->get();
+        $drivers = Driver::where('is_authorized', true)->get();
 
         return view('livewire.official-fleet-management', [
-            'ongoingTrips' => $ongoingTrips,
-            'completedTrips' => $completedTrips,
+            'ongoingTrips'     => $ongoingTrips,
+            'completedTrips'   => $completedTrips,
             'officialVehicles' => $officialVehicles,
-            'drivers' => $drivers,
+            'drivers'          => $drivers,
         ]);
     }
 
     // --- MÉTODOS PARA REGISTRO DE SAÍDA ---
     public function storeDeparture()
     {
-        $validatedData = $this->validate([
-            'vehicle_id' => ['required', Rule::exists('vehicles', 'id')->where('type', 'Oficial'), Rule::unique('official_trips')->whereNull('arrival_datetime')],
-            'driver_id' => ['required', Rule::exists('drivers', 'id')->where('is_authorized', true)],
-            'destination' => 'required|min:3',
-            'departure_odometer' => 'required|integer|min:0',
-            'passengers' => 'nullable|string',
-        ], ['vehicle_id.unique' => 'Este veículo já está em uma viagem em andamento.', 'driver_id.exists' => 'O condutor selecionado não está autorizado.']);
-
-        OfficialTrip::create(array_merge($validatedData, [
+        $this->validate([
+            'vehicle_id' => 'required|exists:vehicles,id',
+            'driver_id' => 'required|exists:drivers,id',
+            'destination' => 'required|string|max:255',
+            'passengers' => 'nullable|string|max:1000',
+            // VALIDAÇÃO DE SAÍDA CORRIGIDA
+            'departure_odometer' => [
+                'required',
+                'integer',
+                'min:0',
+                'max:999999', // Limite máximo de 1 milhão
+            ],
+        ]);
+        OfficialTrip::create([
+            'vehicle_id' => $this->vehicle_id,
+            'driver_id' => $this->driver_id,
+            'destination' => $this->destination,         // Garante que a variável $destination vai para a coluna correta
+            'departure_odometer' => $this->departure_odometer,
+            'passengers' => $this->passengers,           // Garante que a variável $passengers vai para a coluna correta
             'departure_datetime' => now(),
-            'guard_on_departure' => auth()->user()->name, // MELHORIA: Usa o nome do usuário logado
-        ]));
+            'guard_on_departure' => auth()->user()->name,
+        ]);
 
-        $this->successMessage = 'Saída de veículo registrada com sucesso!';
         $this->closeDepartureModal();
+        $this->successMessage = 'Saída registrada com sucesso!';
     }
-
     public function create()
     {
         $this->resetDepartureFields();

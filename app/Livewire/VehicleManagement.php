@@ -71,27 +71,29 @@ class VehicleManagement extends Component
     // Salva um novo registro ou atualiza um existente
     public function store()
     {
-        $validatedData = $this->validate();
+        // Define os perfis que podem cadastrar veículos oficiais
+        $rolesWithOfficialVehiclePermission = ['admin', 'fiscal'];
 
-        // ADICIONE ESTA VERIFICAÇÃO DE SEGURANÇA
-        // Se o usuário logado NÃO for admin ou fiscal E ele está tentando salvar como 'Oficial'
-        if (!in_array(auth()->user()->role, ['admin', 'fiscal']) && $this->type === 'Oficial') {
-            // Joga um erro de validação, impedindo o salvamento.
-            throw ValidationException::withMessages([
-                'type' => 'Você não tem permissão para cadastrar veículos oficiais.'
-            ]);
+        // Define os tipos de veículos permitidos com base no perfil do usuário
+        $allowedTypes = ['Particular'];
+        if (in_array(auth()->user()->role, $rolesWithOfficialVehiclePermission)) {
+            $allowedTypes[] = 'Oficial';
         }
 
-        Vehicle::updateOrCreate(['id' => $this->vehicleId], [
-            'license_plate' => $this->license_plate,
-            'model' => $this->model,
-            'color' => $this->color,
-            'driver_id' => $this->driver_id,
-            'type' => $this->type,
+        $validatedData = $this->validate([
+            'license_plate' => ['required', 'min:7', Rule::unique('vehicles')->ignore($this->vehicleId)],
+            'model' => 'required|min:2',
+            'color' => 'required|min:3',
+            // A validação agora usa a lista dinâmica de tipos permitidos
+            'type' => ['required', Rule::in($allowedTypes)],
+            'driver_id' => 'nullable|exists:drivers,id',
         ]);
 
-        session()->flash('success', $this->vehicleId ? 'Veículo atualizado com sucesso!' : 'Veículo cadastrado com sucesso!');
+        Vehicle::updateOrCreate(['id' => $this->vehicleId], $validatedData);
+
+        session()->flash('successMessage', $this->vehicleId ? 'Veículo atualizado com sucesso!' : 'Veículo criado com sucesso!');
         $this->closeModal();
+        $this->resetInputFields();
     }
 
     // Abre o modal para criar um novo registro
@@ -119,7 +121,10 @@ class VehicleManagement extends Component
 
     public function closeModal()
     {
+
         $this->isModalOpen = false;
+        $this->resetInputFields();
+        $this->dispatch('destroy-tom-select');
     }
 
     private function resetInputFields()

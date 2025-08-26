@@ -15,10 +15,12 @@ class CheckIsAdmin
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Se o usuário NÃO estiver logado OU o cargo dele NÃO for 'admin'
-        if (!auth()->check() || auth()->user()->role !== 'admin') {
-            // Aborta a requisição e mostra uma página de "Acesso Proibido".
-            abort(403, 'ACESSO NÃO AUTORIZADO');
+        // Define a lista de perfis que podem acessar as rotas de gerenciamento
+        $allowedRoles = ['admin', 'porteiro', 'fiscal'];
+
+        // Verifica se o perfil do usuário logado está na lista de perfis permitidos
+        if (!in_array(auth()->user()->role, $allowedRoles)) {
+            abort(403, 'Acesso não autorizado!');
         }
 
         return $next($request);

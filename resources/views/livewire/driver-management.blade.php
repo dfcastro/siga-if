@@ -1,137 +1,216 @@
 <div>
-    <div class="card shadow-sm">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h1 class="h4 mb-0">Gerenciamento de Motoristas</h1>
-            <button wire:click="create" class="btn btn-primary">Cadastrar Novo Motorista</button>
+    {{-- Mensagens de Alerta --}}
+    @if (session('success'))
+        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)" x-transition
+            class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4">
+            <span class="block sm:inline">{{ session('success') }}</span>
         </div>
-        <div class="card-body">
-            @if (session('success'))
-            <div class="alert alert-success">
-                {{ session('success') }}
-            </div>
-            @endif
+    @endif
 
-            <div class="table-responsive">
-                <table class="table table-striped table-hover">
-                    <thead>
+    {{-- Card Principal --}}
+    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+        <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+            <h2 class="text-xl font-semibold">Gerenciamento de Motoristas</h2>
+            <x-primary-button wire:click="create">
+                Cadastrar Novo Motorista
+            </x-primary-button>
+        </div>
+
+        <div class="p-6">
+            {{-- Layout Desktop: Tabela --}}
+            <div class="hidden lg:block">
+                <table class="min-w-full bg-white border rounded-lg">
+                    <thead class="bg-gray-50">
                         <tr>
-                            <th>Nome</th>
-                            <th>Documento (CPF/Matrícula)</th>
-                            <th>Tipo</th>
-                            <th>Autorizado Frota?</th>
-                            <th>Ações</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nome</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Documento</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Autorizado
+                                Frota?</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ações</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody class="divide-y divide-gray-200">
                         @forelse ($drivers as $driver)
-                        <tr>
-                            <td>{{ $driver->name }}</td>
-                            <td>{{ $driver->document }}</td>
-                            <td>{{ $driver->type }}</td>
-                            <td>
-                                <span class="badge {{ $driver->is_authorized ? 'bg-success' : 'bg-secondary' }}">
-                                    {{ $driver->is_authorized ? 'Sim' : 'Não' }}
-                                </span>
-                            </td>
-                            <td>
-                                <button wire:click="edit({{ $driver->id }})" class="btn btn-sm btn-secondary">Editar</button>
-                                <button wire:click="confirmDelete({{ $driver->id }})" class="btn btn-sm btn-danger">Excluir</button>
-                            </td>
-                        </tr>
+                            <tr>
+                                <td class="px-6 py-4">{{ $driver->name }}</td>
+                                <td class="px-6 py-4">{{ $driver->document }}</td>
+                                <td class="px-6 py-4 capitalize">{{ $driver->type }}</td>
+                                <td class="px-6 py-4">
+                                    <span
+                                        class="px-2 inline-flex text-xs font-semibold rounded-full {{ $driver->is_authorized ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800' }}">
+                                        {{ $driver->is_authorized ? 'Sim' : 'Não' }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 space-x-2">
+                                    <x-secondary-button
+                                        wire:click="edit({{ $driver->id }})">Editar</x-secondary-button>
+                                    <x-danger-button
+                                        wire:click="confirmDelete({{ $driver->id }})">Excluir</x-danger-button>
+                                </td>
+                            </tr>
                         @empty
-                        <tr>
-                            <td colspan="5" class="text-center">Nenhum motorista cadastrado.</td>
-                        </tr>
+                            <tr>
+                                <td colspan="5" class="px-6 py-4 text-center text-gray-500">Nenhum motorista
+                                    cadastrado.</td>
+                            </tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
+
+            {{-- Layout Tablet/Mobile: Cards --}}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 lg:hidden">
+                @forelse ($drivers as $driver)
+                    <div class="bg-gray-50 border rounded-lg p-4 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <h3 class="font-semibold text-lg">{{ $driver->name }}</h3>
+                            <p class="text-sm text-gray-600">Documento: {{ $driver->document }}</p>
+                            <p class="text-sm text-gray-600">Tipo: {{ $driver->type }}</p>
+                            <p class="mt-2">
+                                <span
+                                    class="px-2 py-1 text-xs font-semibold rounded-full {{ $driver->is_authorized ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800' }}">
+                                    {{ $driver->is_authorized ? 'Autorizado' : 'Não autorizado' }}
+                                </span>
+                            </p>
+                        </div>
+                        <div class="mt-4 flex space-x-2">
+                            <x-secondary-button class="flex-1"
+                                wire:click="edit({{ $driver->id }})">Editar</x-secondary-button>
+                            <x-danger-button class="flex-1"
+                                wire:click="confirmDelete({{ $driver->id }})">Excluir</x-danger-button>
+                        </div>
+                    </div>
+                @empty
+                    <p class="text-center text-gray-500 col-span-2">Nenhum motorista cadastrado.</p>
+                @endforelse
+            </div>
         </div>
     </div>
 
-    @if($isModalOpen)
-    <div class="modal fade show" tabindex="-1" style="display: block;" wire:keydown.escape.window="closeModal">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">{{ $driverId ? 'Editar Motorista' : 'Cadastrar Novo Motorista' }}</h5>
-                    <button type="button" class="btn-close" wire:click="closeModal"></button>
+    {{-- Os Modais continuam iguais --}}
+
+
+
+    {{-- Modal de Edição/Criação --}}
+    @if ($isModalOpen)
+        <div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center" x-data="{ open: @entangle('isModalOpen') }"
+            x-show="open" @keydown.escape.window="closeModal">
+            <div class="bg-white rounded-lg shadow-xl w-full max-w-lg" @click.away="closeModal">
+                <div class="px-6 py-4 border-b">
+                    <h3 class="text-lg font-semibold">{{ $driverId ? 'Editar Motorista' : 'Cadastrar Novo Motorista' }}
+                    </h3>
                 </div>
                 <form wire:submit="store">
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label for="name" class="form-label">Nome Completo</label>
-                            <input type="text" id="name" class="form-control @error('name') is-invalid @enderror" wire:model="name">
-                            @error('name') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    <div class="p-6 space-y-4">
+                        {{-- Nome --}}
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-gray-700">Nome Completo</label>
+                            <input type="text" id="name"
+                                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm @error('name') border-red-500 @enderror"
+                                wire:model="name">
+                            @error('name')
+                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                            @enderror
                         </div>
-                        <div class="mb-3">
-                            <label for="document" class="form-label">Documento (CPF/Matrícula)</label>
-                            <input type="text" id="document" class="form-control @error('document') is-invalid @enderror" wire:model="document">
-                            @error('document') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        {{-- Documento --}}
+                        <div>
+                            <label for="document" class="block text-sm font-medium text-gray-700">Documento
+                                (CPF/Matrícula)</label>
+                            <input type="text" id="document"
+                                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm @error('document') border-red-500 @enderror"
+                                wire:model="document">
+                            @error('document')
+                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                            @enderror
                         </div>
-                        <div class="mb-3">
-                            <label for="type" class="form-label">Tipo</label>
-                            <select id="type" class="form-select @error('type') is-invalid @enderror" wire:model="type">
+                        {{-- Tipo --}}
+                        <div>
+                            <label for="type" class="block text-sm font-medium text-gray-700">Tipo</label>
+                            <select id="type"
+                                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm @error('type') border-red-500 @enderror"
+                                wire:model="type">
                                 <option value="">Selecione um tipo</option>
                                 <option value="Servidor">Servidor</option>
                                 <option value="Aluno">Aluno</option>
                                 <option value="Terceirizado">Terceirizado</option>
                                 <option value="Visitante">Visitante</option>
                             </select>
-                            @error('type') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            @error('type')
+                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                            @enderror
                         </div>
 
                         {{-- Checkbox de permissão visível apenas para admin/fiscal --}}
-                        @if(auth()->user()->role === 'admin' || auth()->user()->role === 'fiscal')
-                        <div class="form-check form-switch mb-3">
-                            <input class="form-check-input" type="checkbox" role="switch" id="is_authorized" wire:model="is_authorized">
-                            <label class="form-check-label" for="is_authorized">Autorizado a dirigir frota oficial?</label>
-                        </div>
+                        @if (auth()->user()->role === 'admin' || auth()->user()->role === 'fiscal')
+                            <div class="flex items-center pt-2">
+                                <input id="is_authorized" type="checkbox"
+                                    class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                                    wire:model="is_authorized">
+                                <label for="is_authorized" class="ml-2 block text-sm text-gray-900">
+                                    Autorizado a dirigir frota oficial?
+                                </label>
+                            </div>
                         @endif
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" wire:click="closeModal">Fechar</button>
-                        <button type="submit" class="btn btn-primary" wire:loading.attr="disabled">
-                            {{-- Mostra o spinner e o texto "Salvando..." apenas durante o carregamento da ação 'store' --}}
-                            <span wire:loading wire:target="store">
-                                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                                Salvando...
-                            </span>
-                            {{-- Mostra o texto normal quando não estiver carregando --}}
-                            <span wire:loading.remove wire:target="store">
-                                {{ $driverId ? 'Atualizar Motorista' : 'Salvar Motorista' }}
-                            </span>
+                    <div class="px-6 py-4 bg-gray-50 flex items-center justify-end space-x-2">
+                        <button type="button" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+                            wire:click="closeModal">Fechar</button>
+                        <button type="submit"
+                            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center"
+                            wire:loading.attr="disabled">
+
+                            {{-- Spinner de Carregamento --}}
+                            <svg wire:loading wire:target="store" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                    stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                </path>
+                            </svg>
+                            <span wire:loading.remove
+                                wire:target="store">{{ $driverId ? 'Atualizar Motorista' : 'Salvar Motorista' }}</span>
+                            <span wire:loading wire:target="store">Salvando...</span>
                         </button>
                     </div>
                 </form>
             </div>
         </div>
-    </div>
-    <div class="modal-backdrop fade show"></div>
     @endif
 
-    @if($isConfirmModalOpen)
-    <div class="modal fade show" tabindex="-1" style="display: block;" wire:keydown.escape.window="closeConfirmModal">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Confirmar Exclusão</h5>
-                    <button type="button" class="btn-close" wire:click="closeConfirmModal"></button>
+    {{-- Modal de Confirmação de Exclusão --}}
+    @if ($isConfirmModalOpen)
+        <div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center"
+            x-data="{ open: @entangle('isConfirmModalOpen') }" x-show="open" @keydown.escape.window="closeConfirmModal">
+            <div class="bg-white rounded-lg shadow-xl w-full max-w-md" @click.away="closeConfirmModal">
+                <div class="p-6">
+                    <h3 class="text-lg font-bold">Confirmar Exclusão</h3>
+                    <p class="mt-2 text-sm text-gray-600">Você tem certeza que deseja excluir o motorista
+                        <strong>{{ $driverNameToDelete }}</strong>?
+                    </p>
+                    <p class="mt-1 text-sm text-red-600">Esta ação não pode ser desfeita.</p>
                 </div>
-                <div class="modal-body">
-                    <p>Você tem certeza que deseja excluir o motorista <strong>{{ $driverNameToDelete }}</strong>?</p>
-                    <p class="text-danger">Esta ação não pode ser desfeita.</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" wire:click="closeConfirmModal">Cancelar</button>
-                    <button type="button" class="btn btn-danger" wire:click="deleteDriver" wire:loading.attr="disabled">
-                        <span wire:loading wire:target="deleteDriver">Excluindo...</span>
+                <div class="px-6 py-4 bg-gray-50 flex items-center justify-end space-x-2">
+                    <button type="button" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+                        wire:click="closeConfirmModal">Cancelar</button>
+                    <button type="button"
+                        class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 flex items-center"
+                        wire:click="deleteDriver" wire:loading.attr="disabled">
+                        <svg wire:loading wire:target="deleteDriver"
+                            class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg"
+                            fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                            </path>
+                        </svg>
                         <span wire:loading.remove wire:target="deleteDriver">Confirmar Exclusão</span>
+                        <span wire:loading wire:target="deleteDriver">Excluindo...</span>
                     </button>
                 </div>
             </div>
         </div>
-    </div>
-    <div class="modal-backdrop fade show"></div>
     @endif
 </div>

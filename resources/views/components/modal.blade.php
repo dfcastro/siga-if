@@ -1,78 +1,78 @@
-@props([
-    'name',
-    'show' => false,
-    'maxWidth' => '2xl'
-])
+{{-- Modal Criar/Editar Veículo --}}
+<x-dialog-modal wire:model="isModalOpen">
+    <x-slot name="title">
+        {{ $vehicle_id ? 'Editar Veículo' : 'Registrar Novo Veículo' }}
+    </x-slot>
 
-@php
-$maxWidth = [
-    'sm' => 'sm:max-w-sm',
-    'md' => 'sm:max-w-md',
-    'lg' => 'sm:max-w-lg',
-    'xl' => 'sm:max-w-xl',
-    '2xl' => 'sm:max-w-2xl',
-][$maxWidth];
-@endphp
+    <x-slot name="content">
+        <div class="space-y-4">
+            <div>
+                <x-label for="license_plate" value="Placa" />
+                <x-input id="license_plate" type="text" wire:model.defer="license_plate" class="mt-1 block w-full uppercase" maxlength="8" placeholder="ABC-1234" />
+                @error('license_plate') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+            </div>
 
-<div
-    x-data="{
-        show: @js($show),
-        focusables() {
-            // All focusable element types...
-            let selector = 'a, button, input:not([type=\'hidden\']), textarea, select, details, [tabindex]:not([tabindex=\'-1\'])'
-            return [...$el.querySelectorAll(selector)]
-                // All non-disabled elements...
-                .filter(el => ! el.hasAttribute('disabled'))
-        },
-        firstFocusable() { return this.focusables()[0] },
-        lastFocusable() { return this.focusables().slice(-1)[0] },
-        nextFocusable() { return this.focusables()[this.nextFocusableIndex()] || this.firstFocusable() },
-        prevFocusable() { return this.focusables()[this.prevFocusableIndex()] || this.lastFocusable() },
-        nextFocusableIndex() { return (this.focusables().indexOf(document.activeElement) + 1) % (this.focusables().length + 1) },
-        prevFocusableIndex() { return Math.max(0, this.focusables().indexOf(document.activeElement)) -1 },
-    }"
-    x-init="$watch('show', value => {
-        if (value) {
-            document.body.classList.add('overflow-y-hidden');
-            {{ $attributes->has('focusable') ? 'setTimeout(() => firstFocusable().focus(), 100)' : '' }}
-        } else {
-            document.body.classList.remove('overflow-y-hidden');
-        }
-    })"
-    x-on:open-modal.window="$event.detail == '{{ $name }}' ? show = true : null"
-    x-on:close-modal.window="$event.detail == '{{ $name }}' ? show = false : null"
-    x-on:close.stop="show = false"
-    x-on:keydown.escape.window="show = false"
-    x-on:keydown.tab.prevent="$event.shiftKey || nextFocusable().focus()"
-    x-on:keydown.shift.tab.prevent="prevFocusable().focus()"
-    x-show="show"
-    class="fixed inset-0 overflow-y-auto px-4 py-6 sm:px-0 z-50"
-    style="display: {{ $show ? 'block' : 'none' }};"
->
-    <div
-        x-show="show"
-        class="fixed inset-0 transform transition-all"
-        x-on:click="show = false"
-        x-transition:enter="ease-out duration-300"
-        x-transition:enter-start="opacity-0"
-        x-transition:enter-end="opacity-100"
-        x-transition:leave="ease-in duration-200"
-        x-transition:leave-start="opacity-100"
-        x-transition:leave-end="opacity-0"
-    >
-        <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
-    </div>
+            <div>
+                <x-label for="model" value="Modelo" />
+                <x-input id="model" type="text" wire:model.defer="model" class="mt-1 block w-full" placeholder="Ex: Onix, Strada..." />
+                @error('model') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+            </div>
 
-    <div
-        x-show="show"
-        class="mb-6 bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:w-full {{ $maxWidth }} sm:mx-auto"
-        x-transition:enter="ease-out duration-300"
-        x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-        x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
-        x-transition:leave="ease-in duration-200"
-        x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
-        x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-    >
-        {{ $slot }}
-    </div>
-</div>
+            <div>
+                <x-label for="color" value="Cor" />
+                <x-input id="color" type="text" wire:model.defer="color" class="mt-1 block w-full" placeholder="Ex: Preto, Branco..." />
+                @error('color') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+            </div>
+
+            <div>
+                <x-label for="type" value="Tipo" />
+                <select id="type" wire:model.defer="type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                    <option value="">Selecione</option>
+                    <option value="Oficial">Oficial</option>
+                    <option value="Visitante">Visitante</option>
+                </select>
+                @error('type') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+            </div>
+
+            <div>
+                <x-label for="driver" value="Motorista" />
+                <x-input id="driver" type="text" wire:model.defer="driver_name" class="mt-1 block w-full" placeholder="Nome do motorista" />
+                <small class="text-gray-500 text-xs">Se o motorista não existir, ele será cadastrado automaticamente.</small>
+                @error('driver_name') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+            </div>
+        </div>
+    </x-slot>
+
+    <x-slot name="footer">
+        <x-secondary-button wire:click="$toggle('isModalOpen')" class="mr-2">
+            Cancelar
+        </x-secondary-button>
+
+        <x-primary-button wire:click="store">
+            {{ $vehicle_id ? 'Atualizar' : 'Salvar' }}
+        </x-primary-button>
+    </x-slot>
+</x-dialog-modal>
+
+
+{{-- Modal Confirmar Exclusão --}}
+<x-confirmation-modal wire:model="confirmingDelete">
+    <x-slot name="title">
+        Confirmar Exclusão
+    </x-slot>
+
+    <x-slot name="content">
+        Tem certeza que deseja excluir este veículo?  
+        Essa ação não poderá ser desfeita.
+    </x-slot>
+
+    <x-slot name="footer">
+        <x-secondary-button wire:click="$toggle('confirmingDelete')" class="mr-2">
+            Cancelar
+        </x-secondary-button>
+
+        <x-danger-button wire:click="delete">
+            Excluir
+        </x-danger-button>
+    </x-slot>
+</x-confirmation-modal>
