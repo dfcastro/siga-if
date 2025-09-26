@@ -8,7 +8,7 @@
                     </a>
                 </div>
 
-                <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+                <div class="hidden space-x-8 sm:-my-px sm:ml-10 lg:flex">
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
                             fill="currentColor">
@@ -67,11 +67,18 @@
                             </svg>
                             {{ __('Relatórios') }}
                         </x-nav-link>
+                        <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.index')">
+                            @if (auth()->user()->role === 'admin')
+                                
+                                    {{ __('Usuários') }}
+                                
+                            @endif
+                        </x-nav-link>
                     @endif
                 </div>
             </div>
 
-            <div class="hidden sm:flex sm:items-center sm:ml-6">
+            <div class="hidden lg:flex lg:items-center lg:ms-6">
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
                         <button
@@ -108,12 +115,7 @@
                                         {{ __('Usuários') }}
                                     </x-dropdown-link>
                                 @endif
-                                <x-dropdown-link :href="route('vehicles.index')">
-                                    {{ __('Veículos') }}
-                                </x-dropdown-link>
-                                <x-dropdown-link :href="route('drivers.index')">
-                                    {{ __('Motoristas') }}
-                                </x-dropdown-link>
+                
 
                             </div>
                         @endif
@@ -135,7 +137,7 @@
                 </x-dropdown>
             </div>
 
-            <div class="-mr-2 flex items-center sm:hidden">
+            <div class="-mr-2 flex items-center lg:hidden">
                 <button @click="open = ! open"
                     class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 focus:text-gray-500 transition duration-150 ease-in-out">
                     <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
@@ -150,7 +152,7 @@
         </div>
     </div>
 
-    <div :class="{ 'block': open, 'hidden': !open }" class="hidden sm:hidden">
+    <div :class="{ 'block': open, 'hidden': !open }" class="hidden lg:hidden">
         <div class="pt-2 pb-3 space-y-1">
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Início') }}
@@ -185,19 +187,13 @@
             <div class="mt-3 space-y-1">
                 @if (in_array(auth()->user()->role, ['admin', 'porteiro', 'fiscal']))
                     <div class="border-b border-gray-200 pb-2 mb-2">
-                        <div class="px-4 text-sm font-semibold text-gray-500">Gerenciamento</div>
+                        
                         @if (auth()->user()->role === 'admin')
                             <x-responsive-nav-link :href="route('users.index')">
                                 {{ __('Usuários') }}
                             </x-responsive-nav-link>
-                        @endif
-                        <x-responsive-nav-link :href="route('vehicles.index')">
-                            {{ __('Veículos') }}
-                        </x-responsive-nav-link>
-                        <x-responsive-nav-link :href="route('drivers.index')">
-                            {{ __('Motoristas') }}
-                        </x-responsive-nav-link>
-                    </div>
+                        @endif    
+                    
                 @endif
                 <x-responsive-nav-link :href="route('profile.edit')">
                     {{ __('Meu Perfil') }}

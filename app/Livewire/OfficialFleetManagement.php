@@ -22,6 +22,7 @@ class OfficialFleetManagement extends Component
     public $departure_odometer = '';
     public ?string $passengers = '';
     public bool $isDepartureModalOpen = false;
+    public $return_observation = '';
 
     // Propriedades para o modal de CHEGADA
     public ?OfficialTrip $tripToUpdate = null;
@@ -33,6 +34,8 @@ class OfficialFleetManagement extends Component
 
     //PROPRIEDADE PÚBLICA PARA A BUSCA
     public string $search = '';
+
+
 
     //MÉTODO PARA RESETAR A PAGINAÇÃO AO BUSCAR
     public function updatingSearch()
@@ -87,37 +90,69 @@ class OfficialFleetManagement extends Component
     // --- MÉTODOS PARA REGISTRO DE SAÍDA ---
     public function storeDeparture()
     {
-        $this->validate([
-            'vehicle_id' => 'required|exists:vehicles,id',
+
+
+        $validatedData = $this->validate([
+            'vehicle_id' =>  'required',
+                'exists:vehicles,id',
+                Rule::unique('official_trips')->where(function ($query) {
+                    return $query->whereNull('arrival_datetime');
+                })
+            ],
+            [
             'driver_id' => 'required|exists:drivers,id',
             'destination' => 'required|string|max:255',
+            'departure_odometer' => 'required|integer',
             'passengers' => 'nullable|string|max:1000',
-            // VALIDAÇÃO DE SAÍDA CORRIGIDA
-            'departure_odometer' => [
-                'required',
-                'integer',
-                'min:0',
-                'max:999999', // Limite máximo de 1 milhão
-            ],
+            'return_observation' => 'nullable|string|max:1000',
+            ],[
+            'vehicle_id.unique' => 'Este veículo já está em viagem. Registre a chegada antes de uma nova saída.'
         ]);
+
         OfficialTrip::create([
             'vehicle_id' => $this->vehicle_id,
             'driver_id' => $this->driver_id,
-            'destination' => $this->destination,         // Garante que a variável $destination vai para a coluna correta
+            'destination' => $this->destination,
             'departure_odometer' => $this->departure_odometer,
-            'passengers' => $this->passengers,           // Garante que a variável $passengers vai para a coluna correta
             'departure_datetime' => now(),
+            'passengers' => $this->passengers,
+            'return_observation' => $this->return_observation,
+            'user_id' => auth()->id(),
             'guard_on_departure' => auth()->user()->name,
         ]);
 
+        session()->flash('successMessage', 'Saída de veículo oficial registrada com sucesso!');
         $this->closeDepartureModal();
-        $this->successMessage = 'Saída registrada com sucesso!';
+        $this->dispatch('trip-created');
     }
+
+    public function resetDepartureForm()
+    {
+        $this->reset([
+            'vehicle_id',
+            'driver_id',
+            'destination',
+            'departure_odometer',
+            'passengers',
+            'return_observation', // Adicionado para limpar o novo campo também
+        ]);
+        $this->resetErrorBag();
+    }
+
     public function create()
     {
-        $this->resetDepartureFields();
+        // Obtém os IDs de todos os veículos que já estão em viagem
+        $ongoingTripVehicleIds = OfficialTrip::whereNull('arrival_datetime')->pluck('vehicle_id')->toArray();
+
+        // Busca todos os veículos oficiais que NÃO ESTÃO na lista de veículos em viagem
+        $this->officialVehicles = Vehicle::where('type', 'Oficial')
+            ->whereNotIn('id', $ongoingTripVehicleIds) 
+            ->orderBy('model')
+            ->get();
+
+        $this->drivers = Driver::orderBy('name')->get();
+        $this->resetDepartureForm();
         $this->isDepartureModalOpen = true;
-        // AVISA O BROWSER PARA INICIAR OS SELETORES
         $this->dispatch('init-fleet-selectors');
     }
 
@@ -138,6 +173,10 @@ class OfficialFleetManagement extends Component
     // --- NOVOS MÉTODOS PARA REGISTRO DE CHEGADA ---
     public function storeArrival()
     {
+        if (auth()->user()->role === 'fiscal') {
+            abort(403, 'Você não tem permissão para executar esta ação.');
+        }
+        $trip = OfficialTrip::findOrFail($this->tripToUpdate->id);
         $this->validate([
             // A quilometragem de chegada deve ser um número e no mínimo igual à de saída
             'arrival_odometer' => 'required|integer|min:' . $this->tripToUpdate->departure_odometer

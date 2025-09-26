@@ -20,8 +20,8 @@ class OfficialTrip extends Model
         'departure_odometer',
         'arrival_odometer',
         'passengers',
-        'guard_on_departure', // Adicionado
-        'guard_on_arrival',   // Adicionado
+        'guard_on_departure', 
+        'guard_on_arrival',   
     ];
 
     protected $casts = [
@@ -37,5 +37,10 @@ class OfficialTrip extends Model
     public function driver(): BelongsTo
     {
         return $this->belongsTo(Driver::class);
+    }
+//  Define a relação com o Utilizador (Porteiro) que registou a viagem.
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 }

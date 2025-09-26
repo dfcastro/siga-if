@@ -8,6 +8,7 @@ use App\Models\Vehicle;
 use Livewire\Component;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
+use App\Rules\Cpf; // ADICIONADO: Importa a nossa nova regra de validação
 
 #[Layout('layouts.app')]
 class CreatePrivateEntry extends Component
@@ -34,27 +35,46 @@ class CreatePrivateEntry extends Component
     public $searchResults = [];
     public $selectedVehicleId = null;
 
+    // Propriedades para o modal de confirmação
+    public $showExitConfirmationModal = false;
+    public $entryToExit = null;
+
+    public function confirmExit($entryId)
+    {
+        $this->entryToExit = PrivateEntry::with('driver')->findOrFail($entryId);
+        $this->showExitConfirmationModal = true;
+    }
+
+    // Validação em tempo real para o campo de CPF
+    public function updated($propertyName)
+    {
+        if ($propertyName === 'visitor_document') {
+            $this->validateOnly($propertyName, [
+                'visitor_document' => ['required_if:isNewVisitor,true', 'nullable', new Cpf, Rule::unique('drivers', 'document')],
+            ], [
+                'visitor_document.required_if' => 'O CPF do visitante é obrigatório.',
+                'visitor_document.unique' => 'Este CPF já está cadastrado.'
+            ]);
+        }
+    }
+
     public function render()
     {
-        // Busca os veículos que ESTÃO ATUALMENTE no pátio
+        // ... (o seu método render continua igual)
         $currentVehicles = PrivateEntry::with(['vehicle.driver', 'driver'])
-            ->whereNull('exit_at') // 1. Condição principal: Garante que NUNCA buscará veículos que já saíram.
+            ->whereNull('exit_at')
             ->when($this->exitSearch, function ($query) {
                 $searchTerm = '%' . $this->exitSearch . '%';
-                // 2. Agrupa as condições de busca. A busca só será feita DENTRO
-                //    do universo de veículos que já atendem à condição principal.
                 $query->where(function ($subQuery) use ($searchTerm) {
-                    $subQuery->where('license_plate', 'like', $searchTerm) // Busca pela placa
+                    $subQuery->where('license_plate', 'like', $searchTerm)
                         ->orWhereHas('driver', function ($driverQuery) use ($searchTerm) {
-                            $driverQuery->where('name', 'like', $searchTerm); // OU busca pelo nome do motorista
+                            $driverQuery->where('name', 'like', $searchTerm);
                         });
                 });
             })
             ->latest('entry_at')
             ->get();
-
         $drivers = Driver::orderBy('name')->get();
-
         return view('livewire.create-private-entry', [
             'currentVehicles' => $currentVehicles,
             'drivers' => $drivers
@@ -63,29 +83,25 @@ class CreatePrivateEntry extends Component
 
     public function updatedSearch($value)
     {
+        // ... (o seu método updatedSearch continua igual)
         if (strlen($value) < 3) {
             $this->searchResults = collect();
             return;
         }
-
         $vehiclesFound = Vehicle::with('driver')
             ->where('license_plate', 'like', '%' . $value . '%')
             ->orWhere('model', 'like', '%' . $value . '%')
             ->get();
-
         $driversFound = Driver::with('vehicles')
             ->where('name', 'like', '%' . $value . '%')
             ->get();
-
         $formattedResults = collect();
-
         foreach ($vehiclesFound as $vehicle) {
             $formattedResults->push([
                 'id' => $vehicle->id,
                 'text' => "VEÍCULO: {$vehicle->license_plate} ({$vehicle->model}) - Prop.: {$vehicle->driver->name}"
             ]);
         }
-
         foreach ($driversFound as $driver) {
             foreach ($driver->vehicles as $vehicle) {
                 $formattedResults->push([
@@ -94,22 +110,19 @@ class CreatePrivateEntry extends Component
                 ]);
             }
         }
-
         $this->searchResults = $formattedResults->unique('id')->sortBy('text');
     }
 
     public function selectVehicle($vehicleId)
     {
+        // ... (o seu método selectVehicle continua igual)
         $vehicle = Vehicle::findOrFail($vehicleId);
-
         $this->selectedVehicleId = $vehicle->id;
-        $this->license_plate = $vehicle->license_plate; // @entangle cuida do Alpine
+        $this->license_plate = $vehicle->license_plate;
         $this->vehicle_model = $vehicle->model;
         $this->selected_driver_id = $vehicle->driver_id;
-
         $this->search = '';
         $this->searchResults = [];
-
         $this->dispatch('set-driver-select', $this->selected_driver_id);
     }
 
@@ -120,13 +133,18 @@ class CreatePrivateEntry extends Component
 
     public function save()
     {
+        if (auth()->user()->role === 'fiscal') {
+            abort(403, 'Você não tem permissão para executar esta ação.');
+        }
+
         $this->validate([
             'license_plate' => ['required', 'min:7', 'regex:/^[A-Z]{3}-\d{4}$|^[A-Z]{3}\d[A-Z]\d{2}$/', Rule::unique('private_entries')->whereNull('exit_at')],
             'vehicle_model' => 'required|min:2',
             'selected_driver_id' => 'required',
             'entry_reason' => 'required',
             'other_reason' => 'required_if:entry_reason,Outro',
-            'visitor_document' => ['required_if:isNewVisitor,true', 'nullable', 'unique:drivers,document'],
+
+            'visitor_document' => ['required_if:isNewVisitor,true', 'nullable', new Cpf, Rule::unique('drivers', 'document')],
         ], [
             'license_plate.unique' => 'Esta placa já consta como dentro do campus.',
             'other_reason.required_if' => 'Por favor, especifique o motivo da entrada.',
@@ -163,6 +181,7 @@ class CreatePrivateEntry extends Component
 
     public function resetForm()
     {
+        // ... (o seu método resetForm continua igual)
         $this->reset([
             'license_plate',
             'vehicle_model',
@@ -178,15 +197,21 @@ class CreatePrivateEntry extends Component
         $this->dispatch('reset-form-fields');
     }
 
-    public function registerExit($entryId)
+    public function executeExit()
     {
-        $entry = PrivateEntry::find($entryId);
-        if ($entry) {
-            $entry->exit_at = now();
-            $entry->guard_on_exit = auth()->user()->name;
-            $entry->save();
-
-            $this->successMessage = 'Saída do veículo ' . ($entry->vehicle->license_plate ?? $entry->license_plate) . ' registrada com sucesso!';
+        if (auth()->user()->role === 'fiscal') {
+            abort(403, 'Você não tem permissão para executar esta ação.');
         }
+
+        if ($this->entryToExit) {
+            $this->entryToExit->exit_at = now();
+            $this->entryToExit->guard_on_exit = auth()->user()->name;
+            $this->entryToExit->save();
+
+            $this->successMessage = 'Saída do veículo ' . ($this->entryToExit->vehicle->license_plate ?? $this->entryToExit->license_plate) . ' registrada com sucesso!';
+        }
+
+        $this->showExitConfirmationModal = false;
+        $this->entryToExit = null;
     }
 }

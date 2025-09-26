@@ -9,10 +9,11 @@ use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Vehicle extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $guarded = [];
 
@@ -29,7 +30,7 @@ class Vehicle extends Model
     {
         return Attribute::make(
             // Str::upper() converte a string inteira para MAIÚSCULAS.
-            set: fn (string $value) => Str::upper($value),
+            set: fn(string $value) => Str::upper($value),
         );
     }
 }

@@ -24,18 +24,30 @@
         @include('layouts.navigation')
 
         @if (isset($header))
-        <header class="bg-white shadow">
-            <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                {{ $header }}
-            </div>
-        </header>
+            <header class="bg-white shadow">
+                <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+                    {{ $header }}
+                </div>
+            </header>
         @endif
 
-        <main>
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                {{ $slot }}
-            </div>
+        <main class="flex-grow">
+            <div class="py-5">
+                <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+                    {{ $slot }}
+                </div>
+
         </main>
+        <footer class="w-full text-center p-4 bg-white shadow-inner">
+            <p class="text-sm text-gray-500">
+                &copy; {{ date('Y') }} SIGA-IF - Sistema Integrado de Gestão de Acesso.
+                Todos os direitos
+                reservados.<br>
+                Desenvolvido pelo NTI - Núcleo de Tecnologia da Informação
+                <br>Campus Almenara
+                <br>IFNMG
+            </p>
+        </footer>
     </div>
 
 

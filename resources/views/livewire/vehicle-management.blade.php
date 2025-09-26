@@ -32,6 +32,12 @@
         </div>
 
         <div class="p-6">
+            {{-- CAMPO DE BUSCA --}}
+            <div class="mb-4">
+                <input wire:model.live.debounce.300ms="search" type="text"
+                    placeholder="Buscar por placa, modelo, cor ou motorista..."
+                    class="block w-full md:w-1/3 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+            </div>
             {{-- Desktop: Tabela --}}
             <div class="hidden lg:block overflow-x-auto">
                 <table class="min-w-full bg-white border rounded-lg">
@@ -100,6 +106,9 @@
                     <p class="text-center text-gray-500 col-span-2">Nenhum veículo cadastrado.</p>
                 @endforelse
             </div>
+            <div class="mt-4">
+                {{ $vehicles->links() }}
+            </div>
         </div>
     </div>
 
@@ -146,16 +155,23 @@
                                 <label for="model" class="block text-sm font-medium text-gray-700">Modelo</label>
                                 <input type="text" id="model"
                                     class="mt-1 block w-full border-gray-300 rounded-md shadow-sm @error('model') border-red-500 @enderror"
-                                    wire:model="model" maxlength="255">
+                                    wire:model="model" maxlength="20" oninput="this.value = this.value.toUpperCase()">
+                                {{-- ADICIONE ESTA LINHA --}}
                                 @error('model')
                                     <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                                 @enderror
                             </div>
                             <div>
-                                <label for="color" class="block text-sm font-medium text-gray-700">Cor</label>
-                                <input type="text" id="color"
-                                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm @error('color') border-red-500 @enderror"
-                                    wire:model="color" maxlength="255">
+                                <label for="color_selector" class="block text-sm font-medium text-gray-700">Cor</label>
+                                <div wire:ignore>
+                                    <select id="color_selector" wire:model="color"
+                                        placeholder="Selecione uma cor...">
+                                        <option value="">Selecione uma cor...</option>
+                                        @foreach ($commonColors as $colorOption)
+                                            <option value="{{ $colorOption }}">{{ $colorOption }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
                                 @error('color')
                                     <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                                 @enderror

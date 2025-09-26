@@ -17,6 +17,12 @@
         </div>
 
         <div class="p-6">
+            <div class="mb-4">
+
+                <input wire:model.live.debounce.300ms="search" type="text"
+                    placeholder="Buscar por nome ou documento..."
+                    class="block w-full md:w-1/3 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+            </div>
             {{-- Layout Desktop: Tabela --}}
             <div class="hidden lg:block">
                 <table class="min-w-full bg-white border rounded-lg">
@@ -33,7 +39,9 @@
                     <tbody class="divide-y divide-gray-200">
                         @forelse ($drivers as $driver)
                             <tr>
-                                <td class="px-6 py-4">{{ $driver->name }}</td>
+                                <td class="px-6 py-4 truncate max-w-sm" title="{{ $driver->name }}">
+                                    {{ $driver->name }}
+                                </td>
                                 <td class="px-6 py-4">{{ $driver->document }}</td>
                                 <td class="px-6 py-4 capitalize">{{ $driver->type }}</td>
                                 <td class="px-6 py-4">
@@ -64,7 +72,9 @@
                 @forelse ($drivers as $driver)
                     <div class="bg-gray-50 border rounded-lg p-4 shadow-sm flex flex-col justify-between">
                         <div>
-                            <h3 class="font-semibold text-lg">{{ $driver->name }}</h3>
+                            <h3 class="font-semibold text-lg truncate" title="{{ $driver->name }}">
+                                {{ $driver->name }}
+                            </h3>
                             <p class="text-sm text-gray-600">Documento: {{ $driver->document }}</p>
                             <p class="text-sm text-gray-600">Tipo: {{ $driver->type }}</p>
                             <p class="mt-2">
@@ -85,18 +95,19 @@
                     <p class="text-center text-gray-500 col-span-2">Nenhum motorista cadastrado.</p>
                 @endforelse
             </div>
+            <div class="mt-4">
+                {{ $drivers->links() }}
+            </div>
         </div>
     </div>
-
-    {{-- Os Modais continuam iguais --}}
 
 
 
     {{-- Modal de Edição/Criação --}}
     @if ($isModalOpen)
         <div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center" x-data="{ open: @entangle('isModalOpen') }"
-            x-show="open" @keydown.escape.window="closeModal">
-            <div class="bg-white rounded-lg shadow-xl w-full max-w-lg" @click.away="closeModal">
+            x-show="open" @keydown.escape.window="$wire.closeModal()">
+            <div class="bg-white rounded-lg shadow-xl w-full max-w-lg" @click.away="$wire.closeModal()">
                 <div class="px-6 py-4 border-b">
                     <h3 class="text-lg font-semibold">{{ $driverId ? 'Editar Motorista' : 'Cadastrar Novo Motorista' }}
                     </h3>
@@ -107,30 +118,31 @@
                         <div>
                             <label for="name" class="block text-sm font-medium text-gray-700">Nome Completo</label>
                             <input type="text" id="name"
-                                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm @error('name') border-red-500 @enderror"
-                                wire:model="name">
+                                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm capitalize @error('name') border-red-500 @enderror"
+                                wire:model="name" maxlength="100">
                             @error('name')
                                 <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                             @enderror
                         </div>
-                        {{-- Documento --}}
+
+                        {{-- Documento COM MÁSCARA --}}
                         <div>
                             <label for="document" class="block text-sm font-medium text-gray-700">Documento
-                                (CPF/Matrícula)</label>
+                                (CPF)</label>
                             <input type="text" id="document"
                                 class="mt-1 block w-full border-gray-300 rounded-md shadow-sm @error('document') border-red-500 @enderror"
-                                wire:model="document">
+                                wire:model="document" x-data x-mask="999.999.999-99">
                             @error('document')
                                 <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                             @enderror
                         </div>
+
                         {{-- Tipo --}}
                         <div>
                             <label for="type" class="block text-sm font-medium text-gray-700">Tipo</label>
                             <select id="type"
                                 class="mt-1 block w-full border-gray-300 rounded-md shadow-sm @error('type') border-red-500 @enderror"
                                 wire:model="type">
-                                <option value="">Selecione um tipo</option>
                                 <option value="Servidor">Servidor</option>
                                 <option value="Aluno">Aluno</option>
                                 <option value="Terceirizado">Terceirizado</option>
@@ -141,7 +153,7 @@
                             @enderror
                         </div>
 
-                        {{-- Checkbox de permissão visível apenas para admin/fiscal --}}
+                        {{-- Checkbox de permissão --}}
                         @if (auth()->user()->role === 'admin' || auth()->user()->role === 'fiscal')
                             <div class="flex items-center pt-2">
                                 <input id="is_authorized" type="checkbox"
@@ -154,25 +166,8 @@
                         @endif
                     </div>
                     <div class="px-6 py-4 bg-gray-50 flex items-center justify-end space-x-2">
-                        <button type="button" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
-                            wire:click="closeModal">Fechar</button>
-                        <button type="submit"
-                            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center"
-                            wire:loading.attr="disabled">
-
-                            {{-- Spinner de Carregamento --}}
-                            <svg wire:loading wire:target="store" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                    stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor"
-                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                                </path>
-                            </svg>
-                            <span wire:loading.remove
-                                wire:target="store">{{ $driverId ? 'Atualizar Motorista' : 'Salvar Motorista' }}</span>
-                            <span wire:loading wire:target="store">Salvando...</span>
-                        </button>
+                        <x-secondary-button type="button" wire:click="closeModal">Fechar</x-secondary-button>
+                        <x-primary-button type="submit">{{ $driverId ? 'Atualizar' : 'Salvar' }}</x-primary-button>
                     </div>
                 </form>
             </div>
@@ -181,8 +176,8 @@
 
     {{-- Modal de Confirmação de Exclusão --}}
     @if ($isConfirmModalOpen)
-        <div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center"
-            x-data="{ open: @entangle('isConfirmModalOpen') }" x-show="open" @keydown.escape.window="closeConfirmModal">
+        <div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center" x-data="{ open: @entangle('isConfirmModalOpen') }"
+            x-show="open" @keydown.escape.window="closeConfirmModal">
             <div class="bg-white rounded-lg shadow-xl w-full max-w-md" @click.away="closeConfirmModal">
                 <div class="p-6">
                     <h3 class="text-lg font-bold">Confirmar Exclusão</h3>

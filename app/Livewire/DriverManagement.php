@@ -4,90 +4,104 @@ namespace App\Livewire;
 
 use App\Models\Driver;
 use Livewire\Component;
-use Illuminate\Validation\Rule; // Importante para a validação de 'unique' na edição
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
+use Livewire\WithPagination; // IMPORTAR A PAGINAÇÃO
+use App\Rules\Cpf;
+use Illuminate\Support\Str;
+
 
 #[Layout('layouts.app')]
 class DriverManagement extends Component
 {
-    // Propriedades para o formulário do modal
+    use WithPagination; // USAR A TRAIT
+
+    // Suas propriedades existentes
     public string $name = '';
     public string $document = '';
-    public string $type = '';
-
-    // Nova propriedade para guardar o ID do motorista em edição
+    public string $type = 'Servidor';
     public $driverId;
-
-    // Propriedade para controlar a visibilidade do modal
     public bool $isModalOpen = false;
-
-    // NOVAS propriedades para o modal de exclusão
     public bool $isConfirmModalOpen = false;
     public $driverIdToDelete;
     public $driverNameToDelete;
-    // Método que renderiza a view
-    public bool $is_authorized = false;
+    public bool $is_authorized = true;
+
+    // 3. ADICIONAR A PROPRIEDADE PARA A BUSCA
+    public string $search = '';
 
     public function layoutData()
     {
-        return [
-            'header' => 'Gerenciamento de Motoristas',
-        ];
+        return ['header' => 'Gerenciamento de Motoristas'];
+    }
+
+    // 4. ADICIONAR O MÉTODO PARA RESETAR A PÁGINA AO BUSCAR
+    public function updatingSearch()
+    {
+        $this->resetPage();
     }
 
     public function render()
     {
-        $drivers = Driver::orderBy('name')->get();
-        // Ponto de verificação #3: O return deve ser simples, SEM o ->layout()
+        // 5. ATUALIZAR A LÓGICA PARA BUSCAR E PAGINAR
+        $query = Driver::query();
+
+        if (!empty($this->search)) {
+            $query->where(function ($subQuery) {
+                $searchTerm = '%' . $this->search . '%';
+                $subQuery->where('name', 'like', $searchTerm)
+                    ->orWhere('document', 'like', $searchTerm);
+            });
+        }
+
+        $drivers = $query->orderBy('name')->paginate(10);
+
         return view('livewire.driver-management', [
             'drivers' => $drivers,
         ]);
     }
 
-    // Regras de validação
     protected function rules()
     {
         return [
-            'name' => 'required|min:3',
-            // Regra 'document' atualizada: deve ser único, ignorando o ID do motorista atual em edição
-            'document' => ['required', Rule::unique('drivers')->ignore($this->driverId)],
+            'name' => 'required|min:3|max:100',
+            // SUBSTITUA 'cpf' PELA NOVA CLASSE
+            'document' => ['required', new Cpf, Rule::unique('drivers')->ignore($this->driverId)],
             'type' => 'required',
+            'is_authorized' => 'boolean',
         ];
     }
 
-    // Customiza as mensagens de erro (opcional, mas bom ter)
     protected $messages = [
         'name.required' => 'O campo nome é obrigatório.',
+        'name.max' => 'O nome não pode ter mais de 100 caracteres.', // MENSAGEM PARA O LIMITE
         'document.required' => 'O campo documento é obrigatório.',
         'document.unique' => 'Este documento já está cadastrado.',
         'type.required' => 'O campo tipo é obrigatório.',
     ];
 
-
-    // Método chamado para criar ou atualizar
     public function store()
     {
         $this->validate();
 
         Driver::updateOrCreate(['id' => $this->driverId], [
-            'name' => $this->name,
+            // 2. APLIQUE A CONVERSÃO AQUI
+            'name' => Str::title($this->name), // Converte "joão da silva" para "João Da Silva"
             'document' => $this->document,
             'type' => $this->type,
-            'is_authorized' => $this->is_authorized, // Adicione esta linha
+            'is_authorized' => $this->is_authorized,
         ]);
 
         session()->flash('success', $this->driverId ? 'Motorista atualizado!' : 'Motorista cadastrado!');
         $this->closeModal();
     }
 
-    // Método para abrir o modal para CRIAR
     public function create()
     {
         $this->resetInputFields();
         $this->isModalOpen = true;
     }
 
-    // NOVO MÉTODO para abrir o modal para EDITAR
     public function edit($id)
     {
         $driver = Driver::findOrFail($id);
@@ -99,43 +113,35 @@ class DriverManagement extends Component
         $this->isModalOpen = true;
     }
 
-    // Método para fechar o modal
     public function closeModal()
     {
         $this->isModalOpen = false;
         $this->resetInputFields();
     }
 
-    // Método auxiliar para limpar os campos
     private function resetInputFields()
     {
-        $this->reset(['name', 'document', 'type', 'driverId', 'is_authorized']); // Adicione 'is_authorized'
+        $this->reset(['name', 'document', 'type', 'driverId', 'is_authorized']);
+        $this->type = 'Servidor';
+        $this->is_authorized = true;
         $this->resetErrorBag();
     }
 
     public function deleteDriver()
     {
-        $driver = Driver::find($this->driverIdToDelete);
-
-        if ($driver) {
-            $driver->delete();
-            session()->flash('success', 'Motorista excluído com sucesso!');
-        }
-
-        // Fecha o modal de confirmação após excluir
+        Driver::find($this->driverIdToDelete)->delete();
+        session()->flash('success', 'Motorista excluído com sucesso!');
         $this->closeConfirmModal();
     }
 
-    // NOVO MÉTODO para abrir o modal de confirmação
     public function confirmDelete($id)
     {
         $driver = Driver::findOrFail($id);
         $this->driverIdToDelete = $id;
-        $this->driverNameToDelete = $driver->name; // Guardamos o nome para exibir no modal
+        $this->driverNameToDelete = $driver->name;
         $this->isConfirmModalOpen = true;
     }
 
-    // NOVO MÉTODO para fechar o modal de confirmação
     public function closeConfirmModal()
     {
         $this->isConfirmModalOpen = false;
