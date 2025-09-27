@@ -33,4 +33,17 @@ class Vehicle extends Model
             set: fn(string $value) => Str::upper($value),
         );
     }
+
+    //  Define a relação com as Entradas Particulares.
+    //  * Um veículo pode ter muitas entradas particulares.
+    //  */
+    public function privateEntries()
+    {
+        return $this->hasMany(PrivateEntry::class);
+    }
+
+    public function officialTrips()
+    {
+        return $this->hasMany(OfficialTrip::class);
+    }
 }

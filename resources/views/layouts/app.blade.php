@@ -38,15 +38,24 @@
                 </div>
 
         </main>
-        <footer class="w-full text-center p-4 bg-white shadow-inner">
-            <p class="text-sm text-gray-500">
-                &copy; {{ date('Y') }} SIGA-IF - Sistema Integrado de Gestão de Acesso.
-                Todos os direitos
-                reservados.<br>
-                Desenvolvido pelo NTI - Núcleo de Tecnologia da Informação
-                <br>Campus Almenara
-                <br>IFNMG
-            </p>
+        <footer class="w-full bg-white border-t border-gray-200  mt-auto">
+            <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
+                <div
+                    class="flex flex-col sm:flex-row justify-between items-center text-center sm:text-left space-y-2 sm:space-y-0">
+
+                    {{-- Seção de Copyright --}}
+                    <div class="text-sm text-gray-600 dark:text-gray-400">
+                        &copy; {{ date('Y') }} SIGA-IF - Sistema Integrado de Gestão de Acesso.
+                    </div>
+
+                    {{-- Seção de Créditos de Desenvolvimento --}}
+                    <div class="text-xs text-gray-500 dark:text-gray-500">
+                        <p>Desenvolvido pelo NTI - Núcleo de Tecnologia da Informação</p>
+                        <p>IFNMG - Campus Almenara</p>
+                    </div>
+
+                </div>
+            </div>
         </footer>
     </div>
 

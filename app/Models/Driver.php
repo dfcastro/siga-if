@@ -37,4 +37,17 @@ class Driver extends Model
             set: fn(string $value) => Str::title($value),
         );
     }
+    public function privateEntries()
+    {
+        return $this->hasMany(PrivateEntry::class);
+    }
+
+    /**
+     *  Define a relação com as Viagens Oficiais.
+     * Um condutor pode ter muitas viagens oficiais.
+     */
+    public function officialTrips()
+    {
+        return $this->hasMany(OfficialTrip::class);
+    }
 }
