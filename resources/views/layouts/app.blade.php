@@ -14,9 +14,10 @@
 
 
 
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-
+     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
+
+    
 </head>
 
 <body class="font-sans antialiased">
@@ -60,7 +61,7 @@
     </div>
 
 
-    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+    {{-- <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script> --}}
 
     @livewireScripts
     @stack('scripts')

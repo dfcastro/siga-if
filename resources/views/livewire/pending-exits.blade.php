@@ -6,6 +6,7 @@
         </div>
     @endif
 
+    {{-- Alerta de Saídas Particulares Pendentes --}}
     @if ($pendingPrivateEntries->isNotEmpty())
         <div class="mb-8 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md shadow-lg" role="alert">
             <div class="flex">
@@ -19,29 +20,26 @@
                 <div>
                     <p class="font-bold text-lg">Alerta: Saídas de Veículos Particulares Pendentes</p>
                     <p class="text-sm">Os veículos abaixo entraram há mais de 12 horas e podem ter saído sem registo.
-                        Por favor, regularize.</p>
+                    </p>
                 </div>
             </div>
             <div class="mt-4">
                 @foreach ($pendingPrivateEntries as $entry)
                     <div class="border-t border-red-200 py-3 px-2 flex justify-between items-center hover:bg-red-50">
                         <div>
-                            <span class="font-semibold">
-                                {{-- ALTERADO: Lógica aprimorada --}}
-                                @if ($entry->vehicle)
-                                    {{-- Se o veículo é cadastrado, usa os dados da relação --}}
-                                    {{ $entry->vehicle->model }} - Placa: {{ $entry->vehicle->license_plate }}
-                                @else
-                                    {{-- Se não, usa os dados digitados na entrada --}}
-                                    {{ $entry->vehicle_model }} - Placa: {{ $entry->license_plate }}
-                                @endif
-                            </span>
-                            <span class="block text-xs text-gray-600">
-                                Entrou {{ \Carbon\Carbon::parse($entry->entry_at)->diffForHumans() }} por
-                                {{ $entry->guard_on_entry }}.
-                            </span>
+                            <span class="font-semibold">{{ $entry->vehicle->model ?? $entry->vehicle_model }} - Placa:
+                                {{ $entry->vehicle->license_plate ?? $entry->license_plate }}</span>
+                            <span class="block text-xs text-gray-600">Entrou
+                                {{ \Carbon\Carbon::parse($entry->entry_at)->diffForHumans() }} por
+                                {{ $entry->guard_on_entry }}.</span>
                         </div>
-                        <button wire:click="registerExit({{ $entry->id }}, 'private')"
+
+                        {{-- BOTÃO ATUALIZADO PARA CHAMAR O MODAL --}}
+                        @php
+                            $vehicleIdentifier = $entry->vehicle->license_plate ?? $entry->license_plate;
+                        @endphp
+                        <button
+                            wire:click="confirmRegistration({{ $entry->id }}, 'private', 'exit', 'Confirmar a SAÍDA do veículo {{ $vehicleIdentifier }}?')"
                             class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-3 rounded text-sm">
                             Registrar Saída
                         </button>
@@ -51,8 +49,7 @@
         </div>
     @endif
 
-    {{-- resources/views/livewire/pending-exits.blade.php --}}
-
+    {{-- Alerta de Chegadas Oficiais Pendentes --}}
     @if ($pendingOfficialTrips->isNotEmpty())
         <div class="mb-8 bg-blue-100 border-l-4 border-blue-500 text-blue-800 p-4 rounded-md shadow-lg" role="alert">
             <div class="flex">
@@ -70,40 +67,64 @@
             </div>
             <div class="mt-4">
                 @foreach ($pendingOfficialTrips as $trip)
-                    <div class="border-t border-blue-200 py-3 px-2 hover:bg-blue-50">
-                        <div class="flex justify-between items-start">
-                            <div class="flex-grow">
-                                <span class="font-semibold text-gray-900">
-                                    @if ($trip->vehicle)
-                                        {{ $trip->vehicle->model }} ({{ $trip->vehicle->license_plate }})
-                                    @else
-                                        <span class="text-red-600">Veículo Removido</span>
-                                    @endif
-                                </span>
-                                <span class="block text-xs text-gray-600">
-                                    Saiu {{ \Carbon\Carbon::parse($trip->departure_datetime)->diffForHumans() }} por
-                                    <span class="font-semibold">
-                                        {{-- Tenta o nome pela relação, se falhar, usa o nome do campo de texto --}}
-                                        {{ $trip->user?->name ?? ($trip->guard_on_departure ?? 'Porteiro não informado') }}
-                                    </span>.
-                                </span>
-                            </div>
-                            {{-- Botão movido para a direita --}}
-                            <button wire:click="registerExit({{ $trip->id }}, 'official')"
-                                class="ml-4 flex-shrink-0 bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-3 rounded text-sm">
-                                Registrar Chegada
-                            </button>
+                    <div class="border-t border-blue-200 py-3 px-2 flex justify-between items-center hover:bg-blue-50">
+                        <div>
+                            <span class="font-semibold text-gray-900">{{ $trip->vehicle?->model }}
+                                ({{ $trip->vehicle?->license_plate }})
+                            </span>
+                            <span class="block text-xs text-gray-600">Saiu
+                                {{ \Carbon\Carbon::parse($trip->departure_datetime)->diffForHumans() }}.</span>
                         </div>
-                        {{-- EXIBIÇÃO DA OBSERVAÇÃO --}}
-                        @if ($trip->return_observation)
-                            <div
-                                class="mt-2 text-xs bg-yellow-100 border border-yellow-300 text-yellow-800 p-2 rounded-md">
-                                <span class="font-bold">Obs:</span> {{ $trip->return_observation }}
-                            </div>
-                        @endif
+
+                        {{-- BOTÃO ATUALIZADO PARA CHAMAR O MODAL --}}
+                        @php
+                            $vehicleIdentifier = $trip->vehicle?->license_plate ?? 'Veículo Removido';
+                        @endphp
+                        <button
+                            wire:click="confirmRegistration({{ $trip->id }}, 'official', 'arrival', 'Confirmar a CHEGADA do veículo {{ $vehicleIdentifier }}?')"
+                            class="ml-4 flex-shrink-0 bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-3 rounded text-sm">
+                            Registrar Chegada
+                        </button>
                     </div>
                 @endforeach
             </div>
         </div>
     @endif
+
+
+    {{-- MODAL CENTRALIZADO EM AÇÃO --}}
+    {{-- MODAL CENTRALIZADO EM AÇÃO --}}
+    <x-confirmation-dialog wire:model="isConfirmModalOpen">
+        <x-slot name="title">
+            Confirmar Registro
+        </x-slot>
+
+        <x-slot name="content">
+            @if ($itemToConfirm)
+                <p class="text-sm text-gray-700">
+                    Tem a certeza de que deseja registrar a
+                    <strong>{{ $actionType == 'exit' ? 'SAÍDA' : 'CHEGADA' }}</strong>
+                    do veículo?
+                </p>
+                <div class="mt-4 bg-gray-50 p-4 rounded-lg border">
+                    <p><strong>Placa:</strong>
+                        {{ $itemToConfirm->vehicle->license_plate ?? $itemToConfirm->license_plate }}</p>
+                    <p><strong>Modelo:</strong> {{ $itemToConfirm->vehicle->model ?? $itemToConfirm->vehicle_model }}
+                    </p>
+
+                    {{-- LINHA ADICIONADA AQUI --}}
+                    <p><strong>Condutor:</strong> {{ $itemToConfirm->driver->name ?? 'Não informado' }}</p>
+                </div>
+            @endif
+        </x-slot>
+
+        <x-slot name="footer">
+            <x-secondary-button wire:click="closeConfirmModal">
+                Cancelar
+            </x-secondary-button>
+            <x-danger-button wire:click="executeRegistration">
+                Confirmar
+            </x-danger-button>
+        </x-slot>
+    </x-confirmation-dialog>
 </div>

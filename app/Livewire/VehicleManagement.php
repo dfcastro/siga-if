@@ -11,22 +11,24 @@ use Illuminate\Support\Str;
 use Livewire\WithPagination;
 use App\Models\PrivateEntry;
 use App\Models\OfficialTrip;
-use Illuminate\Pagination\LengthAwarePaginator; // Importar o paginador
+use Illuminate\Pagination\LengthAwarePaginator;
 
 #[Layout('layouts.app')]
 class VehicleManagement extends Component
 {
     use WithPagination;
 
-    // Propriedades do formulário
+    // --- PROPRIEDADES DO FORMULÁRIO ---
     public string $license_plate = '';
     public string $model = '';
     public string $color = '';
-    public $driver_id = '';
     public $vehicleId;
     public string $type = 'Particular';
+    public $driver_id = '';
+    public string $driver_search = '';
+    public bool $show_driver_dropdown = false;
 
-    // Controles da UI
+    // --- CONTROLES DA UI ---
     public bool $isModalOpen = false;
     public bool $isConfirmModalOpen = false;
     public $vehicleIdToDelete;
@@ -35,10 +37,10 @@ class VehicleManagement extends Component
     public string $search = '';
     public string $filter = 'active';
 
-    // Propriedades para o modal de histórico
+    // --- PROPRIEDADES DO MODAL DE HISTÓRICO ---
     public $isHistoryModalOpen = false;
     public $vehicleForHistory = null;
-    // A propriedade $vehicleHistory foi removida daqui para ser calculada no render()
+    public string $historySearch = ''; // Propriedade para a busca no histórico
 
     public array $commonColors = ['PRETO', 'BRANCO', 'PRATA', 'CINZA', 'VERMELHO', 'AZUL', 'VERDE', 'AMARELO', 'DOURADO', 'MARROM', 'BEGE', 'LARANJA', 'ROXO'];
 
@@ -49,14 +51,41 @@ class VehicleManagement extends Component
         return ['header' => 'Gerenciamento de Veículos'];
     }
 
+    // --- LÓGICA DE BUSCA DE MOTORISTA ---
+    public function getFoundDriversProperty()
+    {
+        if (strlen(trim($this->driver_search)) < 2) {
+            return collect();
+        }
+        return Driver::where('name', 'like', '%' . $this->driver_search . '%')
+            ->withTrashed()
+            ->take(5)
+            ->get();
+    }
+
+    public function selectDriver($id, $name)
+    {
+        $this->driver_id = $id;
+        $this->driver_search = $name;
+        $this->show_driver_dropdown = false;
+    }
+
+    // --- MÉTODOS DE CICLO DE VIDA (LIFECYCLE HOOKS) ---
     public function updatingSearch()
     {
         $this->resetPage();
     }
 
+    // ADICIONADO: Reseta a paginação do histórico ao buscar
+    public function updatingHistorySearch()
+    {
+        $this->resetPage('historyPage');
+    }
+
+    // --- RENDERIZAÇÃO ---
     public function render()
     {
-        // --- Lógica da lista principal de veículos (sem alterações) ---
+        // Lógica da lista principal de veículos
         $query = Vehicle::with('driver');
         if ($this->filter === 'trashed') {
             $query->onlyTrashed();
@@ -73,136 +102,98 @@ class VehicleManagement extends Component
             });
         }
         $vehicles = $query->orderBy('model', 'asc')->paginate(10);
-        $drivers = Driver::orderBy('name')->get();
 
-        // --- ATUALIZADO: Lógica do histórico movida para aqui ---
-        $vehicleHistoryPaginator = null; // Inicializa como nulo
+        // Lógica do histórico (COM BUSCA)
+        $vehicleHistoryPaginator = null;
         if ($this->isHistoryModalOpen && $this->vehicleForHistory) {
-
-            // Recarrega as relações para garantir que os dados estão atualizados
             $this->vehicleForHistory->load('privateEntries.driver', 'officialTrips.driver');
 
-            // Mapeia entradas particulares
-            $privateEntries = $this->vehicleForHistory->privateEntries->map(function ($entry) {
-                return [
-                    'type' => 'Particular',
-                    'start_time' => $entry->entry_at,
-                    'end_time' => $entry->exit_at,
-                    'driver_name' => $entry->driver->name ?? 'Não informado',
-                    'detail' => $entry->entry_reason,
-                    'guard_entry' => $entry->guard_on_entry,
-                    'guard_exit' => $entry->guard_on_exit,
-                ];
-            });
+            $privateEntries = $this->vehicleForHistory->privateEntries->map(fn($entry) => ['type' => 'Particular', 'start_time' => $entry->entry_at, 'end_time' => $entry->exit_at, 'driver_name' => $entry->driver->name ?? 'N/A', 'detail' => $entry->entry_reason]);
+            $officialTrips = $this->vehicleForHistory->officialTrips->map(fn($trip) => ['type' => 'Oficial', 'start_time' => $trip->departure_datetime, 'end_time' => $trip->arrival_datetime, 'driver_name' => $trip->driver->name ?? 'N/A', 'detail' => $trip->destination]);
 
-            // Mapeia viagens oficiais
-            $officialTrips = $this->vehicleForHistory->officialTrips->map(function ($trip) {
-                return [
-                    'type' => 'Oficial',
-                    'start_time' => $trip->departure_datetime,
-                    'end_time' => $trip->arrival_datetime,
-                    'driver_name' => $trip->driver->name ?? 'Não informado',
-                    'detail' => $trip->destination,
-                    'guard_entry' => $trip->guard_on_departure,
-                    'guard_exit' => $trip->guard_on_arrival,
-                ];
-            });
+            $fullHistory = $privateEntries->concat($officialTrips)->sortByDesc('start_time');
 
-            // Combina, ordena e cria a coleção paginada
-            $fullHistory = $privateEntries->concat($officialTrips)->sortByDesc('start_time')->values();
+            // Filtra o histórico se houver um termo de busca
+            if (!empty($this->historySearch)) {
+                $searchTerm = strtolower($this->historySearch);
+                $fullHistory = $fullHistory->filter(function ($entry) use ($searchTerm) {
+                    return str_contains(strtolower($entry['driver_name']), $searchTerm) ||
+                        str_contains(strtolower($entry['detail']), $searchTerm) ||
+                        str_contains(strtolower(\Carbon\Carbon::parse($entry['start_time'])->format('d/m/Y')), $searchTerm);
+                });
+            }
+
+            // Paginação
+            $fullHistory = $fullHistory->values();
             $currentPage = LengthAwarePaginator::resolveCurrentPage('historyPage');
             $perPage = 5;
             $currentPageItems = $fullHistory->slice(($currentPage - 1) * $perPage, $perPage)->all();
-            $vehicleHistoryPaginator = new LengthAwarePaginator($currentPageItems, $fullHistory->count(), $perPage, $currentPage, [
-                'path' => request()->url(),
-                'pageName' => 'historyPage',
-            ]);
+            $vehicleHistoryPaginator = new LengthAwarePaginator($currentPageItems, $fullHistory->count(), $perPage, $currentPage, ['path' => request()->url(), 'pageName' => 'historyPage']);
         }
 
         return view('livewire.vehicle-management', [
             'vehicles' => $vehicles,
-            'drivers' => $drivers,
-            'vehicleHistory' => $vehicleHistoryPaginator, // Passa o paginador para a view
+            'vehicleHistory' => $vehicleHistoryPaginator,
         ]);
     }
 
-
-
-    // Salva um novo registro ou atualiza um existente
+    // --- AÇÕES DO CRUD ---
     public function store()
     {
         $this->validate([
-            'license_plate' => [
-                'required',
-                'string',
-                'regex:/^[A-Z]{3}[0-9][A-Z][0-9]{2}$|^[A-Z]{3}-[0-9]{4}$/i',
-                Rule::unique('vehicles')->ignore($this->vehicleId)
-            ],
-            // DICA APLICADA: Limite de 20 caracteres
+            'license_plate' => ['required', 'string', 'regex:/^[A-Z]{3}[0-9][A-Z][0-9]{2}$|^[A-Z]{3}-[0-9]{4}$/i', Rule::unique('vehicles')->ignore($this->vehicleId)],
             'model' => 'required|string|max:25',
             'color' => 'required|string|max:20',
             'type' => 'required|string|in:Oficial,Particular',
             'driver_id' => 'nullable|exists:drivers,id',
-        ], [
-            'license_plate.regex' => 'O formato da placa é inválido. Use AAA-1234 ou ABC1D23.'
-        ]);
-
-        // CORREÇÃO DO ERRO SQL: Converte string vazia para null
-        $driverId = $this->driver_id === '' ? null : $this->driver_id;
+        ], ['license_plate.regex' => 'O formato da placa é inválido.']);
 
         Vehicle::updateOrCreate(['id' => $this->vehicleId], [
             'license_plate' => strtoupper($this->license_plate),
             'model'         => Str::upper($this->model),
             'color'         => Str::upper($this->color),
-            'type' => $this->type,
-            'driver_id' => $driverId,
+            'type'          => $this->type,
+            'driver_id'     => $this->driver_id ?: null,
         ]);
 
-        session()->flash('successMessage', $this->vehicleId ? 'Veículo atualizado com sucesso!' : 'Veículo criado com sucesso!');
-
+        session()->flash('successMessage', $this->vehicleId ? 'Veículo atualizado!' : 'Veículo criado!');
         $this->closeModal();
     }
 
-    // Abre o modal para criar um novo registro
     public function create()
     {
         $this->resetInputFields();
         $this->isModalOpen = true;
-        $this->dispatch('init-tom-select');
     }
 
-    // Abre o modal para editar um registro existente
     public function edit($id)
     {
-        // Busca o veículo mesmo que esteja na lixeira
         $vehicle = Vehicle::withTrashed()->findOrFail($id);
         $this->vehicleId = $id;
         $this->license_plate = $vehicle->license_plate;
         $this->model = $vehicle->model;
         $this->color = $vehicle->color;
-        $this->driver_id = $vehicle->driver_id;
         $this->type = $vehicle->type;
+        $this->driver_id = $vehicle->driver_id;
+        $this->driver_search = $vehicle->driver ? $vehicle->driver->name : '';
+
         $this->isModalOpen = true;
-        $this->dispatch('init-tom-select', ['driverId' => $this->driver_id]);
     }
 
     public function closeModal()
     {
-
         $this->isModalOpen = false;
         $this->resetInputFields();
-        $this->dispatch('destroy-tom-select');
     }
 
     private function resetInputFields()
     {
-        $this->reset(['license_plate', 'model', 'color', 'driver_id', 'vehicleId', 'type']); // ALTERADO: Reseta o tipo
+        $this->reset(['license_plate', 'model', 'color', 'vehicleId', 'type']);
         $this->resetErrorBag();
-        $this->dispatch('reset-tom-select');
+        $this->reset(['driver_id', 'driver_search', 'show_driver_dropdown']);
     }
 
-
-    // Abre o modal de confirmação de exclusão
+    // --- MÉTODOS DE EXCLUSÃO E RESTAURAÇÃO ---
     public function confirmDelete($id)
     {
         $vehicle = Vehicle::findOrFail($id);
@@ -211,11 +202,10 @@ class VehicleManagement extends Component
         $this->isConfirmModalOpen = true;
     }
 
-    // Exclui o veículo
     public function deleteVehicle()
     {
-        Vehicle::find($this->vehicleIdToDelete)->delete(); // Isto agora move para a lixeira
-        session()->flash('successMessage', 'Veículo movido para a lixeira com sucesso!');
+        Vehicle::find($this->vehicleIdToDelete)->delete();
+        session()->flash('successMessage', 'Veículo movido para a lixeira.');
         $this->closeConfirmModal();
     }
 
@@ -224,14 +214,12 @@ class VehicleManagement extends Component
         $this->isConfirmModalOpen = false;
     }
 
-    // ADICIONADO: Método para restaurar
     public function restore($id)
     {
         Vehicle::withTrashed()->find($id)->restore();
-        session()->flash('successMessage', 'Veículo restaurado com sucesso!');
+        session()->flash('successMessage', 'Veículo restaurado.');
     }
 
-    // ADICIONADO: Método para confirmar a exclusão permanente
     public function confirmForceDelete($id)
     {
         $vehicle = Vehicle::withTrashed()->findOrFail($id);
@@ -240,21 +228,19 @@ class VehicleManagement extends Component
         $this->isConfirmModalOpen = true;
     }
 
-    // Método para apagar permanentemente
     public function forceDeleteVehicle()
     {
         Vehicle::withTrashed()->find($this->vehicleIdToDelete)->forceDelete();
-        session()->flash('successMessage', 'Veículo excluído permanentemente!');
+        session()->flash('successMessage', 'Veículo excluído permanentemente.');
         $this->closeConfirmModal();
     }
 
-    /**
-     *  método para buscar e exibir o histórico do veículo.
-     */
+    // --- MÉTODOS DE HISTÓRICO ---
     public function showHistory($vehicleId)
     {
         $this->vehicleForHistory = Vehicle::withTrashed()->findOrFail($vehicleId);
-        $this->resetPage('historyPage'); // Reseta para a página 1 sempre que abrir o modal
+        $this->resetPage('historyPage');
+        $this->reset('historySearch'); // Limpa a busca ao abrir o modal
         $this->isHistoryModalOpen = true;
     }
 

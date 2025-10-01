@@ -9,57 +9,70 @@ use Carbon\Carbon;
 
 class PendingExits extends Component
 {
-    public $pendingPrivateEntries;
-    public $pendingOfficialTrips;
+    // Propriedades para o modal
+    public bool $isConfirmModalOpen = false;
+    public $itemToConfirm;
+    public $confirmationMessage;
+    public $actionType;
 
-    public function mount()
+    // Prepara e abre o modal de confirmação
+    public function confirmRegistration($id, $type, $action)
     {
-        $this->loadPendingExits();
+        $this->itemToConfirm = ($type === 'private')
+            ? PrivateEntry::findOrFail($id)
+            : OfficialTrip::findOrFail($id);
+
+        $this->actionType = $action;
+        $this->isConfirmModalOpen = true;
     }
 
-    // app/Livewire/PendingExits.php
-
-    public function loadPendingExits()
+    // Executa a ação após a confirmação
+    public function executeRegistration()
     {
-        // A lógica para veículos particulares
-        $privateLimit = Carbon::now()->subHours(12);
-        $this->pendingPrivateEntries = PrivateEntry::whereNull('exit_at')
-            ->where('entry_at', '<', $privateLimit)
-            ->with('vehicle.driver')
-            ->latest('entry_at')
-            ->get();
+        if (!$this->itemToConfirm) return;
 
-        //  Lógica para veículos oficiais
-        // Agora buscamos TODAS as viagens sem data de chegada, ordenadas pela mais antiga.
-        $this->pendingOfficialTrips = OfficialTrip::whereNull('arrival_datetime')
-            ->with('vehicle.driver', 'user')
-            ->oldest('departure_datetime') // Usamos 'oldest' para ver as mais antigas primeiro
-            ->get();
-    }
-    public function registerExit($id, $type)
-    {
         $now = Carbon::now();
+        $user = auth()->user()->name;
 
-        if ($type === 'private') {
-            $entry = PrivateEntry::find($id);
-            if ($entry) {
-                $entry->update(['exit_at' => $now]);
-            }
-        } elseif ($type === 'official') {
-            $trip = OfficialTrip::find($id);
-            if ($trip) {
-                // CORREÇÃO: Atualizar a coluna 'arrival_datetime'
-                $trip->update(['arrival_datetime' => $now]);
-            }
+        if ($this->itemToConfirm instanceof PrivateEntry && $this->actionType === 'exit') {
+            $this->itemToConfirm->update(['exit_at' => $now, 'guard_on_exit' => $user]);
+            session()->flash('message', 'Saída de veículo particular registrada!');
+        } elseif ($this->itemToConfirm instanceof OfficialTrip && $this->actionType === 'arrival') {
+            $this->itemToConfirm->update(['arrival_datetime' => $now, 'guard_on_arrival' => $user]);
+            session()->flash('message', 'Chegada de veículo oficial registrada!');
         }
 
-        session()->flash('message', 'Saída registrada com sucesso!');
+        $this->closeConfirmModal();
+    }
 
-        $this->loadPendingExits();
+    // Fecha o modal
+    public function closeConfirmModal()
+    {
+        $this->isConfirmModalOpen = false;
+        $this->reset('itemToConfirm', 'confirmationMessage', 'actionType');
     }
 
     public function render()
     {
-        return view('livewire.pending-exits');
+        $privateLimit = Carbon::now()->subHours(12);
+
+        // ATUALIZAÇÃO AQUI: Adicionado 'driver' ao with()
+        $pendingPrivateEntries = PrivateEntry::whereNull('exit_at')
+            ->where('entry_at', '<', $privateLimit)
+            ->with('vehicle', 'driver')
+            ->latest('entry_at')
+            ->get();
+
+        // ATUALIZAÇÃO AQUI: Adicionado 'driver' ao with()
+        $pendingOfficialTrips = OfficialTrip::whereNotNull('departure_datetime')
+            ->whereNull('arrival_datetime')
+            ->with('vehicle', 'driver', 'user')
+            ->oldest('departure_datetime')
+            ->get();
+
+        return view('livewire.pending-exits', [
+            'pendingPrivateEntries' => $pendingPrivateEntries,
+            'pendingOfficialTrips' => $pendingOfficialTrips,
+        ]);
     }
 }

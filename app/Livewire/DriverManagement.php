@@ -10,6 +10,7 @@ use Livewire\WithPagination;
 use App\Rules\Cpf;
 use Illuminate\Support\Str;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 
 #[Layout('layouts.app')]
 class DriverManagement extends Component
@@ -28,6 +29,8 @@ class DriverManagement extends Component
     public bool $is_authorized = true;
     public string $search = '';
 
+    // PROPRIEDADE PARA A BUSCA NO HISTÓRICO
+    public string $historySearch = '';
 
     // Propriedades para o modal de histórico
     public $isHistoryModalOpen = false;
@@ -50,11 +53,12 @@ class DriverManagement extends Component
 
     public function render()
     {
-        // --- Lógica da lista principal de condutores (sem alterações) ---
         $query = Driver::query();
+
         if ($this->filter === 'trashed') {
             $query->onlyTrashed();
         }
+
         if (!empty($this->search)) {
             $query->where(function ($subQuery) {
                 $searchTerm = '%' . $this->search . '%';
@@ -62,9 +66,10 @@ class DriverManagement extends Component
                     ->orWhere('document', 'like', $searchTerm);
             });
         }
-        $drivers = $query->orderBy('name')->paginate(10);
 
-        // --- ADICIONADO: Lógica para o paginador do histórico ---
+        $drivers = $query->orderBy('name', 'asc')->paginate(10);
+
+        // Lógica do Histórico (com busca)
         $driverHistoryPaginator = null;
         if ($this->isHistoryModalOpen && $this->driverForHistory) {
             $this->driverForHistory->load('privateEntries.vehicle', 'officialTrips.vehicle');
@@ -74,10 +79,8 @@ class DriverManagement extends Component
                     'type' => 'Particular',
                     'start_time' => $entry->entry_at,
                     'end_time' => $entry->exit_at,
-                    'vehicle_info' => $entry->vehicle->model ?? $entry->vehicle_model . ' (' . $entry->license_plate . ')',
+                    'vehicle_info' => $entry->vehicle ? "{$entry->vehicle->model} ({$entry->vehicle->license_plate})" : 'Veículo Removido',
                     'detail' => $entry->entry_reason,
-                    'guard_entry' => $entry->guard_on_entry,
-                    'guard_exit' => $entry->guard_on_exit,
                 ];
             });
 
@@ -86,14 +89,25 @@ class DriverManagement extends Component
                     'type' => 'Oficial',
                     'start_time' => $trip->departure_datetime,
                     'end_time' => $trip->arrival_datetime,
-                    'vehicle_info' => $trip->vehicle->model . ' (' . $trip->vehicle->license_plate . ')',
+                    'vehicle_info' => $trip->vehicle ? "{$trip->vehicle->model} ({$trip->vehicle->license_plate})" : 'Veículo Removido',
                     'detail' => $trip->destination,
-                    'guard_entry' => $trip->guard_on_departure,
-                    'guard_exit' => $trip->guard_on_arrival,
                 ];
             });
 
-            $fullHistory = $privateEntries->concat($officialTrips)->sortByDesc('start_time')->values();
+            $fullHistory = $privateEntries->concat($officialTrips)->sortByDesc('start_time');
+
+            // Filtra a coleção do histórico se houver um termo de busca
+            if (!empty($this->historySearch)) {
+                $searchTerm = strtolower($this->historySearch);
+                $fullHistory = $fullHistory->filter(function ($entry) use ($searchTerm) {
+                    return str_contains(strtolower($entry['vehicle_info']), $searchTerm) ||
+                        str_contains(strtolower($entry['detail']), $searchTerm) ||
+                        str_contains(strtolower(\Carbon\Carbon::parse($entry['start_time'])->format('d/m/Y')), $searchTerm);
+                });
+            }
+
+            // Pagina a coleção resultante
+            $fullHistory = $fullHistory->values();
             $currentPage = LengthAwarePaginator::resolveCurrentPage('historyPage');
             $perPage = 5;
             $currentPageItems = $fullHistory->slice(($currentPage - 1) * $perPage, $perPage)->all();
@@ -105,12 +119,12 @@ class DriverManagement extends Component
 
         return view('livewire.driver-management', [
             'drivers' => $drivers,
-            'driverHistory' => $driverHistoryPaginator, // Passa o histórico paginado para a view
+            'driverHistory' => $driverHistoryPaginator,
         ]);
     }
 
     /**
-     * ADICIONADO: Método para abrir o modal de histórico.
+     *  Método para abrir o modal de histórico.
      */
     public function showHistory($driverId)
     {
