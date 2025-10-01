@@ -1,22 +1,22 @@
 <x-guest-layout>
+    {{-- Adicionando a logo com um espaçamento inferior --}}
+
     <x-auth-session-status class="mb-4" :status="session('status')" />
 
     <form method="POST" action="{{ route('login') }}">
         @csrf
 
         <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" placeholder="Digite seu email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required
-                autofocus autocomplete="username" />
+            <x-input-label for="email" value="Email" />
+            <x-text-input id="email" placeholder="Digite seu email" class="block mt-1 w-full" type="email"
+                name="email" :value="old('email')" required autofocus autocomplete="username" />
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
 
         <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
-
-            <x-text-input id="password" placeholder="Digite sua senha" class="block mt-1 w-full" type="password" name="password" required
-                autocomplete="current-password" />
-
+            <x-input-label for="password" value="Senha" />
+            <x-text-input id="password" placeholder="Digite sua senha" class="block mt-1 w-full" type="password"
+                name="password" required autocomplete="current-password" />
             <x-input-error :messages="$errors->get('password')" class="mt-2" />
         </div>
 
@@ -24,20 +24,27 @@
             <label for="remember_me" class="inline-flex items-center">
                 <input id="remember_me" type="checkbox"
                     class="rounded border-gray-300 text-ifnmg-green shadow-sm focus:ring-ifnmg-green" name="remember">
-                <span class="ms-2 text-sm text-gray-600">{{ __('Remember me') }}</span>
+                <span class="ms-2 text-sm text-gray-600">Lembrar Usuário</span>
             </label>
         </div>
 
-        <div class="flex items-center justify-end mt-4">
-            @if (Route::has('password.request'))
-                <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                    href="{{ route('password.request') }}">
-                    {{ __('Forgot your password?') }}
-                </a>
-            @endif
+        {{-- MELHORIA: Campo do reCAPTCHA centralizado e com margem --}}
+        <div class="mt-4 flex justify-center">
+            {!! NoCaptcha::display() !!}
+        </div>
 
-            <x-primary-button class="ms-3">
-                {{ __('Log in') }}
+        {{-- MELHORIA: Exibição de erro específica para o reCAPTCHA --}}
+        @if ($errors->has('g-recaptcha-response'))
+            <div class="text-sm text-red-600 mt-2 text-center">
+                Por favor, confirme que você não é um robô.
+            </div>
+        @endif
+
+
+        <div class="mt-6">
+            {{-- MELHORIA: Botão com largura total --}}
+            <x-primary-button class="w-full justify-center py-3">
+                ENTRAR
             </x-primary-button>
         </div>
     </form>
