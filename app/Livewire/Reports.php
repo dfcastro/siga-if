@@ -8,6 +8,7 @@ use App\Models\PrivateEntry;
 use App\Models\Vehicle;
 use App\Models\Driver;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Layout;
 use Livewire\WithPagination;
 
@@ -16,86 +17,127 @@ class Reports extends Component
 {
     use WithPagination;
 
-    // Propriedades para os filtros (isso está correto)
+    // Propriedades para os Filtros
     public $reportType = 'oficial';
     public $startDate;
     public $endDate;
     public $selectedVehicle = '';
     public $selectedDriver = '';
 
-    // A propriedade pública de resultados foi REMOVIDA
-    // public $results = []; // <<-- REMOVIDO
+    // As listas de veículos e motoristas agora são propriedades computadas, não mais carregadas no mount()
 
-    // Para popular os dropdowns de filtro
-    public $vehicles;
-    public $drivers;
+    // Propriedades para o Dashboard de Analytics
+    public $totalEntriesToday;
+    public $privateVehiclesIn;
+    public $officialVehiclesOnTrip;
+    public $entriesByHourData = [];
 
     public function layoutData()
     {
-        return ['header' => 'Relatórios de Viagens'];
+        return ['header' => 'Relatórios e Análises'];
     }
 
     public function mount()
     {
         $this->startDate = Carbon::now()->startOfMonth()->format('Y-m-d');
         $this->endDate = Carbon::now()->endOfMonth()->format('Y-m-d');
-        $this->vehicles = Vehicle::orderBy('model')->get();
-        $this->drivers = Driver::orderBy('name')->get();
     }
-    
-    // Este método agora só serve para o botão e para validar.
-    // A busca real foi movida para o render().
+
+    // MÉTODO RESTAURADO: Chamado pelo botão "Filtrar"
     public function generateReport()
     {
-        // Valida os dados antes de permitir que o render() faça a busca
         $this->validate([
             'startDate' => 'required|date',
             'endDate'   => 'required|date|after_or_equal:startDate',
         ]);
-
-        // Reseta a paginação para a primeira página a cada nova busca
         $this->resetPage();
     }
 
-    // Este hook também reseta a página quando o tipo de relatório muda
-    public function updatingReportType()
+    // Hook para resetar a página e os filtros dependentes
+    public function updatedReportType()
     {
+        $this->reset('selectedVehicle', 'selectedDriver');
         $this->resetPage();
     }
+
+    public function updating($property)
+    {
+        // Reseta a paginação para qualquer filtro que mude
+        if (in_array($property, ['startDate', 'endDate', 'selectedVehicle', 'selectedDriver'])) {
+            $this->resetPage();
+        }
+    }
+
+    // PROPRIEDADE COMPUTADA: Filtra os veículos dinamicamente
+    public function getVehiclesProperty()
+    {
+        if ($this->reportType === 'oficial') {
+            return Vehicle::where('type', 'Oficial')->orderBy('model')->get();
+        }
+
+        // Para relatórios particulares, mostramos todos os veículos
+        return Vehicle::orderBy('model')->get();
+    }
+
+    // PROPRIEDADE COMPUTADA: Carrega todos os motoristas
+    public function getDriversProperty()
+    {
+        $query = Driver::query();
+
+        // Se o relatório for de 'Viagens Oficiais', mostra apenas motoristas autorizados.
+        if ($this->reportType === 'oficial') {
+            $query->where('is_authorized', true);
+        }
+
+        return $query->orderBy('name')->get();
+    }
+
 
     public function render()
     {
-        // A LÓGICA DE BUSCA E PAGINAÇÃO AGORA VIVE AQUI
-        $query = null;
+        // --- LÓGICA DO DASHBOARD DE ANALYTICS ---
+        $today = Carbon::today();
+        $this->totalEntriesToday = PrivateEntry::whereDate('entry_at', $today)->count() + OfficialTrip::whereDate('departure_datetime', $today)->count();
+        $this->privateVehiclesIn = PrivateEntry::whereNull('exit_at')->count();
+        $this->officialVehiclesOnTrip = OfficialTrip::whereNotNull('departure_datetime')->whereNull('arrival_datetime')->count();
+
+        $entries = PrivateEntry::where('entry_at', '>=', Carbon::now()->subDay())
+            ->select(DB::raw('HOUR(entry_at) as hour'), DB::raw('count(*) as count'))
+            ->groupBy('hour')
+            ->pluck('count', 'hour')
+            ->all();
+
+        $labels = [];
+        $data = [];
+        for ($i = 0; $i < 24; $i++) {
+            $labels[] = str_pad($i, 2, '0', STR_PAD_LEFT) . 'h';
+            $data[] = $entries[$i] ?? 0;
+        }
+        $this->entriesByHourData = ['labels' => $labels, 'data' => $data];
+        $this->dispatch('reportDataUpdated', data: $this->entriesByHourData);
+
+        // --- LÓGICA DA TABELA DE RELATÓRIOS DETALHADOS ---
         if ($this->reportType === 'oficial') {
             $query = OfficialTrip::with(['vehicle', 'driver'])
                 ->whereNotNull('arrival_datetime')
                 ->whereBetween('departure_datetime', [$this->startDate, Carbon::parse($this->endDate)->endOfDay()]);
-
-            if ($this->selectedVehicle) {
-                $query->where('vehicle_id', $this->selectedVehicle);
-            }
-            if ($this->selectedDriver) {
-                $query->where('driver_id', $this->selectedDriver);
-            }
-            $results = $query->orderBy('departure_datetime', 'desc')->paginate(15);
-
-        } else { // 'particular'
+        } else {
             $query = PrivateEntry::with(['vehicle', 'driver'])
                 ->whereNotNull('exit_at')
                 ->whereBetween('entry_at', [$this->startDate, Carbon::parse($this->endDate)->endOfDay()]);
-
-            if ($this->selectedVehicle) {
-                $query->where('vehicle_id', $this->selectedVehicle);
-            }
-            if ($this->selectedDriver) {
-                $query->where('driver_id', $this->selectedDriver);
-            }
-            $results = $query->orderBy('entry_at', 'desc')->paginate(15);
         }
 
+        if ($this->selectedVehicle) {
+            $query->where('vehicle_id', $this->selectedVehicle);
+        }
+        if ($this->selectedDriver) {
+            $query->where('driver_id', $this->selectedDriver);
+        }
+
+        $results = $query->orderBy($this->reportType === 'oficial' ? 'departure_datetime' : 'entry_at', 'desc')->paginate(15);
+
         return view('livewire.reports', [
-            'results' => $results, // Passa o paginator diretamente para a view
+            'results' => $results,
         ]);
     }
 }

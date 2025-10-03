@@ -22,7 +22,7 @@
         <div class="space-y-8">
 
             {{-- Card de Registro de ENTRADA --}}
-            <div class="bg-white overflow-hidden shadow-md sm:rounded-lg">
+            <div class="bg-white overflow-hidden shadow-md sm:rounded-lg" wire:poll.15s>
                 <div class="p-6 border-b border-gray-200">
                     <h2 class="text-xl font-semibold text-gray-800">Registrar Nova Entrada de Veículo</h2>
                     <p class="text-sm text-gray-500 mt-1">Use a busca rápida ou preencha os campos manualmente.</p>

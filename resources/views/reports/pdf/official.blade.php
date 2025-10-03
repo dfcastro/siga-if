@@ -27,11 +27,11 @@
         }
 
         .logo-ifnmg {
-            width: 200px;
+            width: 130px;
         }
 
         .logo-siga {
-            width: 120px;
+            width: 130px;
         }
 
         .header-text {
