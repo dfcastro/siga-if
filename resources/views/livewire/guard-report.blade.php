@@ -1,0 +1,122 @@
+<div>
+    <x-slot name="header">
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+            {{ __('Meus Relatórios Pendentes') }}
+        </h2>
+    </x-slot>
+
+    <div class="py-12">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="p-6 text-gray-900">
+
+                    {{-- Mensagens de Sessão --}}
+                    @if (session()->has('message'))
+                        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4" role="alert">
+                            <p>{{ session('message') }}</p>
+                        </div>
+                    @endif
+                    @if (session()->has('error'))
+                        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
+                            <p>{{ session('error') }}</p>
+                        </div>
+                    @endif
+
+                    {{-- Filtros de Data --}}
+                    <div class="flex flex-wrap items-center space-y-4 md:space-y-0 md:space-x-4 mb-6">
+                        <div>
+                            <x-input-label for="startDate" :value="__('Data de Início')" />
+                            <x-text-input wire:model.lazy="startDate" id="startDate" class="block mt-1 w-full"
+                                type="date" />
+                        </div>
+                        <div>
+                            <x-input-label for="endDate" :value="__('Data de Fim')" />
+                            <x-text-input wire:model.lazy="endDate" id="endDate" class="block mt-1 w-full"
+                                type="date" />
+                        </div>
+                    </div>
+
+                    {{-- Navegação das Abas --}}
+                    <div class="border-b border-gray-200 mb-4">
+                        <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                            <button wire:click.prevent="setSubmissionType('private')"
+                                class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {{ $submissionType === 'private' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}">
+                                Veículos Particulares
+                            </button>
+                            <button wire:click.prevent="setSubmissionType('official')"
+                                class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {{ $submissionType === 'official' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}">
+                                Veículos Oficiais
+                            </button>
+                        </nav>
+                    </div>
+
+                    {{-- Conteúdo das Abas --}}
+                    <div wire:loading.class="opacity-50">
+                        @if ($submissionType === 'private')
+                            <div class="mb-6">
+                                @if ($privateEntries->total() > 0)
+                                    {{-- O botão agora chama o método de confirmação do Livewire --}}
+                                    <x-primary-button
+                                        wire:click="confirmSubmission('privateForm', 'Tem a certeza que deseja submeter os {{ $privateEntries->total() }} registos de veículos particulares deste período?')">
+                                        Submeter Relatório de Particulares ({{ $privateEntries->total() }} registos)
+                                    </x-primary-button>
+                                @else
+                                    <p class="text-sm text-gray-500">Nenhum registo de veículo particular pendente para
+                                        o período selecionado.</p>
+                                @endif
+                            </div>
+
+                            {{-- Formulário apenas com 'id' --}}
+                            <form id="privateForm" action="{{ route('reports.submitGuardReport') }}" method="POST"
+                                class="hidden">
+                                @csrf
+                                <input type="hidden" name="start_date" value="{{ $startDate }}">
+                                <input type="hidden" name="end_date" value="{{ $endDate }}">
+                                <input type="hidden" name="submission_type" value="private">
+                            </form>
+
+                            @include('livewire.partials.guard-report-private-table')
+                            <div class="mt-4">{{ $privateEntries->links() }}</div>
+                        @else
+                            @if ($selectedVehicleId)
+                                @include('livewire.partials.guard-report-official-details')
+                            @else
+                                @include('livewire.partials.guard-report-official-list')
+                            @endif
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- O seu modal de diálogo, agora controlado pelo Livewire --}}
+    <x-confirmation-dialog wire:model.live="showConfirmationModal">
+        <x-slot name="title">{{ $confirmationTitle }}</x-slot>
+        <x-slot name="content">{{ $confirmationMessage }}</x-slot>
+        <x-slot name="footer">
+            <x-secondary-button wire:click="$set('showConfirmationModal', false)" wire:loading.attr="disabled">
+                Cancelar
+            </x-secondary-button>
+            <x-danger-button class="ms-3" wire:click="executeConfirmedAction" wire:loading.attr="disabled">
+                Confirmar
+            </x-danger-button>
+        </x-slot>
+    </x-confirmation-dialog>
+
+    {{-- Script para ouvir o evento e submeter o formulário --}}
+    @push('scripts')
+        <script>
+            document.addEventListener('livewire:initialized', () => {
+                @this.on('submit-form', ({
+                    formId
+                }) => {
+                    const form = document.getElementById(formId);
+                    if (form) {
+                        form.submit();
+                    }
+                });
+            });
+        </script>
+    @endpush
+</div>
