@@ -2,26 +2,32 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
-            {{-- Card de Boas-Vindas --}}
+            {{-- Card de Boas-Vindas (Mantido no topo) --}}
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
-                <div class="p-6 text-gray-900">
+                <div class="p-6 text-gray-900 ">
                     <h3 class="text-lg font-medium">Bem-vindo(a) ao SIGA-IF, {{ Auth::user()->name }}!</h3>
-                    <p class="mt-1 text-sm text-gray-600">Utilize os atalhos abaixo para agilizar suas tarefas diárias.
-                    </p>
+                    <p class="mt-1 text-sm text-gray-600">Utilize os atalhos abaixo para agilizar suas
+                        tarefas diárias.</p>
                 </div>
             </div>
 
-            {{-- 1. NOVO COMPONENTE DE ESTATÍSTICAS DINÂMICAS --}}
+            {{-- SEÇÃO DE ALERTAS E AÇÕES PENDENTES --}}
+            <div class="flex flex-col space-y-6 mb-8">
+                {{-- Alerta para saídas pendentes (Veículos no Pátio) --}}
+                @livewire('pending-exits')
+
+                
+                
+            </div>
+
+            {{-- PAINEL PRINCIPAL DE ESTATÍSTICAS --}}
             @livewire('dashboard-stats')
 
-            {{-- 2. LISTA DE SAÍDAS PENDENTES --}}
-            @livewire('pending-exits')
-
-            {{-- 3. CARTÕES DE ATALHO (Links) --}}
+            {{-- CARTÕES DE ATALHO (Links) --}}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-
+                {{-- Atalho para Registrar Entrada/Saída --}}
                 <a href="{{ route('entries.create') }}"
-                    class="bg-white p-6 rounded-lg shadow-sm flex items-center space-x-4 hover:bg-gray-50 transition-colors">
+                    class="bg-white  p-6 rounded-lg shadow-sm flex items-center space-x-4 hover:bg-gray-50  transition-colors">
                     <div class="bg-blue-100 p-3 rounded-full">
                         <svg class="w-8 h-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none"
                             viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -30,13 +36,14 @@
                         </svg>
                     </div>
                     <div>
-                        <p class="font-semibold text-gray-700">Registrar Entrada/Saída</p>
-                        <p class="text-sm text-gray-500">Veículos particulares</p>
+                        <p class="font-semibold text-gray-700 ">Registrar Entrada/Saída</p>
+                        <p class="text-sm text-gray-500 ">Veículos particulares</p>
                     </div>
                 </a>
 
+                {{-- Atalho para Diário de Bordo --}}
                 <a href="{{ route('fleet.index') }}"
-                    class="bg-white p-6 rounded-lg shadow-sm flex items-center space-x-4 hover:bg-gray-50 transition-colors">
+                    class="bg-white  p-6 rounded-lg shadow-sm flex items-center space-x-4 hover:bg-gray-50  transition-colors">
                     <div class="bg-green-100 p-3 rounded-full">
                         <svg class="w-8 h-8 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none"
                             viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -45,8 +52,8 @@
                         </svg>
                     </div>
                     <div>
-                        <p class="font-semibold text-gray-700">Diário de Bordo</p>
-                        <p class="text-sm text-gray-500">Frota oficial</p>
+                        <p class="font-semibold text-gray-700 ">Diário de Bordo</p>
+                        <p class="text-sm text-gray-500 ">Frota oficial</p>
                     </div>
                 </a>
             </div>
