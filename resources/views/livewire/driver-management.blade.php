@@ -17,6 +17,24 @@
             </div>
         </div>
     @endif
+    @if (session('errorMessage'))
+        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" x-transition
+            class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg relative mb-6 shadow-md"
+            role="alert">
+            <div class="flex">
+                <div class="py-1">
+                    <svg class="h-6 w-6 text-red-500 mr-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <div>
+                    <p class="font-bold">Atenção!</p>
+                    <p class="text-sm">{{ session('errorMessage') }}</p>
+                </div>
+            </div>
+        </div>
+    @endif
 
     {{-- Card Principal --}}
     <div class="bg-white overflow-hidden shadow-md sm:rounded-lg">

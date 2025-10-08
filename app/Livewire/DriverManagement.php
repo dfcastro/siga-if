@@ -247,8 +247,35 @@ class DriverManagement extends Component
     // ADICIONADO: Método para apagar permanentemente
     public function forceDeleteDriver()
     {
-        Driver::withTrashed()->find($this->driverIdToDelete)->forceDelete();
-        session()->flash('success', 'Motorista excluído permanentemente!');
+        $driver = Driver::withTrashed()->find($this->driverIdToDelete);
+
+        // --- NOVAS VERIFICAÇÕES DE SEGURANÇA ---
+
+        // 1. Verifica se o motorista está em alguma viagem oficial
+        if ($driver->officialTrips()->exists()) {
+            session()->flash('errorMessage', 'Não é possível excluir permanentemente. O motorista possui um histórico de viagens oficiais.');
+            $this->closeConfirmModal();
+            return;
+        }
+
+        // 2. Verifica se o motorista está em alguma entrada particular
+        if ($driver->privateEntries()->exists()) {
+            session()->flash('errorMessage', 'Não é possível excluir permanentemente. O motorista possui um histórico de entradas particulares.');
+            $this->closeConfirmModal();
+            return;
+        }
+
+        // 3. Mantém a verificação de veículos associados
+        if ($driver->vehicles()->exists()) {
+            session()->flash('errorMessage', 'Não é possível excluir permanentemente. O motorista ainda possui veículos associados.');
+            $this->closeConfirmModal();
+            return;
+        }
+
+        // Se passar por todas as verificações, aí sim permite a exclusão
+        $driver->forceDelete();
+
+        session()->flash('successMessage', 'Motorista excluído permanentemente.');
         $this->closeConfirmModal();
     }
 }

@@ -204,20 +204,31 @@ class CreatePrivateEntry extends Component
             $this->searchResults = collect();
             return;
         }
+
         $vehiclesFound = Vehicle::with('driver')
-            ->where('license_plate', 'like', '%' . $value . '%')
-            ->orWhere('model', 'like', '%' . $value . '%')
+            ->where('type', 'Particular')
+            ->where(function ($query) use ($value) {
+                $query->where('license_plate', 'like', '%' . $value . '%')
+                    ->orWhere('model', 'like', '%' . $value . '%');
+            })
             ->get();
-        $driversFound = Driver::with('vehicles')
+
+        $driversFound = Driver::with(['vehicles' => function ($query) {
+            $query->where('type', 'Particular');
+        }])
             ->where('name', 'like', '%' . $value . '%')
             ->get();
+
         $formattedResults = collect();
+
         foreach ($vehiclesFound as $vehicle) {
             $formattedResults->push([
                 'id' => $vehicle->id,
-                'text' => "VEÍCULO: {$vehicle->license_plate} ({$vehicle->model}) - Prop.: {$vehicle->driver->name}"
+                // --- CORREÇÃO DE SINTAXE APLICADA AQUI ---
+                'text' => "VEÍCULO: {$vehicle->license_plate} ({$vehicle->model}) - Prop.: " . ($vehicle->driver ? $vehicle->driver->name : 'Sem proprietário')
             ]);
         }
+
         foreach ($driversFound as $driver) {
             foreach ($driver->vehicles as $vehicle) {
                 $formattedResults->push([
@@ -226,9 +237,10 @@ class CreatePrivateEntry extends Component
                 ]);
             }
         }
+
         $this->searchResults = $formattedResults->unique('id')->sortBy('text');
     }
-
+    
     public function confirmExit($entryId)
     {
         $this->entryToExit = PrivateEntry::with('driver')->findOrFail($entryId);

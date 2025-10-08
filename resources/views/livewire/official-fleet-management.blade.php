@@ -29,7 +29,8 @@
                                 <div class="font-bold text-gray-800">{{ $trip->vehicle->model }}
                                     ({{ $trip->vehicle->license_plate }})
                                 </div>
-                                <span class="text-xs text-gray-500">Condutor: {{ $trip->driver->name }}</span>
+                                <span class="text-xs text-gray-500">Condutor:
+                                    {{ $trip->driver ? $trip->driver->name : 'N/D' }}</span>
                             </div>
                             <div class="text-sm text-gray-600 mb-2"><strong>Destino:</strong> {{ $trip->destination }}
                             </div>
@@ -86,7 +87,8 @@
                                         <div class="text-sm font-medium text-gray-900">{{ $trip->vehicle->model }}</div>
                                         <div class="text-sm text-gray-500">{{ $trip->vehicle->license_plate }}</div>
                                     </td>
-                                    <td class="px-6 py-4 align-middle text-sm text-gray-600">{{ $trip->driver->name }}
+                                    <td class="px-6 py-4 align-middle text-sm text-gray-600">
+                                        {{ $trip->driver ? $trip->driver->name : 'N/D' }}
                                     </td>
                                     <td class="px-6 py-4 align-middle text-sm text-gray-600">{{ $trip->destination }}
                                     </td>
@@ -152,7 +154,8 @@
                                         </div>
                                         <div class="text-sm text-gray-500">{{ $trip->vehicle->license_plate }}</div>
                                     </td>
-                                    <td class="px-6 py-4 align-middle text-sm text-gray-600">{{ $trip->driver->name }}
+                                    <td class="px-6 py-4 align-middle text-sm text-gray-600">
+                                        {{ $trip->driver ? $trip->driver->name : 'N/D' }}
                                     </td>
                                     <td class="px-6 py-4 align-middle text-sm text-gray-600">
                                         <div><span class="font-semibold">S:</span>

@@ -54,11 +54,14 @@ class VehicleManagement extends Component
     // --- LÓGICA DE BUSCA DE MOTORISTA ---
     public function getFoundDriversProperty()
     {
+        // Se o termo de busca for muito curto, retorna uma coleção vazia.
         if (strlen(trim($this->driver_search)) < 2) {
             return collect();
         }
+
+        // -
+        //  busca APENAS motoristas ativos.
         return Driver::where('name', 'like', '%' . $this->driver_search . '%')
-            ->withTrashed()
             ->take(5)
             ->get();
     }
@@ -106,7 +109,14 @@ class VehicleManagement extends Component
         // Lógica do histórico (COM BUSCA)
         $vehicleHistoryPaginator = null;
         if ($this->isHistoryModalOpen && $this->vehicleForHistory) {
-            $this->vehicleForHistory->load('privateEntries.driver', 'officialTrips.driver');
+            $this->vehicleForHistory->load([
+                'privateEntries.driver' => function ($query) {
+                    $query->withTrashed();
+                },
+                'officialTrips.driver' => function ($query) {
+                    $query->withTrashed();
+                }
+            ]);
 
             $privateEntries = $this->vehicleForHistory->privateEntries->map(fn($entry) => ['type' => 'Particular', 'start_time' => $entry->entry_at, 'end_time' => $entry->exit_at, 'driver_name' => $entry->driver->name ?? 'N/A', 'detail' => $entry->entry_reason]);
             $officialTrips = $this->vehicleForHistory->officialTrips->map(fn($trip) => ['type' => 'Oficial', 'start_time' => $trip->departure_datetime, 'end_time' => $trip->arrival_datetime, 'driver_name' => $trip->driver->name ?? 'N/A', 'detail' => $trip->destination]);
