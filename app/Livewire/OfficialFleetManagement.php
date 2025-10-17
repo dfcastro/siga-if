@@ -183,19 +183,40 @@ class OfficialFleetManagement extends Component
         $this->tripToUpdate = null;
     }
 
-    public function render()
+   public function render()
     {
-        $ongoingTrips = OfficialTrip::whereNull('arrival_datetime')->with(['vehicle', 'driver'])->latest('departure_datetime')->get();
-        $completedTripsQuery = OfficialTrip::whereNotNull('arrival_datetime')->with(['vehicle', 'driver']);
+        // **CORREÇÃO APLICADA AQUI**
+        // Agora, ao buscar os relacionamentos 'vehicle' e 'driver', incluímos os que estão na lixeira.
+        $ongoingTrips = OfficialTrip::whereNull('arrival_datetime')
+            ->with([
+                'vehicle' => fn($query) => $query->withTrashed(),
+                'driver' => fn($query) => $query->withTrashed()
+            ])
+            ->latest('departure_datetime')
+            ->get();
+
+        // **CORREÇÃO APLICADA AQUI TAMBÉM**
+        $completedTripsQuery = OfficialTrip::whereNotNull('arrival_datetime')
+            ->with([
+                'vehicle' => fn($query) => $query->withTrashed(),
+                'driver' => fn($query) => $query->withTrashed()
+            ]);
+
         if (!empty($this->search)) {
             $completedTripsQuery->where(function ($query) {
                 $searchTerm = '%' . $this->search . '%';
                 $query->where('destination', 'like', $searchTerm)
-                    ->orWhereHas('vehicle', fn($q) => $q->where('model', 'like', $searchTerm)->orWhere('license_plate', 'like', $searchTerm))
-                    ->orWhereHas('driver', fn($q) => $q->where('name', 'like', $searchTerm));
+                    ->orWhereHas('vehicle', fn($q) => $q->withTrashed()->where('model', 'like', $searchTerm)->orWhere('license_plate', 'like', $searchTerm))
+                    ->orWhereHas('driver', fn($q) => $q->withTrashed()->where('name', 'like', $searchTerm));
             });
         }
+
         $completedTrips = $completedTripsQuery->latest('arrival_datetime')->paginate(10);
-        return view('livewire.official-fleet-management', ['ongoingTrips' => $ongoingTrips, 'completedTrips' => $completedTrips]);
+
+        return view('livewire.official-fleet-management', [
+            'ongoingTrips' => $ongoingTrips, 
+            'completedTrips' => $completedTrips
+        ]);
     }
 }
+
