@@ -52,71 +52,60 @@
 
                     {{-- Conteúdo das Abas --}}
                     <div wire:loading.class="opacity-50">
-                        @if ($submissionType === 'private')
-                            <div class="mb-6">
-                                @if ($privateEntries->total() > 0)
-                                    {{-- O botão agora chama o método de confirmação do Livewire --}}
-                                    <x-primary-button
-                                        wire:click="confirmSubmission('privateForm', 'Tem a certeza que deseja submeter os {{ $privateEntries->total() }} registos de veículos particulares deste período?')">
-                                        Submeter Relatório de Particulares ({{ $privateEntries->total() }} registos)
+                        <div wire:loading.class="opacity-50">
+                            @if ($submissionType === 'private')
+                                <div class="mb-6">
+                                    {{-- CORREÇÃO AQUI: O botão agora chama a ação do Livewire --}}
+                                    <x-primary-button wire:click="confirmSubmission('private')">
+                                        Submeter Relatório de Particulares
                                     </x-primary-button>
-                                @else
-                                    <p class="text-sm text-gray-500">Nenhum registo de veículo particular pendente para
-                                        o período selecionado.</p>
-                                @endif
-                            </div>
+                                </div>
 
-                            {{-- Formulário apenas com 'id' --}}
-                            <form id="privateForm" action="{{ route('reports.submitGuardReport') }}" method="POST"
-                                class="hidden">
-                                @csrf
-                                <input type="hidden" name="start_date" value="{{ $startDate }}">
-                                <input type="hidden" name="end_date" value="{{ $endDate }}">
-                                <input type="hidden" name="submission_type" value="private">
-                            </form>
+                                {{-- O formulário antigo não é mais necessário e pode ser removido --}}
+                                {{-- <form id="privateForm" ...></form> --}}
 
-                            @include('livewire.partials.guard-report-private-table')
-                            <div class="mt-4">{{ $privateEntries->links() }}</div>
-                        @else
-                            @if ($selectedVehicleId)
-                                @include('livewire.partials.guard-report-official-details')
+                                @include('livewire.partials.guard-report-private-table')
+                                <div class="mt-4">{{ $privateEntries->links() }}</div>
                             @else
-                                @include('livewire.partials.guard-report-official-list')
+                                @if ($selectedVehicleId)
+                                    @include('livewire.partials.guard-report-official-details')
+                                @else
+                                    @include('livewire.partials.guard-report-official-list')
+                                @endif
                             @endif
-                        @endif
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    {{-- O seu modal de diálogo, agora controlado pelo Livewire --}}
-    <x-confirmation-dialog wire:model.live="showConfirmationModal">
-        <x-slot name="title">{{ $confirmationTitle }}</x-slot>
-        <x-slot name="content">{{ $confirmationMessage }}</x-slot>
-        <x-slot name="footer">
-            <x-secondary-button wire:click="$set('showConfirmationModal', false)" wire:loading.attr="disabled">
-                Cancelar
-            </x-secondary-button>
-            <x-danger-button class="ms-3" wire:click="executeConfirmedAction" wire:loading.attr="disabled">
-                Confirmar
-            </x-danger-button>
-        </x-slot>
-    </x-confirmation-dialog>
+        {{-- O seu modal de diálogo, agora controlado pelo Livewire --}}
+        <x-confirmation-dialog wire:model.live="showConfirmationModal">
+            <x-slot name="title">{{ $confirmationTitle }}</x-slot>
+            <x-slot name="content">{{ $confirmationMessage }}</x-slot>
+            <x-slot name="footer">
+                <x-secondary-button wire:click="$set('showConfirmationModal', false)" wire:loading.attr="disabled">
+                    Cancelar
+                </x-secondary-button>
+                <x-danger-button class="ms-3" wire:click="executeConfirmedAction" wire:loading.attr="disabled">
+                    Confirmar
+                </x-danger-button>
+            </x-slot>
+        </x-confirmation-dialog>
 
-    {{-- Script para ouvir o evento e submeter o formulário --}}
-    @push('scripts')
-        <script>
-            document.addEventListener('livewire:initialized', () => {
-                @this.on('submit-form', ({
-                    formId
-                }) => {
-                    const form = document.getElementById(formId);
-                    if (form) {
-                        form.submit();
-                    }
+        {{-- Script para ouvir o evento e submeter o formulário --}}
+        @push('scripts')
+            <script>
+                document.addEventListener('livewire:initialized', () => {
+                    @this.on('submit-form', ({
+                        formId
+                    }) => {
+                        const form = document.getElementById(formId);
+                        if (form) {
+                            form.submit();
+                        }
+                    });
                 });
-            });
-        </script>
-    @endpush
-</div>
+            </script>
+        @endpush
+    </div>

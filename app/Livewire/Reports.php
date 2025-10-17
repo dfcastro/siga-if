@@ -24,8 +24,6 @@ class Reports extends Component
     public $selectedVehicle = '';
     public $selectedDriver = '';
 
-    // As listas de veículos e motoristas agora são propriedades computadas, não mais carregadas no mount()
-
     // Propriedades para o Dashboard de Analytics
     public $totalEntriesToday;
     public $privateVehiclesIn;
@@ -43,7 +41,6 @@ class Reports extends Component
         $this->endDate = Carbon::now()->endOfMonth()->format('Y-m-d');
     }
 
-    // MÉTODO RESTAURADO: Chamado pelo botão "Filtrar"
     public function generateReport()
     {
         $this->validate([
@@ -53,7 +50,6 @@ class Reports extends Component
         $this->resetPage();
     }
 
-    // Hook para resetar a página e os filtros dependentes
     public function updatedReportType()
     {
         $this->reset('selectedVehicle', 'selectedDriver');
@@ -62,40 +58,41 @@ class Reports extends Component
 
     public function updating($property)
     {
-        // Reseta a paginação para qualquer filtro que mude
         if (in_array($property, ['startDate', 'endDate', 'selectedVehicle', 'selectedDriver'])) {
             $this->resetPage();
         }
     }
 
-    // PROPRIEDADE COMPUTADA: Filtra os veículos dinamicamente
+    // CORREÇÃO DE PERFORMANCE: Otimiza a busca de veículos para os filtros
     public function getVehiclesProperty()
     {
+        $query = Vehicle::query()->select('id', 'model', 'license_plate');
+
         if ($this->reportType === 'oficial') {
-            return Vehicle::where('type', 'Oficial')->orderBy('model')->get();
+            $query->where('type', 'Oficial');
         }
 
-        // Para relatórios particulares, mostramos todos os veículos
-        return Vehicle::orderBy('model')->get();
+        return $query->orderBy('model')->get()->mapWithKeys(function ($vehicle) {
+            return [$vehicle->id => "{$vehicle->model} ({$vehicle->license_plate})"];
+        });
     }
 
-    // PROPRIEDADE COMPUTADA: Carrega todos os motoristas
+    // CORREÇÃO DE PERFORMANCE: Otimiza a busca de motoristas para os filtros
     public function getDriversProperty()
     {
-        $query = Driver::query();
+        $query = Driver::query()->select('id', 'name');
 
-        // Se o relatório for de 'Viagens Oficiais', mostra apenas motoristas autorizados.
         if ($this->reportType === 'oficial') {
             $query->where('is_authorized', true);
         }
 
-        return $query->orderBy('name')->get();
+        return $query->orderBy('name')->pluck('name', 'id');
     }
 
 
     public function render()
     {
-        // --- LÓGICA DO DASHBOARD DE ANALYTICS ---
+        // --- LÓGICA DO DASHBOARD DE ANALYTICS (SEM ALTERAÇÕES) ---
         $today = Carbon::today();
         $this->totalEntriesToday = PrivateEntry::whereDate('entry_at', $today)->count() + OfficialTrip::whereDate('departure_datetime', $today)->count();
         $this->privateVehiclesIn = PrivateEntry::whereNull('exit_at')->count();
@@ -118,11 +115,12 @@ class Reports extends Component
 
         // --- LÓGICA DA TABELA DE RELATÓRIOS DETALHADOS ---
         if ($this->reportType === 'oficial') {
-            $query = OfficialTrip::with(['vehicle', 'driver'])
+            // CORREÇÃO DE SEGURANÇA: Adiciona withTrashed para evitar erro com veículos/motoristas deletados
+            $query = OfficialTrip::with(['vehicle' => fn($q) => $q->withTrashed(), 'driver' => fn($q) => $q->withTrashed()])
                 ->whereNotNull('arrival_datetime')
                 ->whereBetween('departure_datetime', [$this->startDate, Carbon::parse($this->endDate)->endOfDay()]);
         } else {
-            $query = PrivateEntry::with(['vehicle', 'driver'])
+            $query = PrivateEntry::with(['vehicle' => fn($q) => $q->withTrashed(), 'driver' => fn($q) => $q->withTrashed()])
                 ->whereNotNull('exit_at')
                 ->whereBetween('entry_at', [$this->startDate, Carbon::parse($this->endDate)->endOfDay()]);
         }

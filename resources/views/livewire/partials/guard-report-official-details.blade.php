@@ -1,122 +1,78 @@
-<div>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Meus Relatórios Pendentes') }}
-        </h2>
-    </x-slot>
-
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900">
-
-                    {{-- Mensagens de Sessão --}}
-                    @if (session()->has('message'))
-                        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4" role="alert">
-                            <p>{{ session('message') }}</p>
-                        </div>
-                    @endif
-                    @if (session()->has('error'))
-                        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
-                            <p>{{ session('error') }}</p>
-                        </div>
-                    @endif
-
-                    {{-- Filtros de Data --}}
-                    <div class="flex flex-wrap items-center space-y-4 md:space-y-0 md:space-x-4 mb-6">
-                        <div>
-                            <x-input-label for="startDate" :value="__('Data de Início')" />
-                            <x-text-input wire:model.lazy="startDate" id="startDate" class="block mt-1 w-full"
-                                type="date" />
-                        </div>
-                        <div>
-                            <x-input-label for="endDate" :value="__('Data de Fim')" />
-                            <x-text-input wire:model.lazy="endDate" id="endDate" class="block mt-1 w-full"
-                                type="date" />
-                        </div>
-                    </div>
-
-                    {{-- Navegação das Abas --}}
-                    <div class="border-b border-gray-200 mb-4">
-                        <nav class="-mb-px flex space-x-8" aria-label="Tabs">
-                            <button wire:click.prevent="setSubmissionType('private')"
-                                class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {{ $submissionType === 'private' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}">
-                                Veículos Particulares
-                            </button>
-                            <button wire:click.prevent="setSubmissionType('official')"
-                                class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {{ $submissionType === 'official' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}">
-                                Veículos Oficiais
-                            </button>
-                        </nav>
-                    </div>
-
-                    {{-- Conteúdo das Abas --}}
-                    <div wire:loading.class="opacity-50">
-                        @if ($submissionType === 'private')
-                            <div class="mb-6">
-                                @if ($privateEntries->total() > 0)
-                                    {{-- O botão agora chama o método de confirmação do Livewire --}}
-                                    <x-primary-button
-                                        wire:click="confirmSubmission('privateForm', 'Tem a certeza que deseja submeter os {{ $privateEntries->total() }} registos de veículos particulares deste período?')">
-                                        Submeter Relatório de Particulares ({{ $privateEntries->total() }} registos)
-                                    </x-primary-button>
-                                @else
-                                    <p class="text-sm text-gray-500">Nenhum registo de veículo particular pendente para
-                                        o período selecionado.</p>
-                                @endif
-                            </div>
-
-                            {{-- Formulário apenas com 'id' --}}
-                            <form id="privateForm" action="{{ route('reports.submitGuardReport') }}" method="POST"
-                                class="hidden">
-                                @csrf
-                                <input type="hidden" name="start_date" value="{{ $startDate }}">
-                                <input type="hidden" name="end_date" value="{{ $endDate }}">
-                                <input type="hidden" name="submission_type" value="private">
-                            </form>
-
-                            @include('livewire.partials.guard-report-private-table')
-                            <div class="mt-4">{{ $privateEntries->links() }}</div>
-                        @else
-                            @if ($selectedVehicleId)
-                                @include('livewire.partials.guard-report-official-details')
-                            @else
-                                @include('livewire.partials.guard-report-official-list')
-                            @endif
-                        @endif
-                    </div>
-                </div>
-            </div>
+<div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+    <div class="flex justify-between items-start mb-4">
+        <div>
+            <h3 class="text-lg font-semibold text-gray-800">
+                Preparando Relatório para:
+                <span class="font-bold text-indigo-600">{{ $selectedVehicleEntries->first()->vehicle->model }} -
+                    {{ $selectedVehicleEntries->first()->vehicle->license_plate }}</span>
+            </h3>
+            <p class="text-sm text-gray-500">
+                {{ $selectedVehicleEntries->count() }} registo(s) encontrado(s) para o período selecionado.
+            </p>
         </div>
+        <button wire:click="clearSelectedVehicle" class="text-sm text-gray-600 hover:text-gray-900">&larr; Voltar para a
+            lista</button>
     </div>
 
-    {{-- O seu modal de diálogo, agora controlado pelo Livewire --}}
-    <x-confirmation-dialog wire:model.live="showConfirmationModal">
-        <x-slot name="title">{{ $confirmationTitle }}</x-slot>
-        <x-slot name="content">{{ $confirmationMessage }}</x-slot>
-        <x-slot name="footer">
-            <x-secondary-button wire:click="$set('showConfirmationModal', false)" wire:loading.attr="disabled">
-                Cancelar
-            </x-secondary-button>
-            <x-danger-button class="ms-3" wire:click="executeConfirmedAction" wire:loading.attr="disabled">
-                Confirmar
-            </x-danger-button>
-        </x-slot>
-    </x-confirmation-dialog>
+    {{-- Tabela de Detalhes dos Registos --}}
+    <div class="overflow-x-auto border rounded-lg">
+        <table class="w-full text-sm text-left text-gray-500">
+            <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3">Data/Hora da Saída</th>
+                    <th class="px-6 py-3">Condutor</th>
+                    <th class="px-6 py-3">Destino</th>
+                    <th class="px-6 py-3">Data/Hora da Chegada</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse ($selectedVehicleEntries as $entry)
+                    <tr class="bg-white border-b hover:bg-gray-50">
+                        <td class="px-6 py-4">
+                            {{ \Carbon\Carbon::parse($entry->departure_datetime)->format('d/m/Y H:i') }}</td>
+                        <td class="px-6 py-4">{{ $entry->driver->name ?? 'N/A' }}</td>
+                        <td class="px-6 py-4">{{ $entry->destination }}</td>
+                        <td class="px-6 py-4">
+                            {{ $entry->arrival_datetime ? \Carbon\Carbon::parse($entry->arrival_datetime)->format('d/m/Y H:i') : 'Em trânsito' }}
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="4" class="px-6 py-4 text-center text-gray-500">Nenhum registo para este veículo
+                            no período selecionado.</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
 
-    {{-- Script para ouvir o evento e submeter o formulário --}}
-    @push('scripts')
-        <script>
-            document.addEventListener('livewire:initialized', () => {
-                @this.on('submit-form', ({
-                    formId
-                }) => {
-                    const form = document.getElementById(formId);
-                    if (form) {
-                        form.submit();
-                    }
-                });
-            });
-        </script>
-    @endpush
+    {{-- Seção de Submissão --}}
+    <div class="mt-6 pt-6 border-t">
+        <h4 class="font-semibold text-md text-gray-800">Submeter Relatório para Fiscal</h4>
+        <div class="mt-4">
+            <x-input-label for="observation" value="Observações (opcional)" />
+            <textarea wire:model="observation" id="observation" rows="3"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></textarea>
+            @error('observation')
+                <span class="text-sm text-red-600 mt-1">{{ $message }}</span>
+            @enderror
+        </div>
+
+        <div class="mt-6 flex justify-end">
+            {{--
+                CORREÇÃO APLICADA AQUI:
+                - O botão agora usa wire:click para chamar a ação 'confirmSubmission' do Livewire.
+                - Ele não submete mais um formulário HTML, eliminando a causa da lentidão.
+            --}}
+            <x-primary-button wire:click="confirmSubmission('official')" wire:loading.attr="disabled">
+                <div wire:loading wire:target="confirmSubmission('official')"
+                    class="animate-spin -ml-1 mr-3 h-5 w-5 text-white">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h5" />
+                    </svg>
+                </div>
+                Submeter Relatório
+            </x-primary-button>
+        </div>
+    </div>
 </div>

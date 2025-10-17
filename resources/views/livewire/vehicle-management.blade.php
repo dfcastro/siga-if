@@ -25,15 +25,17 @@
                 <h2 class="text-xl font-semibold text-gray-800">Gerenciamento de Veículos</h2>
                 <p class="text-sm text-gray-500 mt-1">Adicione, edite e visualize todos os veículos cadastrados.</p>
             </div>
-            <div class="mt-4 sm:mt-0">
-                <x-primary-button wire:click="create">
-                    <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                        stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                    </svg>
-                    Novo Veículo
-                </x-primary-button>
-            </div>
+            @if (in_array(auth()->user()->role, ['admin', 'porteiro', 'fiscal']))
+                <div class="mt-4 sm:mt-0">
+                    <x-primary-button wire:click="create">
+                        <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                            stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
+                        Novo Veículo
+                    </x-primary-button>
+                </div>
+            @endif
         </div>
 
         <div class="p-6">
@@ -97,10 +99,15 @@
                                     @else
                                         <button wire:click="showHistory({{ $vehicle->id }})"
                                             class="font-medium text-blue-600 hover:text-blue-800">Histórico</button>
-                                        <x-secondary-button wire:click="edit({{ $vehicle->id }})"
-                                            class="ml-2">Editar</x-secondary-button>
-                                        <x-danger-button
-                                            wire:click="confirmDelete({{ $vehicle->id }})">Excluir</x-danger-button>
+                                        @if (auth()->user()->role === 'admin' ||
+                                                ($vehicle->type === 'Oficial' && auth()->user()->role === 'fiscal') ||
+                                                ($vehicle->type === 'Particular' && auth()->user()->role === 'porteiro'))
+                                            <x-secondary-button wire:click="edit({{ $vehicle->id }})"
+                                                class="ml-2">Editar</x-secondary-button>
+
+                                            <x-danger-button
+                                                wire:click="confirmDelete({{ $vehicle->id }})">Excluir</x-danger-button>
+                                        @endif
                                     @endif
                                 </td>
                             </tr>
@@ -139,10 +146,18 @@
                             @else
                                 <x-primary-button class="flex-grow"
                                     wire:click="showHistory({{ $vehicle->id }})">Histórico</x-primary-button>
-                                <x-secondary-button class="flex-grow"
-                                    wire:click="edit({{ $vehicle->id }})">Editar</x-secondary-button>
-                                <x-danger-button class="flex-grow"
-                                    wire:click="confirmDelete({{ $vehicle->id }})">Excluir</x-danger-button>
+                                @if (auth()->user()->role === 'admin' ||
+                                        ($vehicle->type === 'Oficial' && auth()->user()->role === 'fiscal') ||
+                                        ($vehicle->type === 'Particular' && auth()->user()->role === 'porteiro'))
+                                    {{-- Botão Editar --}}
+                                    <x-secondary-button class="flex-grow" wire:click="edit({{ $vehicle->id }})">
+                                        Editar
+                                    </x-secondary-button>
+                                    {{-- Botão Excluir (agora dentro da mesma condição) --}}
+                                    <x-danger-button class="flex-grow" wire:click="confirmDelete({{ $vehicle->id }})">
+                                        Excluir
+                                    </x-danger-button>
+                                @endif
                             @endif
                         </div>
                     </div>
@@ -195,7 +210,7 @@
                         <div class="space-y-4">
                             <div>
                                 <x-input-label for="type" value="Tipo" />
-                                <select id="type" wire:model="type"
+                                <select id="type" wire:model.live="type"
                                     class="mt-1 block w-full border-gray-300 focus:border-ifnmg-green focus:ring-ifnmg-green rounded-md shadow-sm">
                                     @if (in_array(auth()->user()->role, ['admin', 'fiscal']))
                                         <option value="Oficial">Oficial</option>

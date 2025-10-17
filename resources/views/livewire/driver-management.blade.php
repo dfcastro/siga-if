@@ -89,6 +89,7 @@
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nome</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Documento</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Telefone</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Autorizado
                                 Frota?</th>
@@ -102,6 +103,7 @@
                                 <td class="px-6 py-4 truncate max-w-sm" title="{{ $driver->name }}">{{ $driver->name }}
                                 </td>
                                 <td class="px-6 py-4">{{ $driver->document }}</td>
+                                <td class="px-6 py-4">{{ $driver->telefone ?? 'N/A' }}</td>
                                 <td class="px-6 py-4 capitalize"><span
                                         class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">{{ $driver->type }}</span>
                                 </td>
@@ -130,7 +132,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="px-6 py-4 text-center text-gray-500">Nenhum motorista
+                                <td colspan="6" class="px-6 py-4 text-center text-gray-500">Nenhum motorista
                                     encontrado.</td>
                             </tr>
                         @endforelse
@@ -153,6 +155,8 @@
                                 </span>
                             </div>
                             <p class="text-sm text-gray-600"><strong>Documento:</strong> {{ $driver->document }}</p>
+                            <p class="text-sm text-gray-600"><strong>Telefone:</strong>
+                                {{ $driver->telefone ?? 'Não informado' }}</p>
                             <p class="text-sm text-gray-600"><strong>Tipo:</strong> {{ $driver->type }}</p>
                         </div>
                         <div class="mt-4 pt-4 border-t border-gray-200 flex flex-wrap gap-2 justify-end">
@@ -206,6 +210,12 @@
                             <x-text-input type="text" id="document" class="mt-1 block w-full"
                                 wire:model="document" x-data x-mask="999.999.999-99" />
                             <x-input-error for="document" class="mt-1" />
+                        </div>
+                        <div>
+                            <x-input-label for="telefone" value="Telefone (Opcional)" />
+                            <x-text-input type="text" id="telefone" class="mt-1 block w-full"
+                                wire:model="telefone" x-data x-mask="(99) 99999-9999" />
+                            <x-input-error for="telefone" class="mt-1" />
                         </div>
                         <div>
                             <x-input-label for="type" value="Tipo" />

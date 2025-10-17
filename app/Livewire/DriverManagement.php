@@ -28,6 +28,7 @@ class DriverManagement extends Component
     public $driverNameToDelete;
     public bool $is_authorized = true;
     public string $search = '';
+    public string $telefone = '';
 
     // PROPRIEDADE PARA A BUSCA NO HISTÓRICO
     public string $historySearch = '';
@@ -147,11 +148,11 @@ class DriverManagement extends Component
         return [
             'name' => 'required|min:3|max:100',
             'document' => ['required', new Cpf, Rule::unique('drivers')->ignore($this->driverId)],
+            'telefone' => 'nullable|string|max:20', // <-- ADICIONAR
             'type' => 'required',
             'is_authorized' => 'boolean',
         ];
     }
-
     protected $messages = [
         'name.required' => 'O campo nome é obrigatório.',
         'name.max' => 'O nome não pode ter mais de 100 caracteres.',
@@ -167,6 +168,7 @@ class DriverManagement extends Component
         Driver::updateOrCreate(['id' => $this->driverId], [
             'name' => Str::title($this->name),
             'document' => $this->document,
+            'telefone' => $this->telefone, // <-- ADICIONAR
             'type' => $this->type,
             'is_authorized' => $this->is_authorized,
         ]);
@@ -188,6 +190,7 @@ class DriverManagement extends Component
         $this->driverId = $id;
         $this->name = $driver->name;
         $this->document = $driver->document;
+        $this->telefone = $driver->telefone; // <-- ADICIONAR
         $this->type = $driver->type;
         $this->is_authorized = $driver->is_authorized;
         $this->isModalOpen = true;
@@ -201,7 +204,7 @@ class DriverManagement extends Component
 
     private function resetInputFields()
     {
-        $this->reset(['name', 'document', 'type', 'driverId', 'is_authorized']);
+        $this->reset(['name', 'document', 'type', 'driverId', 'is_authorized', 'telefone']); // <-- ADICIONAR 'telefone'
         $this->type = 'Servidor';
         $this->is_authorized = true;
         $this->resetErrorBag();

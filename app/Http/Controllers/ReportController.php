@@ -28,8 +28,8 @@ class ReportController extends Controller
         $startDate = $request->start_date;
         $endDate = $request->end_date;
 
-        $query = OfficialTrip::with('driver', 'vehicle')
-            ->whereBetween('departure_datetime', [$startDate, Carbon::parse($endDate)->endOfDay()])
+        $query = OfficialTrip::with(['driver', 'vehicle' => fn($q) => $q->withTrashed()])
+            ->whereBetween('departure_datetime', [$request->start_date, Carbon::parse($request->end_date)->endOfDay()])
             ->whereNotNull('arrival_datetime');
 
         if ($request->filled('vehicle_id')) {
@@ -163,7 +163,7 @@ class ReportController extends Controller
         return $pdf->stream($fileName);
     }
 
-    // MÉTODO NOVO: GERA O RELATÓRIO PARA UM ÚNICO VEÍCULO OFICIAL
+    // GERA O RELATÓRIO PARA UM ÚNICO VEÍCULO OFICIAL
     public function generateOfficialVehiclePDF(Request $request)
     {
         // Valida se recebemos os dados necessários
@@ -178,15 +178,15 @@ class ReportController extends Controller
         $endDate   = Carbon::parse($request->end_date);
 
         // Busca os dados do veículo específico
-        $vehicle = Vehicle::findOrFail($vehicleId);
+        $vehicle = Vehicle::withTrashed()->findOrFail($request->vehicle_id);
 
         // Busca as viagens APENAS para este veículo e período
-        $trips = OfficialTrip::with('driver')
-            ->where('vehicle_id', $vehicleId) // <-- A FILTRAGEM ACONTECE AQUI!
-            ->whereBetween('departure_datetime', [$startDate->startOfDay(), $endDate->endOfDay()])
+        $trips = OfficialTrip::with(['driver'])
+            ->where('vehicle_id', $request->vehicle_id)
+            ->whereBetween('departure_datetime', [Carbon::parse($request->start_date)->startOfDay(), Carbon::parse($request->end_date)->endOfDay()])
             ->orderBy('departure_datetime', 'asc')
             ->get();
-
+            
         // Renomeia a variável de resultados para 'results' para ser compatível com o template
         // E mapeia os campos para os nomes que o template espera (entry_at, exit_at, etc.)
         $results = $trips->map(function ($trip) {

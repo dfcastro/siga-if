@@ -13,7 +13,7 @@ use App\Rules\Cpf;
 #[Layout('layouts.app')]
 class CreatePrivateEntry extends Component
 {
-    // SUAS PROPRIEDADES EXISTENTES
+    // --- PROPRIEDADES DO FORMULÁRIO PRINCIPAL ---
     public string $license_plate = '';
     public string $vehicle_model = '';
     public string $entry_reason = '';
@@ -35,15 +35,20 @@ class CreatePrivateEntry extends Component
         'Pais de aluno, buscar aluno, trazer aluno,etc',
     ];
 
-    // --- NOVAS PROPRIEDADES PARA O CAMPO DE MOTORISTA ---
-    public $selected_driver_id = null; // Manteve-se para o ID
-    public string $driver_search = ''; // O texto visível no campo de busca
-    public $driver_results = []; // Resultados da busca de motoristas
-    public bool $show_driver_dropdown = false; // Controla a visibilidade do dropdown
-    public bool $isNewVisitor = false; // Flag para indicar um novo motorista
-    public string $visitor_document = ''; // CPF do novo motorista
+    // --- PROPRIEDADES REFINADAS E UNIFICADAS PARA O MOTORISTA ---
+    public $selected_driver_id = null;
+    public string $driver_search = '';
+    public $drivers = [];
 
-    // Regras de validação atualizadas
+    // --- Estado do Formulário de Novo Visitante ---
+    public bool $showNewVisitorForm = false;
+    public string $new_visitor_name = '';
+    public string $new_visitor_document = '';
+    public string $new_visitor_phone = '';
+
+    /**
+     * Regras de validação unificadas.
+     */
     protected function rules()
     {
         return [
@@ -51,61 +56,76 @@ class CreatePrivateEntry extends Component
             'vehicle_model' => 'required|min:2',
             'entry_reason' => 'required',
             'other_reason' => 'required_if:entry_reason,Outro',
-            'selected_driver_id' => 'required_if:isNewVisitor,false|nullable|exists:drivers,id',
-            'driver_search' => 'required_if:isNewVisitor,true|string|max:255',
-            'visitor_document' => ['required_if:isNewVisitor,true', 'nullable', new Cpf, Rule::unique('drivers', 'document')],
+            'selected_driver_id' => 'required_without:new_visitor_name',
+            'new_visitor_name' => 'required_if:showNewVisitorForm,true|string|max:100',
+            'new_visitor_document' => ['required_if:showNewVisitorForm,true', 'nullable', new Cpf, Rule::unique('drivers', 'document')],
+            'new_visitor_phone' => 'nullable|string|max:20',
         ];
     }
 
-    // Validação em tempo real para o CPF
+    // --- ADIÇÃO PARA VALIDAÇÃO EM TEMPO REAL ---
+    /**
+     * Este método é executado automaticamente sempre que uma propriedade
+     * com wire:model.live ou wire:model.blur é atualizada.
+     * Ele valida APENAS o campo que foi alterado.
+     */
     public function updated($propertyName)
     {
-        if ($propertyName === 'visitor_document') {
-            $this->validateOnly($propertyName);
-        }
+        $this->validateOnly($propertyName);
     }
+    // --- FIM DA ADIÇÃO ---
 
-    // --- NOVOS MÉTODOS PARA O CAMPO DE MOTORISTA ---
-
-    // Acionado sempre que o campo de busca de motorista é alterado
+    /**
+     * Acionado sempre que o campo de busca de motorista é alterado.
+     */
     public function updatedDriverSearch($value)
     {
+        $this->selected_driver_id = null;
+        $this->showNewVisitorForm = false;
+
         if (strlen($value) >= 2) {
-            $this->driver_results = Driver::where('name', 'like', '%' . $value . '%')
+            $this->drivers = Driver::where('name', 'like', '%' . $value . '%')
                 ->orderBy('name')
                 ->limit(5)
                 ->get();
-            $this->show_driver_dropdown = true;
         } else {
-            $this->driver_results = [];
-            $this->show_driver_dropdown = false;
+            $this->drivers = [];
         }
-        $this->isNewVisitor = false;
-        $this->selected_driver_id = null; // Limpa o ID se o texto mudar
     }
 
-    // Seleciona um motorista existente da lista
+    /**
+     * Seleciona um motorista existente da lista de resultados.
+     */
     public function selectDriver($id, $name)
     {
         $this->selected_driver_id = $id;
         $this->driver_search = $name;
-        $this->isNewVisitor = false;
-        $this->show_driver_dropdown = false;
-        $this->driver_results = [];
+        $this->drivers = []; // Esconde a lista de resultados
     }
 
-    // Prepara para criar um novo motorista
-    public function createNewDriver()
+    /**
+     * Prepara a UI para cadastrar um novo visitante.
+     */
+    public function prepareNewVisitorForm()
     {
-        $this->isNewVisitor = true;
-        $this->driver_search = trim($this->driver_search);
-        $this->selected_driver_id = null;
-        $this->show_driver_dropdown = false;
-        $this->driver_results = [];
+        $this->showNewVisitorForm = true;
+        $this->new_visitor_name = $this->driver_search;
+        $this->drivers = [];
     }
 
-    // --- SEUS MÉTODOS EXISTENTES (COM PEQUENOS AJUSTES) ---
+    /**
+     * Cancela o modo de cadastro e limpa os campos do novo visitante.
+     */
+    public function cancelNewVisitor()
+    {
+        $this->showNewVisitorForm = false;
+        $this->reset('new_visitor_name', 'new_visitor_document', 'new_visitor_phone');
+        $this->resetErrorBag(['new_visitor_name', 'new_visitor_document', 'new_visitor_phone']);
+    }
 
+    /**
+     * Preenche os dados do formulário ao selecionar um veículo na busca rápida.
+     */
     public function selectVehicle($vehicleId)
     {
         $vehicle = Vehicle::findOrFail($vehicleId);
@@ -113,7 +133,6 @@ class CreatePrivateEntry extends Component
         $this->license_plate = $vehicle->license_plate;
         $this->vehicle_model = $vehicle->model;
 
-        // Ajuste: Preenche o nosso novo campo de busca de motorista
         if ($vehicle->driver) {
             $this->selectDriver($vehicle->driver->id, $vehicle->driver->name);
         }
@@ -122,6 +141,9 @@ class CreatePrivateEntry extends Component
         $this->searchResults = [];
     }
 
+    /**
+     * Salva a entrada do veículo no banco de dados.
+     */
     public function save()
     {
         if (auth()->user()->role === 'fiscal') {
@@ -133,12 +155,13 @@ class CreatePrivateEntry extends Component
         $driverId = $this->selected_driver_id;
         $finalReason = $this->entry_reason === 'Outro' ? $this->other_reason : $this->entry_reason;
 
-        if ($this->isNewVisitor) {
+        if ($this->showNewVisitorForm) {
             $newDriver = Driver::create([
-                'name' => $this->driver_search, // Usa o nome digitado na busca
-                'document' => preg_replace('/\D/', '', $this->visitor_document),
+                'name' => $this->new_visitor_name,
+                'document' => preg_replace('/\D/', '', $this->new_visitor_document),
+                'telefone' => $this->new_visitor_phone,
                 'type' => 'Visitante',
-                'is_authorized' => false,
+                'is_authorized' => true,
             ]);
             $driverId = $newDriver->id;
         }
@@ -152,31 +175,23 @@ class CreatePrivateEntry extends Component
             'vehicle_id' => $this->selectedVehicleId,
             'driver_id' => $driverId,
         ]);
+
         $this->dispatch('stats-updated');
         $this->successMessage = 'Entrada do veículo ' . $this->license_plate . ' registrada com sucesso!';
         $this->resetForm();
     }
 
+    /**
+     * Reseta todas as propriedades públicas do componente para o estado inicial.
+     */
     public function resetForm()
     {
-        $this->reset([
-            'license_plate',
-            'vehicle_model',
-            'entry_reason',
-            'other_reason',
-            'search',
-            'searchResults',
-            'selectedVehicleId',
-            'selected_driver_id',
-            'isNewVisitor',
-            'visitor_document',
-            'driver_search',
-            'driver_results',
-            'show_driver_dropdown'
-        ]);
+        $this->reset();
     }
 
-    // O resto dos seus métodos (render, confirmExit, executeExit, etc.) permanecem iguais
+    /**
+     * Renderiza o componente na tela.
+     */
     public function render()
     {
         $currentVehicles = PrivateEntry::with(['vehicle.driver', 'driver'])
@@ -192,12 +207,15 @@ class CreatePrivateEntry extends Component
             })
             ->latest('entry_at')
             ->get();
-        // Não precisamos mais passar os drivers para a view desta forma
+
         return view('livewire.create-private-entry', [
             'currentVehicles' => $currentVehicles
         ]);
     }
 
+    /**
+     * Lógica para a busca rápida de veículos.
+     */
     public function updatedSearch($value)
     {
         if (strlen($value) < 3) {
@@ -224,7 +242,6 @@ class CreatePrivateEntry extends Component
         foreach ($vehiclesFound as $vehicle) {
             $formattedResults->push([
                 'id' => $vehicle->id,
-                // --- CORREÇÃO DE SINTAXE APLICADA AQUI ---
                 'text' => "VEÍCULO: {$vehicle->license_plate} ({$vehicle->model}) - Prop.: " . ($vehicle->driver ? $vehicle->driver->name : 'Sem proprietário')
             ]);
         }
@@ -240,13 +257,19 @@ class CreatePrivateEntry extends Component
 
         $this->searchResults = $formattedResults->unique('id')->sortBy('text');
     }
-    
+
+    /**
+     * Prepara o modal de confirmação de saída.
+     */
     public function confirmExit($entryId)
     {
         $this->entryToExit = PrivateEntry::with('driver')->findOrFail($entryId);
         $this->showExitConfirmationModal = true;
     }
 
+    /**
+     * Executa o registro da saída do veículo.
+     */
     public function executeExit()
     {
         if (auth()->user()->role === 'fiscal') {

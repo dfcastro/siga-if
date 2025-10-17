@@ -7,25 +7,25 @@ use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use App\Models\PrivateEntry;
 use App\Models\OfficialTrip;
+use App\Models\ReportSubmission;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Layout;
-use Livewire\WithPagination; // Adicionar se estiver a usar paginação nos parciais
+use Livewire\WithPagination;
 
 #[Layout('layouts.app')]
 class GuardReport extends Component
 {
-    use WithPagination; // Adicionar se estiver a usar paginação nos parciais
+    use WithPagination;
 
+    // Propriedades do Componente
     public string $startDate;
     public string $endDate;
     public string $submissionType = 'private';
-
-    // Propriedades para a aba "Oficiais"
+    public string $observation = '';
     public ?int $selectedVehicleId = null;
-    public Collection $vehiclesWithOfficialTrips;
     public Collection $selectedVehicleEntries;
 
-    // SUAS PROPRIEDADES PARA O MODAL (ESTÃO PERFEITAS)
+    // Propriedades do Modal de Confirmação
     public bool $showConfirmationModal = false;
     public string $confirmationTitle = '';
     public string $confirmationMessage = '';
@@ -36,63 +36,31 @@ class GuardReport extends Component
     {
         $this->startDate = Carbon::now()->startOfMonth()->toDateString();
         $this->endDate = Carbon::now()->endOfMonth()->toDateString();
-        $this->loadData(); // Carregar os dados iniciais
+        $this->selectedVehicleEntries = collect();
     }
 
     public function updated($property)
     {
-        // Apenas recarrega se uma data mudar
-        if ($property === 'startDate' || $property === 'endDate') {
-            $this->reset('selectedVehicleId');
-            $this->loadData();
+        if (in_array($property, ['startDate', 'endDate', 'submissionType'])) {
+            $this->resetPage();
+            $this->reset('selectedVehicleId', 'selectedVehicleEntries');
         }
     }
 
     public function setSubmissionType(string $type)
     {
         $this->submissionType = $type;
-        $this->reset('selectedVehicleId');
         $this->resetPage();
-        $this->loadData();
-    }
-
-    public function loadData()
-    {
-        // A sua lógica de carregamento de dados está correta.
-        // Assegure-se que ela é chamada quando necessário.
-        if ($this->submissionType === 'official') {
-            $guardName = Auth::user()->name;
-            $start = Carbon::parse($this->startDate)->startOfDay();
-            $end = Carbon::parse($this->endDate)->endOfDay();
-
-            $trips = OfficialTrip::with('vehicle')
-                ->where('guard_on_departure', $guardName)
-                ->whereBetween('departure_datetime', [$start, $end])
-                ->whereNull('report_submission_id')
-                ->get();
-
-            $this->vehiclesWithOfficialTrips = $trips->groupBy('vehicle_id')->map(function ($vehicleTrips) {
-                return [
-                    'vehicle' => $vehicleTrips->first()->vehicle,
-                    'count' => $vehicleTrips->count(),
-                ];
-            });
-        }
+        $this->reset('selectedVehicleId', 'selectedVehicleEntries');
     }
 
     public function selectVehicle(int $vehicleId)
     {
-        // Sua lógica para selecionar veículo está correta
         $this->selectedVehicleId = $vehicleId;
-
-        $guardName = Auth::user()->name;
-        $start = Carbon::parse($this->startDate)->startOfDay();
-        $end = Carbon::parse($this->endDate)->endOfDay();
-
-        $this->selectedVehicleEntries = OfficialTrip::with('driver', 'vehicle')
-            ->where('guard_on_departure', $guardName)
+        $this->selectedVehicleEntries = OfficialTrip::with(['driver', 'vehicle' => fn($q) => $q->withTrashed()])
+            ->where('guard_on_departure', Auth::user()->name)
             ->where('vehicle_id', $this->selectedVehicleId)
-            ->whereBetween('departure_datetime', [$start, $end])
+            ->whereBetween('departure_datetime', [Carbon::parse($this->startDate)->startOfDay(), Carbon::parse($this->endDate)->endOfDay()])
             ->whereNull('report_submission_id')
             ->orderBy('departure_datetime', 'asc')
             ->get();
@@ -100,10 +68,88 @@ class GuardReport extends Component
 
     public function clearSelectedVehicle()
     {
-        $this->selectedVehicleId = null;
+        $this->reset('selectedVehicleId', 'selectedVehicleEntries', 'observation');
     }
 
-    // --- MÉTODOS PARA O MODAL (USANDO A SUA ESTRUTURA) ---
+    // --- NOVA LÓGICA DE SUBMISSÃO (EFICIENTE) ---
+
+    public function submitPrivateReport()
+    {
+        $entryIds = PrivateEntry::where('guard_on_entry', Auth::user()->name)
+            ->whereBetween('entry_at', [Carbon::parse($this->startDate)->startOfDay(), Carbon::parse($this->endDate)->endOfDay()])
+            ->whereNull('report_submission_id')
+            ->pluck('id');
+
+        if ($entryIds->isEmpty()) {
+            session()->flash('error', 'Nenhum registro de veículo particular para submeter no período.');
+            return;
+        }
+
+        $submission = ReportSubmission::create([
+            'user_id'    => Auth::id(),
+            'start_date' => $this->startDate,
+            'end_date'   => $this->endDate,
+            'type'       => 'private',
+            'status'     => 'pending',
+        ]);
+
+        PrivateEntry::whereIn('id', $entryIds)->update(['report_submission_id' => $submission->id]);
+        session()->flash('success', 'Relatório de ' . $entryIds->count() . ' registros particulares submetido com sucesso!');
+        $this->resetPage('privatePage');
+    }
+
+    public function submitOfficialReport()
+    {
+        $this->validate([
+            'selectedVehicleId' => 'required',
+            'observation' => 'nullable|string|max:500',
+            'selectedVehicleEntries' => 'required|min:1'
+        ]);
+
+        $submission = ReportSubmission::create([
+            'user_id'     => Auth::id(),
+            'vehicle_id'  => $this->selectedVehicleId,
+            'start_date'  => $this->startDate,
+            'end_date'    => $this->endDate,
+            'observation' => $this->observation,
+            'type'        => 'official',
+            'status'      => 'pending',
+        ]);
+
+        OfficialTrip::whereIn('id', $this->selectedVehicleEntries->pluck('id'))->update(['report_submission_id' => $submission->id]);
+        session()->flash('success', 'Relatório do veículo submetido com sucesso!');
+        $this->clearSelectedVehicle();
+    }
+
+    // --- LÓGICA DO MODAL ADAPTADA ---
+
+    public function confirmSubmission(string $type)
+    {
+        if ($type === 'private') {
+            // Conta os registros antes de abrir o modal
+            $count = PrivateEntry::where('guard_on_entry', Auth::user()->name)
+                ->whereBetween('entry_at', [Carbon::parse($this->startDate)->startOfDay(), Carbon::parse($this->endDate)->endOfDay()])
+                ->whereNull('report_submission_id')
+                ->count();
+
+            if ($count === 0) {
+                session()->flash('error', 'Nenhum registro para submeter.');
+                return;
+            }
+            $this->confirmAction(
+                'submitPrivateReport',
+                'Confirmar Submissão',
+                "Tem certeza que deseja submeter os {$count} registros de veículos particulares deste período?"
+            );
+        } elseif ($type === 'official') {
+            $this->validate(['selectedVehicleId' => 'required']);
+            $this->confirmAction(
+                'submitOfficialReport',
+                'Confirmar Submissão',
+                'Tem certeza que deseja submeter o relatório para o veículo selecionado? Esta ação não pode ser desfeita.'
+            );
+        }
+    }
 
     public function confirmAction(string $action, string $title, string $message, array $params = [])
     {
@@ -116,52 +162,47 @@ class GuardReport extends Component
 
     public function executeConfirmedAction()
     {
-        if ($this->confirmedAction) {
+        if (method_exists($this, $this->confirmedAction)) {
             call_user_func_array([$this, $this->confirmedAction], $this->confirmedParams);
         }
         $this->showConfirmationModal = false;
     }
 
-    /**
-     * NOVO: Prepara a confirmação para submeter um formulário.
-     */
-    public function confirmSubmission(string $formId, string $message)
-    {
-        $this->confirmAction(
-            'submitForm',
-            'Confirmar Submissão',
-            $message,
-            ['formId' => $formId]
-        );
-    }
-
-    /**
-     * NOVO: Despacha o evento que o JavaScript vai ouvir para submeter o form.
-     */
-    public function submitForm(string $formId)
-    {
-        $this->dispatch('submit-form', formId: $formId);
-    }
-
-    // ---------------------------------------------------------
-
     public function render()
     {
         $privateEntries = collect();
+        $vehiclesWithOfficialTrips = collect();
+        $officialTrips = null;
+
         if ($this->submissionType === 'private') {
-            $guardName = Auth::user()->name;
-            $start = Carbon::parse($this->startDate)->startOfDay();
-            $end = Carbon::parse($this->endDate)->endOfDay();
             $privateEntries = PrivateEntry::with('vehicle', 'driver')
-                ->where('guard_on_entry', $guardName)
-                ->whereBetween('entry_at', [$start, $end])
+                ->where('guard_on_entry', Auth::user()->name)
+                ->whereBetween('entry_at', [Carbon::parse($this->startDate)->startOfDay(), Carbon::parse($this->endDate)->endOfDay()])
                 ->whereNull('report_submission_id')
                 ->orderBy('entry_at', 'desc')
-                ->paginate(15);
+                ->paginate(15, ['*'], 'privatePage');
+        }
+
+        if ($this->submissionType === 'official') {
+            $officialTrips = OfficialTrip::with(['vehicle' => fn($q) => $q->withTrashed()])
+                ->where('guard_on_departure', Auth::user()->name)
+                ->whereBetween('departure_datetime', [Carbon::parse($this->startDate)->startOfDay(), Carbon::parse($this->endDate)->endOfDay()])
+                ->whereNull('report_submission_id')
+                ->whereHas('vehicle', fn($q) => $q->withTrashed())
+                ->paginate(15, ['*'], 'officialPage');
+
+            $vehiclesWithOfficialTrips = $officialTrips->groupBy('vehicle_id')->map(function ($vehicleTrips) {
+                return [
+                    'vehicle' => $vehicleTrips->first()->vehicle,
+                    'count' => $vehicleTrips->count(),
+                ];
+            });
         }
 
         return view('livewire.guard-report', [
             'privateEntries' => $privateEntries,
+            'vehiclesWithOfficialTrips' => $vehiclesWithOfficialTrips,
+            'officialTrips' => $officialTrips,
         ]);
     }
 }

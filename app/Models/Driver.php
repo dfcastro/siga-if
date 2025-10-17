@@ -2,10 +2,8 @@
 
 namespace App\Models;
 
-// Precisamos importar duas classes auxiliares
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Support\Str;
-
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -14,6 +12,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Driver extends Model
 {
     use HasFactory, SoftDeletes;
+
+    // ADICIONE ESTA LINHA
     protected $guarded = [];
 
     // Adicione esta propriedade
@@ -43,7 +43,7 @@ class Driver extends Model
     }
 
     /**
-     *  Define a relação com as Viagens Oficiais.
+     * Define a relação com as Viagens Oficiais.
      * Um condutor pode ter muitas viagens oficiais.
      */
     public function officialTrips()

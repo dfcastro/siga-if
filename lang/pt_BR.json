@@ -62,7 +62,10 @@
     "New Password": "Nova Senha",
     "Confirm Password":"Confirme a Senha",
     "Profile":"Perfil",
-    "Log Out":"Sair"
+    "Log Out":"Sair",
+    "True": "verdadeiro",
+    "False": "falso"
+    
     
 
 }

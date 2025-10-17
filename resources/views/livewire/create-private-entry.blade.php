@@ -1,4 +1,3 @@
-
 <div>
     {{-- Seção de Mensagens de Alerta --}}
     @if ($successMessage)
@@ -23,7 +22,7 @@
         <div class="space-y-8">
 
             {{-- Card de Registro de ENTRADA --}}
-            <div class="bg-white overflow-hidden shadow-md sm:rounded-lg" wire:poll.15s>
+            <div class="bg-white overflow-hidden shadow-md sm:rounded-lg">
                 <div class="p-6 border-b border-gray-200">
                     <h2 class="text-xl font-semibold text-gray-800">Registrar Nova Entrada de Veículo</h2>
                     <p class="text-sm text-gray-500 mt-1">Use a busca rápida ou preencha os campos manualmente.</p>
@@ -31,7 +30,7 @@
 
                 <form wire:submit="save" class="p-6">
                     <div class="space-y-6">
-                        {{-- Campo de Busca Inteligente --}}
+                        {{-- Campo de Busca Inteligente de Veículos --}}
                         <div class="relative">
                             <label for="search" class="block text-sm font-medium text-gray-700">Busca Rápida (Veículo
                                 ou Motorista)</label>
@@ -69,7 +68,7 @@
                             @endif
                         </div>
 
-                        {{-- Campos do Formulário --}}
+                        {{-- Campos do Formulário do Veículo --}}
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
                             <div x-data="{
                                 plate: $wire.entangle('license_plate').live,
@@ -100,7 +99,7 @@
                             <div>
                                 <label for="vehicle_model" class="block text-sm font-medium text-gray-700">Modelo do
                                     Veículo</label>
-                                <input type="text" id="vehicle_model" wire:model="vehicle_model"
+                                <input type="text" id="vehicle_model" wire:model.live="vehicle_model"
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-ifnmg-green focus:ring-ifnmg-green @error('vehicle_model') border-red-500 @enderror">
                                 @error('vehicle_model')
                                     <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
@@ -108,54 +107,83 @@
                             </div>
                         </div>
 
-                        <div x-data="{ open: $wire.entangle('show_driver_dropdown', true) }" @click.away="open = false" class="relative">
-                            <label for="driver_search" class="block text-sm font-medium text-gray-700">Motorista</label>
-                            <input type="text" id="driver_search" wire:model.live.debounce.300ms="driver_search"
-                                @focus="open = true" placeholder="Digite para buscar ou cadastrar um novo"
-                                autocomplete="off"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-ifnmg-green focus:ring-ifnmg-green @error('driver_search') border-red-500 @enderror @error('selected_driver_id') border-red-500 @enderror">
+                        {{-- SEÇÃO REFINADA DO MOTORISTA --}}
+                        <div>
+                            <x-input-label for="driver_search" value="Motorista" />
 
-                            <div x-show="open" x-transition
-                                class="absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                                <ul>
-                                    @if (!empty($driver_results) && count($driver_results) > 0)
-                                        @foreach ($driver_results as $driver)
-                                            <li wire:click="selectDriver({{ $driver->id }}, '{{ addslashes($driver->name) }}')"
-                                                class="px-4 py-3 cursor-pointer hover:bg-gray-100 text-sm">
-                                                {{ $driver->name }}
-                                            </li>
-                                        @endforeach
+                            @if ($showNewVisitorForm)
+                                {{-- MODO CADASTRO DE NOVO VISITANTE --}}
+                                <div
+                                    class="p-4 border border-blue-300 bg-blue-50 rounded-lg mt-2 space-y-4 animate-fade-in-down">
+                                    <div class="flex justify-between items-center">
+                                        <h3 class="font-semibold text-blue-800">Cadastrar Novo Visitante</h3>
+                                        <button type="button" wire:click="cancelNewVisitor"
+                                            class="text-sm text-gray-600 hover:text-gray-900 transition">Cancelar</button>
+                                    </div>
+
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        {{-- Campo Nome --}}
+                                        <div class="md:col-span-1">
+                                            <x-input-label for="new_visitor_name" value="Nome Completo" />
+                                            <x-text-input wire:model.live="new_visitor_name" id="new_visitor_name"
+                                                class="block mt-1 w-full" type="text" />
+                                            <x-input-error for="new_visitor_name" class="mt-1" />
+                                        </div>
+
+                                        {{-- Campo CPF --}}
+                                        <div>
+                                            <x-input-label for="new_visitor_document" value="CPF" />
+                                            <x-text-input wire:model.live="new_visitor_document"
+                                                id="new_visitor_document" class="block mt-1 w-full" type="text"
+                                                x-mask="999.999.999-99" />
+                                            <x-input-error for="new_visitor_document" class="mt-1" />
+                                        </div>
+
+                                        {{-- Campo Telefone (Opcional) --}}
+                                        <div>
+                                            <x-input-label for="new_visitor_phone" value="Telefone (Opcional)" />
+                                            <x-text-input wire:model="new_visitor_phone" id="new_visitor_phone"
+                                                class="block mt-1 w-full" type="text" x-mask="(99) 99999-9999" />
+                                            <x-input-error for="new_visitor_phone" class="mt-1" />
+                                        </div>
+                                    </div>
+                                </div>
+                            @else
+                                {{-- MODO BUSCA --}}
+                                <div class="relative">
+                                    <x-text-input wire:model.live.debounce.300ms="driver_search" id="driver_search"
+                                        class="block mt-1 w-full" placeholder="Digite para buscar..."
+                                        :disabled="$selected_driver_id" autocomplete="off" />
+
+                                    @if (!empty($driver_search) && !$selected_driver_id)
+                                        <div
+                                            class="absolute z-20 w-full bg-white rounded-md shadow-lg mt-1 border border-gray-200">
+                                            @if (count($drivers) > 0)
+                                                <ul class="max-h-60 overflow-y-auto">
+                                                    @foreach ($drivers as $driver)
+                                                        <li class="px-4 py-3 hover:bg-gray-100 cursor-pointer text-sm"
+                                                            wire:click="selectDriver({{ $driver->id }}, '{{ addslashes($driver->name) }}')">
+                                                            {{ $driver->name }}
+                                                        </li>
+                                                    @endforeach
+                                                </ul>
+                                            @else
+                                                <div class="p-4 text-center text-sm text-gray-500">
+                                                    Nenhum motorista encontrado.
+                                                    <button type="button" wire:click="prepareNewVisitorForm"
+                                                        class="text-ifnmg-green hover:underline font-semibold ml-1">
+                                                        Cadastrar "{{ $driver_search }}"?
+                                                    </button>
+                                                </div>
+                                            @endif
+                                        </div>
                                     @endif
-                                    @if (strlen($driver_search) >= 2)
-                                        <li wire:click="createNewDriver"
-                                            class="px-4 py-3 cursor-pointer hover:bg-gray-100 text-sm font-semibold text-ifnmg-green border-t">
-                                            + Adicionar novo motorista: "{{ $driver_search }}"
-                                        </li>
-                                    @endif
-                                </ul>
-                            </div>
-                            @error('selected_driver_id')
-                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                            @enderror
-                            @error('driver_search')
-                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                            @enderror
+                                </div>
+                                <x-input-error for="selected_driver_id" class="mt-1" />
+                            @endif
                         </div>
 
-                        @if ($isNewVisitor)
-                            <div class="p-4 bg-blue-50 border border-blue-200 rounded-md">
-                                <label for="visitor_document" class="block text-sm font-medium text-blue-800">CPF do
-                                    Novo Visitante</label>
-                                <input type="text" id="visitor_document"
-                                    wire:model.live.debounce.300ms="visitor_document" x-mask="999.999.999-99"
-                                    placeholder="Digite o CPF"
-                                    class="mt-1 block w-full rounded-md border-blue-300 shadow-sm focus:border-ifnmg-green focus:ring-ifnmg-green @error('visitor_document') border-red-500 @enderror">
-                                @error('visitor_document')
-                                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                                @enderror
-                            </div>
-                        @endif
-
+                        {{-- Seção do Motivo da Entrada --}}
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label for="entry_reason" class="block text-sm font-medium text-gray-700">Motivo da
@@ -359,4 +387,3 @@
         </div>
     @endif
 </div>
-

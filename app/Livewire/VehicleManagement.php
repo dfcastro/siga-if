@@ -9,9 +9,8 @@ use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Illuminate\Support\Str;
 use Livewire\WithPagination;
-use App\Models\PrivateEntry;
-use App\Models\OfficialTrip;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB; // É importante importar a facade DB
 
 #[Layout('layouts.app')]
 class VehicleManagement extends Component
@@ -40,10 +39,9 @@ class VehicleManagement extends Component
     // --- PROPRIEDADES DO MODAL DE HISTÓRICO ---
     public $isHistoryModalOpen = false;
     public $vehicleForHistory = null;
-    public string $historySearch = ''; // Propriedade para a busca no histórico
+    public string $historySearch = '';
 
     public array $commonColors = ['PRETO', 'BRANCO', 'PRATA', 'CINZA', 'VERMELHO', 'AZUL', 'VERDE', 'AMARELO', 'DOURADO', 'MARROM', 'BEGE', 'LARANJA', 'ROXO'];
-
     protected $paginationTheme = 'tailwind';
 
     public function layoutData()
@@ -51,16 +49,12 @@ class VehicleManagement extends Component
         return ['header' => 'Gerenciamento de Veículos'];
     }
 
-    // --- LÓGICA DE BUSCA DE MOTORISTA ---
+    // --- LÓGICA DE BUSCA DE MOTORISTA (SEM ALTERAÇÃO) ---
     public function getFoundDriversProperty()
     {
-        // Se o termo de busca for muito curto, retorna uma coleção vazia.
         if (strlen(trim($this->driver_search)) < 2) {
             return collect();
         }
-
-        // -
-        //  busca APENAS motoristas ativos.
         return Driver::where('name', 'like', '%' . $this->driver_search . '%')
             ->take(5)
             ->get();
@@ -73,22 +67,20 @@ class VehicleManagement extends Component
         $this->show_driver_dropdown = false;
     }
 
-    // --- MÉTODOS DE CICLO DE VIDA (LIFECYCLE HOOKS) ---
+    // --- MÉTODOS DE CICLO DE VIDA (SEM ALTERAÇÃO) ---
     public function updatingSearch()
     {
         $this->resetPage();
     }
 
-    // ADICIONADO: Reseta a paginação do histórico ao buscar
     public function updatingHistorySearch()
     {
         $this->resetPage('historyPage');
     }
 
-    // --- RENDERIZAÇÃO ---
+    // --- RENDERIZAÇÃO (COM LÓGICA DE HISTÓRICO OTIMIZADA) ---
     public function render()
     {
-        // Lógica da lista principal de veículos
         $query = Vehicle::with('driver');
         if ($this->filter === 'trashed') {
             $query->onlyTrashed();
@@ -106,39 +98,18 @@ class VehicleManagement extends Component
         }
         $vehicles = $query->orderBy('model', 'asc')->paginate(10);
 
-        // Lógica do histórico (COM BUSCA)
         $vehicleHistoryPaginator = null;
         if ($this->isHistoryModalOpen && $this->vehicleForHistory) {
-            $this->vehicleForHistory->load([
-                'privateEntries.driver' => function ($query) {
-                    $query->withTrashed();
-                },
-                'officialTrips.driver' => function ($query) {
-                    $query->withTrashed();
-                }
-            ]);
+            $private = DB::table('private_entries')->join('drivers', 'private_entries.driver_id', '=', 'drivers.id')->select(DB::raw("'Particular' as type"), 'private_entries.entry_at as start_time', 'private_entries.exit_at as end_time', 'drivers.name as driver_name', 'private_entries.entry_reason as detail')->where('private_entries.vehicle_id', $this->vehicleForHistory->id);
+            $official = DB::table('official_trips')->join('drivers', 'official_trips.driver_id', '=', 'drivers.id')->select(DB::raw("'Oficial' as type"), 'official_trips.departure_datetime as start_time', 'official_trips.arrival_datetime as end_time', 'drivers.name as driver_name', 'official_trips.destination as detail')->where('official_trips.vehicle_id', $this->vehicleForHistory->id);
 
-            $privateEntries = $this->vehicleForHistory->privateEntries->map(fn($entry) => ['type' => 'Particular', 'start_time' => $entry->entry_at, 'end_time' => $entry->exit_at, 'driver_name' => $entry->driver->name ?? 'N/A', 'detail' => $entry->entry_reason]);
-            $officialTrips = $this->vehicleForHistory->officialTrips->map(fn($trip) => ['type' => 'Oficial', 'start_time' => $trip->departure_datetime, 'end_time' => $trip->arrival_datetime, 'driver_name' => $trip->driver->name ?? 'N/A', 'detail' => $trip->destination]);
-
-            $fullHistory = $privateEntries->concat($officialTrips)->sortByDesc('start_time');
-
-            // Filtra o histórico se houver um termo de busca
             if (!empty($this->historySearch)) {
-                $searchTerm = strtolower($this->historySearch);
-                $fullHistory = $fullHistory->filter(function ($entry) use ($searchTerm) {
-                    return str_contains(strtolower($entry['driver_name']), $searchTerm) ||
-                        str_contains(strtolower($entry['detail']), $searchTerm) ||
-                        str_contains(strtolower(\Carbon\Carbon::parse($entry['start_time'])->format('d/m/Y')), $searchTerm);
-                });
+                $searchTerm = '%' . $this->historySearch . '%';
+                $private->where(fn($q) => $q->where('drivers.name', 'like', $searchTerm)->orWhere('private_entries.entry_reason', 'like', $searchTerm));
+                $official->where(fn($q) => $q->where('drivers.name', 'like', $searchTerm)->orWhere('official_trips.destination', 'like', $searchTerm));
             }
 
-            // Paginação
-            $fullHistory = $fullHistory->values();
-            $currentPage = LengthAwarePaginator::resolveCurrentPage('historyPage');
-            $perPage = 5;
-            $currentPageItems = $fullHistory->slice(($currentPage - 1) * $perPage, $perPage)->all();
-            $vehicleHistoryPaginator = new LengthAwarePaginator($currentPageItems, $fullHistory->count(), $perPage, $currentPage, ['path' => request()->url(), 'pageName' => 'historyPage']);
+            $vehicleHistoryPaginator = $private->unionAll($official)->orderBy('start_time', 'desc')->paginate(5, ['*'], 'historyPage');
         }
 
         return view('livewire.vehicle-management', [
@@ -147,15 +118,25 @@ class VehicleManagement extends Component
         ]);
     }
 
-    // --- AÇÕES DO CRUD ---
+    // --- AÇÕES DO CRUD COM AS NOVAS REGRAS DE PERMISSÃO ---
     public function store()
     {
+        $userRole = auth()->user()->role;
+
+        // **NOVA REGRA DE VALIDAÇÃO DE PERMISSÃO**
+        if (
+            ($this->type === 'Oficial' && !in_array($userRole, ['admin', 'fiscal'])) ||
+            ($this->type === 'Particular' && !in_array($userRole, ['admin', 'porteiro']))
+        ) {
+            abort(403, 'Você não tem permissão para criar ou editar este tipo de veículo.');
+        }
+
         $this->validate([
             'license_plate' => ['required', 'string', 'regex:/^[A-Z]{3}[0-9][A-Z][0-9]{2}$|^[A-Z]{3}-[0-9]{4}$/i', Rule::unique('vehicles')->ignore($this->vehicleId)],
             'model' => 'required|string|max:25',
             'color' => 'required|string|max:20',
             'type' => 'required|string|in:Oficial,Particular',
-            'driver_id' => 'nullable|exists:drivers,id',
+            'driver_id' => $this->type === 'Particular' ? 'nullable|exists:drivers,id' : '',
         ], ['license_plate.regex' => 'O formato da placa é inválido.']);
 
         Vehicle::updateOrCreate(['id' => $this->vehicleId], [
@@ -163,7 +144,7 @@ class VehicleManagement extends Component
             'model'         => Str::upper($this->model),
             'color'         => Str::upper($this->color),
             'type'          => $this->type,
-            'driver_id'     => $this->driver_id ?: null,
+            'driver_id'     => $this->type === 'Particular' ? ($this->driver_id ?: null) : null,
         ]);
 
         session()->flash('successMessage', $this->vehicleId ? 'Veículo atualizado!' : 'Veículo criado!');
@@ -172,13 +153,32 @@ class VehicleManagement extends Component
 
     public function create()
     {
+        if (!in_array(auth()->user()->role, ['admin', 'porteiro', 'fiscal'])) {
+            abort(403, 'Ação não autorizada.');
+        }
         $this->resetInputFields();
+
+        if (auth()->user()->role === 'fiscal') {
+            $this->type = 'Oficial';
+        } else {
+            $this->type = 'Particular';
+        }
+
         $this->isModalOpen = true;
     }
 
     public function edit($id)
     {
         $vehicle = Vehicle::withTrashed()->findOrFail($id);
+        $userRole = auth()->user()->role;
+
+        if (
+            ($vehicle->type === 'Oficial' && !in_array($userRole, ['admin', 'fiscal'])) ||
+            ($vehicle->type === 'Particular' && !in_array($userRole, ['admin', 'porteiro']))
+        ) {
+            abort(403, 'Você não tem permissão para editar este veículo.');
+        }
+
         $this->vehicleId = $id;
         $this->license_plate = $vehicle->license_plate;
         $this->model = $vehicle->model;
@@ -186,7 +186,6 @@ class VehicleManagement extends Component
         $this->type = $vehicle->type;
         $this->driver_id = $vehicle->driver_id;
         $this->driver_search = $vehicle->driver ? $vehicle->driver->name : '';
-
         $this->isModalOpen = true;
     }
 
@@ -203,10 +202,19 @@ class VehicleManagement extends Component
         $this->reset(['driver_id', 'driver_search', 'show_driver_dropdown']);
     }
 
-    // --- MÉTODOS DE EXCLUSÃO E RESTAURAÇÃO ---
+    // --- MÉTODOS DE EXCLUSÃO COM PERMISSÕES E SEGURANÇA ---
     public function confirmDelete($id)
     {
         $vehicle = Vehicle::findOrFail($id);
+        $userRole = auth()->user()->role;
+
+        if (
+            ($vehicle->type === 'Oficial' && !in_array($userRole, ['admin', 'fiscal'])) ||
+            ($vehicle->type === 'Particular' && !in_array($userRole, ['admin', 'porteiro']))
+        ) {
+            abort(403, 'Ação não autorizada.');
+        }
+
         $this->vehicleIdToDelete = $id;
         $this->vehiclePlateToDelete = $vehicle->license_plate;
         $this->isConfirmModalOpen = true;
@@ -214,7 +222,17 @@ class VehicleManagement extends Component
 
     public function deleteVehicle()
     {
-        Vehicle::find($this->vehicleIdToDelete)->delete();
+        $vehicle = Vehicle::findOrFail($this->vehicleIdToDelete);
+        $userRole = auth()->user()->role;
+
+        if (
+            ($vehicle->type === 'Oficial' && !in_array($userRole, ['admin', 'fiscal'])) ||
+            ($vehicle->type === 'Particular' && !in_array($userRole, ['admin', 'porteiro']))
+        ) {
+            abort(403, 'Você não tem permissão para mover este veículo para a lixeira.');
+        }
+
+        $vehicle->delete();
         session()->flash('successMessage', 'Veículo movido para a lixeira.');
         $this->closeConfirmModal();
     }
@@ -226,13 +244,32 @@ class VehicleManagement extends Component
 
     public function restore($id)
     {
-        Vehicle::withTrashed()->find($id)->restore();
+        $vehicle = Vehicle::withTrashed()->findOrFail($id);
+        $userRole = auth()->user()->role;
+
+        if (
+            ($vehicle->type === 'Oficial' && !in_array($userRole, ['admin', 'fiscal'])) ||
+            ($vehicle->type === 'Particular' && !in_array($userRole, ['admin', 'porteiro']))
+        ) {
+            abort(403, 'Ação não autorizada.');
+        }
+
+        $vehicle->restore();
         session()->flash('successMessage', 'Veículo restaurado.');
     }
 
     public function confirmForceDelete($id)
     {
         $vehicle = Vehicle::withTrashed()->findOrFail($id);
+        $userRole = auth()->user()->role;
+
+        if (
+            ($vehicle->type === 'Oficial' && !in_array($userRole, ['admin', 'fiscal'])) ||
+            ($vehicle->type === 'Particular' && !in_array($userRole, ['admin', 'porteiro']))
+        ) {
+            abort(403, 'Ação não autorizada.');
+        }
+
         $this->vehicleIdToDelete = $id;
         $this->vehiclePlateToDelete = $vehicle->license_plate;
         $this->isConfirmModalOpen = true;
@@ -240,17 +277,39 @@ class VehicleManagement extends Component
 
     public function forceDeleteVehicle()
     {
-        Vehicle::withTrashed()->find($this->vehicleIdToDelete)->forceDelete();
+        $vehicle = Vehicle::withTrashed()->find($this->vehicleIdToDelete);
+        $userRole = auth()->user()->role;
+
+        if (!$vehicle) {
+            session()->flash('error', 'Veículo não encontrado.');
+            $this->closeConfirmModal();
+            return;
+        }
+
+        if (
+            ($vehicle->type === 'Oficial' && !in_array($userRole, ['admin', 'fiscal'])) ||
+            ($vehicle->type === 'Particular' && !in_array($userRole, ['admin', 'porteiro']))
+        ) {
+            abort(403, 'Você não tem permissão para excluir este veículo permanentemente.');
+        }
+
+        if ($vehicle->officialTrips()->exists() || $vehicle->privateEntries()->exists()) {
+            session()->flash('error', 'Não é possível excluir: o veículo possui registros associados.');
+            $this->closeConfirmModal();
+            return;
+        }
+
+        $vehicle->forceDelete();
         session()->flash('successMessage', 'Veículo excluído permanentemente.');
         $this->closeConfirmModal();
     }
 
-    // --- MÉTODOS DE HISTÓRICO ---
+    // --- MÉTODOS DE HISTÓRICO (SEM ALTERAÇÃO) ---
     public function showHistory($vehicleId)
     {
         $this->vehicleForHistory = Vehicle::withTrashed()->findOrFail($vehicleId);
         $this->resetPage('historyPage');
-        $this->reset('historySearch'); // Limpa a busca ao abrir o modal
+        $this->reset('historySearch');
         $this->isHistoryModalOpen = true;
     }
 
