@@ -209,43 +209,44 @@
                         </div>
                         <div class="space-y-4">
                             <div>
-                                <x-input-label for="type" value="Tipo" />
-                                <select id="type" wire:model.live="type"
-                                    class="mt-1 block w-full border-gray-300 focus:border-ifnmg-green focus:ring-ifnmg-green rounded-md shadow-sm">
+                                <x-input-label for="type" value="Tipo de Veículo" />
+                                <select wire:model.live="type" id="type" class="block mt-1 w-full ...">
+                                    {{-- Apenas admins e fiscais podem ver a opção 'Oficial' --}}
                                     @if (in_array(auth()->user()->role, ['admin', 'fiscal']))
                                         <option value="Oficial">Oficial</option>
                                     @endif
-                                    <option value="Particular">Particular</option>
+                                    {{-- Apenas admins e porteiros podem ver a opção 'Particular' --}}
+                                    @if (in_array(auth()->user()->role, ['admin', 'porteiro']))
+                                        <option value="Particular">Particular</option>
+                                    @endif
                                 </select>
-                                <x-input-error for="type" class="mt-1" />
                             </div>
-                            <div>
-                                <x-input-label for="driver_search" value="Motorista (opcional)" />
-                                <div class="relative" x-data="{ open: false }"
-                                    x-on:close-driver-dropdown.window="open = false" @click.away="open = false"
-                                    @keydown.escape.window="open = false">
-                                    <input id="driver_search" type="text"
-                                        class="block mt-1 w-full border-gray-300 focus:border-ifnmg-green focus:ring-ifnmg-green rounded-md shadow-sm"
-                                        wire:model.live.debounce.300ms="driver_search" @click="open = true"
-                                        @input="open = true" placeholder="Digite para buscar..." autocomplete="off">
-                                    <div x-show="open" x-transition
-                                        class="absolute z-50 w-full bg-white rounded-md shadow-lg mt-1 max-h-40 overflow-y-auto border">
-                                        @if ($this->foundDrivers->isNotEmpty())
-                                            <ul>
-                                                @foreach ($this->foundDrivers as $driver)
-                                                    <li class="px-4 py-2 cursor-pointer hover:bg-gray-200"
-                                                        wire:click="selectDriver({{ $driver->id }}, '{{ addslashes($driver->name) }}')">
-                                                        {{ $driver->name }}
-                                                    </li>
-                                                @endforeach
-                                            </ul>
-                                        @elseif(strlen($driver_search) > 1)
-                                            <div class="px-4 py-2 text-gray-500">Nenhum motorista encontrado.</div>
-                                        @endif
+                            @if ($type === 'Particular')
+                                <div>
+                                    <x-input-label for="driver_search" value="Proprietário (Motorista)" />
+                                    <div x-data="{ open: @entangle('show_driver_dropdown') }" @click.away="open = false" class="relative">
+                                        <x-text-input type="text" id="driver_search" class="mt-1 block w-full"
+                                            wire:model.live.debounce.300ms="driver_search" @focus="open = true"
+                                            autocomplete="off" placeholder="Digite para buscar um motorista" />
+                                        <div x-show="open"
+                                            class="absolute z-10 w-full bg-white rounded-md shadow-lg mt-1">
+                                            @if ($this->foundDrivers->isNotEmpty())
+                                                <ul>
+                                                    @foreach ($this->foundDrivers as $driver)
+                                                        <li class="p-2 hover:bg-gray-100 cursor-pointer"
+                                                            wire:click="selectDriver({{ $driver->id }}, '{{ $driver->name }}')">
+                                                            {{ $driver->name }}
+                                                        </li>
+                                                    @endforeach
+                                                </ul>
+                                            @else
+                                                <p class="p-2 text-gray-500 text-sm">Nenhum motorista encontrado.</p>
+                                            @endif
+                                        </div>
                                     </div>
+                                    <x-input-error for="driver_id" class="mt-2" />
                                 </div>
-                                <x-input-error for="driver_id" class="mt-1" />
-                            </div>
+                            @endif
                         </div>
                     </div>
                     <div class="px-6 py-4 bg-gray-50 text-right space-x-2">

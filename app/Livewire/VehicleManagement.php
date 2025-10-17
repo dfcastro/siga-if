@@ -123,7 +123,6 @@ class VehicleManagement extends Component
     {
         $userRole = auth()->user()->role;
 
-        // **NOVA REGRA DE VALIDAÇÃO DE PERMISSÃO**
         if (
             ($this->type === 'Oficial' && !in_array($userRole, ['admin', 'fiscal'])) ||
             ($this->type === 'Particular' && !in_array($userRole, ['admin', 'porteiro']))
@@ -136,6 +135,7 @@ class VehicleManagement extends Component
             'model' => 'required|string|max:25',
             'color' => 'required|string|max:20',
             'type' => 'required|string|in:Oficial,Particular',
+            // **CORREÇÃO DE LÓGICA:** Validação de motorista só se aplica a veículos 'Particulares'.
             'driver_id' => $this->type === 'Particular' ? 'nullable|exists:drivers,id' : '',
         ], ['license_plate.regex' => 'O formato da placa é inválido.']);
 
@@ -144,6 +144,7 @@ class VehicleManagement extends Component
             'model'         => Str::upper($this->model),
             'color'         => Str::upper($this->color),
             'type'          => $this->type,
+            // **CORREÇÃO DE LÓGICA:** Salva o driver_id apenas se for 'Particular', senão, salva null.
             'driver_id'     => $this->type === 'Particular' ? ($this->driver_id ?: null) : null,
         ]);
 
