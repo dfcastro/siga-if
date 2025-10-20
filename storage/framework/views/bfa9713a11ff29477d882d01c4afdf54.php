@@ -6,13 +6,13 @@
             <span class="block sm:inline"><?php echo e(session('successMessage')); ?></span>
         </div>
     <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
-
-    
-    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-        <div
-            class="p-6 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
-            <h2 class="text-xl font-semibold text-gray-800">Diário de Bordo - Frota Oficial</h2>
-            <?php if (isset($component)) { $__componentOriginald411d1792bd6cc877d687758b753742c = $component; } ?>
+    <!--[if BLOCK]><![endif]--><?php if(auth()->user()->role !== 'fiscal'): ?>
+        
+        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+            <div
+                class="p-6 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
+                <h2 class="text-xl font-semibold text-gray-800">Diário de Bordo - Frota Oficial</h2>
+                <?php if (isset($component)) { $__componentOriginald411d1792bd6cc877d687758b753742c = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginald411d1792bd6cc877d687758b753742c = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.primary-button','data' => ['wire:click' => 'create']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('primary-button'); ?>
@@ -22,8 +22,8 @@
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
 <?php $component->withAttributes(['wire:click' => 'create']); ?>
-                Registrar Saída
-             <?php echo $__env->renderComponent(); ?>
+                    Registrar Saída
+                 <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginald411d1792bd6cc877d687758b753742c)): ?>
 <?php $attributes = $__attributesOriginald411d1792bd6cc877d687758b753742c; ?>
@@ -33,189 +33,203 @@
 <?php $component = $__componentOriginald411d1792bd6cc877d687758b753742c; ?>
 <?php unset($__componentOriginald411d1792bd6cc877d687758b753742c); ?>
 <?php endif; ?>
-        </div>
-
-        <div class="p-6">
-            
-            <div>
-                <h3 class="text-lg font-semibold mb-4 text-gray-700">Viagens em Andamento</h3>
-                
-                <div class="space-y-4 md:hidden">
-                    <!--[if BLOCK]><![endif]--><?php $__empty_1 = true; $__currentLoopData = $ongoingTrips; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $trip): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-                        <div class="bg-white p-4 border border-gray-200 rounded-lg">
-                            <div class="flex justify-between items-start mb-2">
-                                <div class="font-bold text-gray-800"><?php echo e($trip->vehicle->model); ?>
-
-                                    (<?php echo e($trip->vehicle->license_plate); ?>)
-                                </div>
-                                <span class="text-xs text-gray-500">Condutor:
-                                    <?php echo e($trip->driver ? $trip->driver->name : 'N/D'); ?></span>
-                            </div>
-                            <div class="text-sm text-gray-600 mb-2"><strong>Destino:</strong> <?php echo e($trip->destination); ?>
-
-                            </div>
-                            <div class="text-sm text-gray-600 mb-4">
-                                <strong>Saída:</strong>
-                                <?php echo e(\Carbon\Carbon::parse($trip->departure_datetime)->format('d/m/Y H:i')); ?>h
-                                <br>
-                                <strong>KM:</strong> <?php echo e(number_format($trip->departure_odometer, 0, ',', '.')); ?> km
-                            </div>
-                            <div class="text-sm text-gray-600 mb-2"><strong>Porteiro:</strong>
-                                <?php echo e($trip->guard_on_departure); ?>
-
-                            </div>
-                            <button wire:click="openArrivalModal(<?php echo e($trip->id); ?>)"
-                                class="w-full px-3 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700">
-                                Registrar Chegada
-                            </button>
-                        </div>
-                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
-                        <div class="bg-gray-50 p-4 rounded-lg text-center text-gray-500">
-                            Nenhuma viagem em andamento.
-                        </div>
-                    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
-                </div>
-
-                
-                <div class="hidden md:block overflow-x-auto border border-gray-200 sm:rounded-lg">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-100">
-                            <tr>
-                                <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                                    Veículo</th>
-                                <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                                    Condutor</th>
-                                <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                                    Destino</th>
-                                <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                                    Saída</th>
-                                <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                                    Porteiro</th>
-                                <th
-                                    class="px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">
-                                    Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            <!--[if BLOCK]><![endif]--><?php $__empty_1 = true; $__currentLoopData = $ongoingTrips; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $trip): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-                                <tr>
-                                    <td class="px-6 py-4 align-middle">
-                                        <div class="text-sm font-medium text-gray-900"><?php echo e($trip->vehicle->model); ?></div>
-                                        <div class="text-sm text-gray-500"><?php echo e($trip->vehicle->license_plate); ?></div>
-                                    </td>
-                                    <td class="px-6 py-4 align-middle text-sm text-gray-600">
-                                        <?php echo e($trip->driver ? $trip->driver->name : 'N/D'); ?>
-
-                                    </td>
-                                    <td class="px-6 py-4 align-middle text-sm text-gray-600"><?php echo e($trip->destination); ?>
-
-                                    </td>
-                                    <td class="px-6 py-4 align-middle text-sm text-gray-600">
-                                        <div>
-                                            <?php echo e(\Carbon\Carbon::parse($trip->departure_datetime)->format('d/m/Y H:i')); ?>h
-                                        </div>
-                                        <div class="text-green-600 mt-1">
-                                            <?php echo e(number_format($trip->departure_odometer, 0, ',', '.')); ?> km</div>
-                                    </td>
-                                    <td class="px-6 py-4 align-middle text-sm text-gray-600">
-                                        <?php echo e($trip->guard_on_departure); ?></td>
-                                    <td class="px-6 py-4 align-middle text-center">
-                                        <button wire:click="openArrivalModal(<?php echo e($trip->id); ?>)"
-                                            class="px-3 py-1 bg-green-600 text-white text-xs rounded-md hover:bg-green-700">Registrar
-                                            Chegada</button>
-                                    </td>
-                                </tr>
-                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
-                                <tr>
-                                    <td colspan="6" class="px-6 py-4 text-center text-gray-500">Nenhuma viagem em
-                                        andamento.</td>
-                                </tr>
-                            <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
-                        </tbody>
-                    </table>
-                </div>
             </div>
 
-            <hr class="my-8 border-gray-200">
+            <div class="p-6">
+                
+                <div>
+                    <h3 class="text-lg font-semibold mb-4 text-gray-700">Viagens em Andamento</h3>
+                    
+                    <div class="space-y-4 md:hidden">
+                        <!--[if BLOCK]><![endif]--><?php $__empty_1 = true; $__currentLoopData = $ongoingTrips; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $trip): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                            <div class="bg-white p-4 border border-gray-200 rounded-lg">
+                                <div class="flex justify-between items-start mb-2">
+                                    <div class="font-bold text-gray-800"><?php echo e($trip->vehicle->model); ?>
 
-            
-            <div>
-                <h3 class="text-lg font-semibold mb-4 text-gray-700">Últimas Viagens Concluídas</h3>
-                <div class="mb-4">
-                    <input wire:model.live.debounce.300ms="search" type="text"
-                        placeholder="Buscar por destino, veículo, placa ou motorista..."
-                        class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                </div>
-                <div class="hidden md:block overflow-x-auto border border-gray-200 sm:rounded-lg">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-100">
-                            <tr>
-                                <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                                    Veículo</th>
-                                <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                                    Condutor</th>
-                                <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                                    Período da Viagem</th>
-                                <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                                    Distância</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            <!--[if BLOCK]><![endif]--><?php $__empty_1 = true; $__currentLoopData = $completedTrips; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $trip): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                                        (<?php echo e($trip->vehicle->license_plate); ?>)
+                                    </div>
+                                    <span class="text-xs text-gray-500">Condutor:
+                                        <?php echo e($trip->driver ? $trip->driver->name : 'N/D'); ?></span>
+                                </div>
+                                <div class="text-sm text-gray-600 mb-2"><strong>Destino:</strong>
+                                    <?php echo e($trip->destination); ?>
+
+                                </div>
+                                <div class="text-sm text-gray-600 mb-4">
+                                    <strong>Saída:</strong>
+                                    <?php echo e(\Carbon\Carbon::parse($trip->departure_datetime)->format('d/m/Y H:i')); ?>h
+                                    <br>
+                                    <strong>KM:</strong> <?php echo e(number_format($trip->departure_odometer, 0, ',', '.')); ?> km
+                                </div>
+                                <div class="text-sm text-gray-600 mb-2"><strong>Porteiro:</strong>
+                                    <?php echo e($trip->guard_on_departure); ?>
+
+                                </div>
+                                <button wire:click="openArrivalModal(<?php echo e($trip->id); ?>)"
+                                    class="w-full px-3 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700">
+                                    Registrar Chegada
+                                </button>
+                            </div>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+                            <div class="bg-gray-50 p-4 rounded-lg text-center text-gray-500">
+                                Nenhuma viagem em andamento.
+                            </div>
+                        <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                    </div>
+
+                    
+                    <div class="hidden md:block overflow-x-auto border border-gray-200 sm:rounded-lg">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-100">
                                 <tr>
-                                    <td class="px-6 py-4 align-middle">
-                                        <div class="text-sm font-medium text-gray-900"><?php echo e($trip->vehicle->model); ?>
-
-                                        </div>
-                                        <div class="text-sm text-gray-500"><?php echo e($trip->vehicle->license_plate); ?></div>
-                                    </td>
-                                    <td class="px-6 py-4 align-middle text-sm text-gray-600">
-                                        <?php echo e($trip->driver ? $trip->driver->name : 'N/D'); ?>
-
-                                    </td>
-                                    <td class="px-6 py-4 align-middle text-sm text-gray-600">
-                                        <div><span class="font-semibold">S:</span>
-                                            <?php echo e(\Carbon\Carbon::parse($trip->departure_datetime)->format('d/m/Y H:i')); ?>
-
-                                        </div>
-                                        <!--[if BLOCK]><![endif]--><?php if($trip->arrival_datetime): ?>
-                                            <div><span class="font-semibold">C:</span>
-                                                <?php echo e(\Carbon\Carbon::parse($trip->arrival_datetime)->format('d/m/Y H:i')); ?>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                                        Veículo</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                                        Condutor</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                                        Destino</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                                        Saída</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                                        Porteiro</th>
+                                    <th
+                                        class="px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">
+                                        Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <!--[if BLOCK]><![endif]--><?php $__empty_1 = true; $__currentLoopData = $ongoingTrips; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $trip): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                                    <tr>
+                                        <td class="px-6 py-4 align-middle">
+                                            <div class="text-sm font-medium text-gray-900"><?php echo e($trip->vehicle->model); ?>
 
                                             </div>
-                                        <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
-                                    </td>
-                                    <td class="px-6 py-4 align-middle text-sm font-medium text-gray-800">
-                                        <?php echo e(number_format($trip->arrival_odometer - $trip->departure_odometer, 0, ',', '.')); ?>
+                                            <div class="text-sm text-gray-500"><?php echo e($trip->vehicle->license_plate); ?>
 
-                                        km</td>
-                                </tr>
-                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
-                                <tr>
-                                    <td colspan="4" class="px-6 py-4 text-center text-gray-500">Nenhuma viagem
-                                        concluída encontrada.</td>
-                                </tr>
-                            <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
-                        </tbody>
-                    </table>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 align-middle text-sm text-gray-600">
+                                            <?php echo e($trip->driver ? $trip->driver->name : 'N/D'); ?>
+
+                                        </td>
+                                        <td class="px-6 py-4 align-middle text-sm text-gray-600">
+                                            <?php echo e($trip->destination); ?>
+
+                                        </td>
+                                        <td class="px-6 py-4 align-middle text-sm text-gray-600">
+                                            <div>
+                                                <?php echo e(\Carbon\Carbon::parse($trip->departure_datetime)->format('d/m/Y H:i')); ?>h
+                                            </div>
+                                            <div class="text-green-600 mt-1">
+                                                <?php echo e(number_format($trip->departure_odometer, 0, ',', '.')); ?> km</div>
+                                        </td>
+                                        <td class="px-6 py-4 align-middle text-sm text-gray-600">
+                                            <?php echo e($trip->guard_on_departure); ?></td>
+                                        <td class="px-6 py-4 align-middle text-center">
+                                            <button wire:click="openArrivalModal(<?php echo e($trip->id); ?>)"
+                                                class="px-3 py-1 bg-green-600 text-white text-xs rounded-md hover:bg-green-700">Registrar
+                                                Chegada</button>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+                                    <tr>
+                                        <td colspan="6" class="px-6 py-4 text-center text-gray-500">Nenhuma viagem em
+                                            andamento.</td>
+                                    </tr>
+                                <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-                <div class="mt-4">
-                    <?php echo e($completedTrips->links()); ?>
 
+                <hr class="my-8 border-gray-200">
+
+                
+                <div>
+                    <h3 class="text-lg font-semibold mb-4 text-gray-700">Últimas Viagens Concluídas</h3>
+                    <div class="mb-4">
+                        <input wire:model.live.debounce.300ms="search" type="text"
+                            placeholder="Buscar por destino, veículo, placa ou motorista..."
+                            class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                    <div class="hidden md:block overflow-x-auto border border-gray-200 sm:rounded-lg">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                                        Veículo</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                                        Condutor</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                                        Período da Viagem</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                                        Distância</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <!--[if BLOCK]><![endif]--><?php $__empty_1 = true; $__currentLoopData = $completedTrips; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $trip): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                                    <tr>
+                                        <td class="px-6 py-4 align-middle">
+                                            <div class="text-sm font-medium text-gray-900"><?php echo e($trip->vehicle->model); ?>
+
+                                            </div>
+                                            <div class="text-sm text-gray-500"><?php echo e($trip->vehicle->license_plate); ?>
+
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 align-middle text-sm text-gray-600">
+                                            <?php echo e($trip->driver ? $trip->driver->name : 'N/D'); ?>
+
+                                        </td>
+                                        <td class="px-6 py-4 align-middle text-sm text-gray-600">
+                                            <div><span class="font-semibold">S:</span>
+                                                <?php echo e(\Carbon\Carbon::parse($trip->departure_datetime)->format('d/m/Y H:i')); ?>
+
+                                            </div>
+                                            <!--[if BLOCK]><![endif]--><?php if($trip->arrival_datetime): ?>
+                                                <div><span class="font-semibold">C:</span>
+                                                    <?php echo e(\Carbon\Carbon::parse($trip->arrival_datetime)->format('d/m/Y H:i')); ?>
+
+                                                </div>
+                                            <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                                        </td>
+                                        <td class="px-6 py-4 align-middle text-sm font-medium text-gray-800">
+                                            <?php echo e(number_format($trip->arrival_odometer - $trip->departure_odometer, 0, ',', '.')); ?>
+
+                                            km</td>
+                                    </tr>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+                                    <tr>
+                                        <td colspan="4" class="px-6 py-4 text-center text-gray-500">Nenhuma viagem
+                                            concluída encontrada.</td>
+                                    </tr>
+                                <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-4">
+                        <?php echo e($completedTrips->links()); ?>
+
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-
+    <?php else: ?>
+        
+        <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded-lg relative" role="alert">
+            <span class="block sm:inline">Você tem permissão apenas para visualização. O registro de entradas e saídas
+                é restrito aos porteiros e administradores.</span>
+        </div>
+    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
     
     <?php if (isset($component)) { $__componentOriginal9f64f32e90b9102968f2bc548315018c = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal9f64f32e90b9102968f2bc548315018c = $attributes; } ?>

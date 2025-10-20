@@ -33,7 +33,8 @@
 <?php $component = $__componentOriginalc295f12dca9d42f28a259237a5724830; ?>
 <?php unset($__componentOriginalc295f12dca9d42f28a259237a5724830); ?>
 <?php endif; ?>
-                    <?php if (isset($component)) { $__componentOriginalc295f12dca9d42f28a259237a5724830 = $component; } ?>
+                    <?php if(in_array(Auth::user()->role, ['admin', 'porteiro'])): ?>
+                        <?php if (isset($component)) { $__componentOriginalc295f12dca9d42f28a259237a5724830 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalc295f12dca9d42f28a259237a5724830 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.nav-link','data' => ['href' => route('entries.create'),'active' => request()->routeIs('entries.create'),'icon' => 'arrows-right-left']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('nav-link'); ?>
@@ -43,8 +44,8 @@
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
 <?php $component->withAttributes(['href' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(route('entries.create')),'active' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(request()->routeIs('entries.create')),'icon' => 'arrows-right-left']); ?>
-                        Entrada/Saída
-                     <?php echo $__env->renderComponent(); ?>
+                            Entrada/Saída
+                         <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginalc295f12dca9d42f28a259237a5724830)): ?>
 <?php $attributes = $__attributesOriginalc295f12dca9d42f28a259237a5724830; ?>
@@ -54,7 +55,7 @@
 <?php $component = $__componentOriginalc295f12dca9d42f28a259237a5724830; ?>
 <?php unset($__componentOriginalc295f12dca9d42f28a259237a5724830); ?>
 <?php endif; ?>
-                    <?php if (isset($component)) { $__componentOriginalc295f12dca9d42f28a259237a5724830 = $component; } ?>
+                        <?php if (isset($component)) { $__componentOriginalc295f12dca9d42f28a259237a5724830 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalc295f12dca9d42f28a259237a5724830 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.nav-link','data' => ['href' => route('fleet.index'),'active' => request()->routeIs('fleet.index'),'icon' => 'truck']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('nav-link'); ?>
@@ -64,8 +65,8 @@
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
 <?php $component->withAttributes(['href' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(route('fleet.index')),'active' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(request()->routeIs('fleet.index')),'icon' => 'truck']); ?>
-                        Frota Oficial
-                     <?php echo $__env->renderComponent(); ?>
+                            Frota Oficial
+                         <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginalc295f12dca9d42f28a259237a5724830)): ?>
 <?php $attributes = $__attributesOriginalc295f12dca9d42f28a259237a5724830; ?>
@@ -75,6 +76,7 @@
 <?php $component = $__componentOriginalc295f12dca9d42f28a259237a5724830; ?>
 <?php unset($__componentOriginalc295f12dca9d42f28a259237a5724830); ?>
 <?php endif; ?>
+                    <?php endif; ?>
 
                     
                     <?php if(in_array(Auth::user()->role, ['admin', 'fiscal', 'porteiro'])): ?>
@@ -465,7 +467,8 @@
 <?php $component = $__componentOriginald69b52d99510f1e7cd3d80070b28ca18; ?>
 <?php unset($__componentOriginald69b52d99510f1e7cd3d80070b28ca18); ?>
 <?php endif; ?>
-            <?php if (isset($component)) { $__componentOriginald69b52d99510f1e7cd3d80070b28ca18 = $component; } ?>
+            <?php if(in_array(Auth::user()->role, ['admin', 'porteiro'])): ?>
+                <?php if (isset($component)) { $__componentOriginald69b52d99510f1e7cd3d80070b28ca18 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginald69b52d99510f1e7cd3d80070b28ca18 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.responsive-nav-link','data' => ['href' => route('entries.create'),'active' => request()->routeIs('entries.create')]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('responsive-nav-link'); ?>
@@ -484,7 +487,7 @@
 <?php $component = $__componentOriginald69b52d99510f1e7cd3d80070b28ca18; ?>
 <?php unset($__componentOriginald69b52d99510f1e7cd3d80070b28ca18); ?>
 <?php endif; ?>
-            <?php if (isset($component)) { $__componentOriginald69b52d99510f1e7cd3d80070b28ca18 = $component; } ?>
+                <?php if (isset($component)) { $__componentOriginald69b52d99510f1e7cd3d80070b28ca18 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginald69b52d99510f1e7cd3d80070b28ca18 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.responsive-nav-link','data' => ['href' => route('fleet.index'),'active' => request()->routeIs('fleet.index')]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('responsive-nav-link'); ?>
@@ -503,6 +506,7 @@
 <?php $component = $__componentOriginald69b52d99510f1e7cd3d80070b28ca18; ?>
 <?php unset($__componentOriginald69b52d99510f1e7cd3d80070b28ca18); ?>
 <?php endif; ?>
+            <?php endif; ?>
         </div>
 
         

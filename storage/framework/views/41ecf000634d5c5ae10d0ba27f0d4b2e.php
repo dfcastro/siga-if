@@ -29,7 +29,18 @@
                             </button>
                         </nav>
                     </div>
-
+                    <!--[if BLOCK]><![endif]--><?php if(auth()->user()->role === 'admin' || auth()->user()->fiscal_type === 'both'): ?>
+                        <div class="mt-4 flex space-x-4 text-sm">
+                            <button wire:click.prevent="setTypeFilter('')"
+                                class="<?php echo e($typeFilter === '' ? 'text-indigo-600 font-semibold' : 'text-gray-500'); ?>">Todos</button>
+                            <button wire:click.prevent="setTypeFilter('official')"
+                                class="<?php echo e($typeFilter === 'official' ? 'text-indigo-600 font-semibold' : 'text-gray-500'); ?>">Apenas
+                                Oficiais</button>
+                            <button wire:click.prevent="setTypeFilter('private')"
+                                class="<?php echo e($typeFilter === 'private' ? 'text-indigo-600 font-semibold' : 'text-gray-500'); ?>">Apenas
+                                Particulares</button>
+                        </div>
+                    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
                     <div class="shadow-md sm:rounded-lg overflow-hidden">
                         <table class="w-full text-sm text-left text-gray-500">
                             <thead class="text-xs text-gray-700 uppercase bg-gray-50 hidden sm:table-header-group">
@@ -51,6 +62,19 @@
                                         class="bg-white block sm:table-row p-4 mb-4 sm:p-0 sm:mb-0 border rounded-lg shadow-sm sm:border-b sm:rounded-none sm:shadow-none">
                                         <td
                                             class="flex justify-between items-center py-2 sm:py-4 sm:px-6 sm:table-cell border-b sm:border-none">
+                                            <span class="font-bold text-gray-600 sm:hidden">Tipo</span>
+                                            <span class="text-right">
+                                                <!--[if BLOCK]><![endif]--><?php if($submission->type === 'official'): ?>
+                                                    <span
+                                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Oficial</span>
+                                                <?php else: ?>
+                                                    <span
+                                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">Particular</span>
+                                                <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                                            </span>
+                                        </td>
+                                        <td
+                                            class="flex justify-between items-center py-2 sm:py-4 sm:px-6 sm:table-cell border-b sm:border-none">
                                             <span class="font-bold text-gray-600 sm:hidden">Porteiro</span> <span
                                                 class="text-right font-medium text-gray-900"><?php echo e($submission->guardUser?->name ?? 'Usuário Removido'); ?></span>
                                         </td>
@@ -58,7 +82,8 @@
                                             class="flex justify-between items-center py-2 sm:py-4 sm:px-6 sm:table-cell border-b sm:border-none">
                                             <span class="font-bold text-gray-600 sm:hidden">Período</span> <span
                                                 class="text-right"><?php echo e($submission->start_date->format('d/m/Y')); ?> a
-                                                <?php echo e($submission->end_date->format('d/m/Y')); ?></span></td>
+                                                <?php echo e($submission->end_date->format('d/m/Y')); ?></span>
+                                        </td>
                                         <!--[if BLOCK]><![endif]--><?php if($filterStatus === 'pending'): ?>
                                             <td
                                                 class="flex justify-between items-center py-2 sm:py-4 sm:px-6 sm:table-cell border-b sm:border-none">
@@ -162,7 +187,8 @@
                                         <tr class="<?php echo e($loop->even ? 'bg-gray-50' : ''); ?>">
                                             <td class="px-4 py-2 font-medium"><?php echo e($entry->vehicle?->model ?? 'N/A'); ?>
 
-                                                (<?php echo e($entry->vehicle?->license_plate ?? ''); ?>)</td>
+                                                (<?php echo e($entry->vehicle?->license_plate ?? ''); ?>)
+                                            </td>
                                             <td class="px-4 py-2"><?php echo e($entry->driver?->name ?? 'N/A'); ?></td>
                                             <td class="px-4 py-2 whitespace-nowrap">
                                                 <?php echo e($entry->entry_at?->format('d/m H:i')); ?> →
@@ -200,7 +226,8 @@
                                             <td class="px-4 py-2 font-medium whitespace-nowrap">
                                                 <?php echo e($trip->vehicle?->model ?? 'N/A'); ?>
 
-                                                (<?php echo e($trip->vehicle?->license_plate ?? ''); ?>)</td>
+                                                (<?php echo e($trip->vehicle?->license_plate ?? ''); ?>)
+                                            </td>
                                             <td class="px-4 py-2 whitespace-nowrap"><?php echo e($trip->driver?->name ?? 'N/A'); ?>
 
                                             </td>
@@ -216,6 +243,15 @@
                                         </tr>
                                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><!--[if ENDBLOCK]><![endif]-->
                                 </tbody>
+                                <tfoot class="bg-gray-100 font-bold sticky bottom-0">
+                                    <tr>
+                                        <td colspan="4" class="px-4 py-3 text-right text-gray-800 uppercase">
+                                            Distância Total Rodada:</td>
+                                        <td colspan="2" class="px-4 py-3 text-left font-mono text-gray-900">
+                                            <?php echo e(number_format($totalDistance, 0, ',', '.')); ?> km
+                                        </td>
+                                    </tr>
+                                </tfoot>
                             </table>
                         </div>
                         

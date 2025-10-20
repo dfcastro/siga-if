@@ -28,7 +28,18 @@
                             </button>
                         </nav>
                     </div>
-
+                    @if (auth()->user()->role === 'admin' || auth()->user()->fiscal_type === 'both')
+                        <div class="mt-4 flex space-x-4 text-sm">
+                            <button wire:click.prevent="setTypeFilter('')"
+                                class="{{ $typeFilter === '' ? 'text-indigo-600 font-semibold' : 'text-gray-500' }}">Todos</button>
+                            <button wire:click.prevent="setTypeFilter('official')"
+                                class="{{ $typeFilter === 'official' ? 'text-indigo-600 font-semibold' : 'text-gray-500' }}">Apenas
+                                Oficiais</button>
+                            <button wire:click.prevent="setTypeFilter('private')"
+                                class="{{ $typeFilter === 'private' ? 'text-indigo-600 font-semibold' : 'text-gray-500' }}">Apenas
+                                Particulares</button>
+                        </div>
+                    @endif
                     <div class="shadow-md sm:rounded-lg overflow-hidden">
                         <table class="w-full text-sm text-left text-gray-500">
                             <thead class="text-xs text-gray-700 uppercase bg-gray-50 hidden sm:table-header-group">
@@ -50,6 +61,19 @@
                                         class="bg-white block sm:table-row p-4 mb-4 sm:p-0 sm:mb-0 border rounded-lg shadow-sm sm:border-b sm:rounded-none sm:shadow-none">
                                         <td
                                             class="flex justify-between items-center py-2 sm:py-4 sm:px-6 sm:table-cell border-b sm:border-none">
+                                            <span class="font-bold text-gray-600 sm:hidden">Tipo</span>
+                                            <span class="text-right">
+                                                @if ($submission->type === 'official')
+                                                    <span
+                                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Oficial</span>
+                                                @else
+                                                    <span
+                                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">Particular</span>
+                                                @endif
+                                            </span>
+                                        </td>
+                                        <td
+                                            class="flex justify-between items-center py-2 sm:py-4 sm:px-6 sm:table-cell border-b sm:border-none">
                                             <span class="font-bold text-gray-600 sm:hidden">Porteiro</span> <span
                                                 class="text-right font-medium text-gray-900">{{ $submission->guardUser?->name ?? 'Usuário Removido' }}</span>
                                         </td>
@@ -57,7 +81,8 @@
                                             class="flex justify-between items-center py-2 sm:py-4 sm:px-6 sm:table-cell border-b sm:border-none">
                                             <span class="font-bold text-gray-600 sm:hidden">Período</span> <span
                                                 class="text-right">{{ $submission->start_date->format('d/m/Y') }} a
-                                                {{ $submission->end_date->format('d/m/Y') }}</span></td>
+                                                {{ $submission->end_date->format('d/m/Y') }}</span>
+                                        </td>
                                         @if ($filterStatus === 'pending')
                                             <td
                                                 class="flex justify-between items-center py-2 sm:py-4 sm:px-6 sm:table-cell border-b sm:border-none">
@@ -135,7 +160,8 @@
                                     @foreach ($privateEntries as $entry)
                                         <tr class="{{ $loop->even ? 'bg-gray-50' : '' }}">
                                             <td class="px-4 py-2 font-medium">{{ $entry->vehicle?->model ?? 'N/A' }}
-                                                ({{ $entry->vehicle?->license_plate ?? '' }})</td>
+                                                ({{ $entry->vehicle?->license_plate ?? '' }})
+                                            </td>
                                             <td class="px-4 py-2">{{ $entry->driver?->name ?? 'N/A' }}</td>
                                             <td class="px-4 py-2 whitespace-nowrap">
                                                 {{ $entry->entry_at?->format('d/m H:i') }} →
@@ -172,7 +198,8 @@
                                         <tr class="{{ $loop->even ? 'bg-gray-50' : '' }}">
                                             <td class="px-4 py-2 font-medium whitespace-nowrap">
                                                 {{ $trip->vehicle?->model ?? 'N/A' }}
-                                                ({{ $trip->vehicle?->license_plate ?? '' }})</td>
+                                                ({{ $trip->vehicle?->license_plate ?? '' }})
+                                            </td>
                                             <td class="px-4 py-2 whitespace-nowrap">{{ $trip->driver?->name ?? 'N/A' }}
                                             </td>
                                             <td class="px-4 py-2 break-words">{{ $trip->passengers ?: 'N/A' }}</td>
@@ -187,6 +214,15 @@
                                         </tr>
                                     @endforeach
                                 </tbody>
+                                <tfoot class="bg-gray-100 font-bold sticky bottom-0">
+                                    <tr>
+                                        <td colspan="4" class="px-4 py-3 text-right text-gray-800 uppercase">
+                                            Distância Total Rodada:</td>
+                                        <td colspan="2" class="px-4 py-3 text-left font-mono text-gray-900">
+                                            {{ number_format($totalDistance, 0, ',', '.') }} km
+                                        </td>
+                                    </tr>
+                                </tfoot>
                             </table>
                         </div>
                         {{-- LEGENDA ADICIONADA AQUI --}}

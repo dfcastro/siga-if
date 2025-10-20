@@ -15,12 +15,14 @@
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" icon="home">
                         Início
                     </x-nav-link>
-                    <x-nav-link :href="route('entries.create')" :active="request()->routeIs('entries.create')" icon="arrows-right-left">
-                        Entrada/Saída
-                    </x-nav-link>
-                    <x-nav-link :href="route('fleet.index')" :active="request()->routeIs('fleet.index')" icon="truck">
-                        Frota Oficial
-                    </x-nav-link>
+                    @if (in_array(Auth::user()->role, ['admin', 'porteiro']))
+                        <x-nav-link :href="route('entries.create')" :active="request()->routeIs('entries.create')" icon="arrows-right-left">
+                            Entrada/Saída
+                        </x-nav-link>
+                        <x-nav-link :href="route('fleet.index')" :active="request()->routeIs('fleet.index')" icon="truck">
+                            Frota Oficial
+                        </x-nav-link>
+                    @endif
 
                     {{-- Dropdown de Gerenciamento --}}
                     @if (in_array(Auth::user()->role, ['admin', 'fiscal', 'porteiro']))
@@ -139,10 +141,12 @@
     <div :class="{ 'block': open, 'hidden': !open }" class="hidden sm:hidden">
         <div class="pt-2 pb-3 space-y-1">
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">{{ __('Início') }}</x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('entries.create')"
-                :active="request()->routeIs('entries.create')">{{ __('Entrada/Saída') }}</x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('fleet.index')"
-                :active="request()->routeIs('fleet.index')">{{ __('Frota Oficial') }}</x-responsive-nav-link>
+            @if (in_array(Auth::user()->role, ['admin', 'porteiro']))
+                <x-responsive-nav-link :href="route('entries.create')"
+                    :active="request()->routeIs('entries.create')">{{ __('Entrada/Saída') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('fleet.index')"
+                    :active="request()->routeIs('fleet.index')">{{ __('Frota Oficial') }}</x-responsive-nav-link>
+            @endif
         </div>
 
         {{-- Seções do Menu Mobile --}}

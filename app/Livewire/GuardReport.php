@@ -11,6 +11,8 @@ use App\Models\ReportSubmission;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Layout;
 use Livewire\WithPagination;
+use App\Models\User;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 #[Layout('layouts.app')]
 class GuardReport extends Component
@@ -24,6 +26,7 @@ class GuardReport extends Component
     public string $observation = '';
     public ?int $selectedVehicleId = null;
     public Collection $selectedVehicleEntries;
+    public int $totalDistance = 0;
 
     // Propriedades do Modal de Confirmação
     public bool $showConfirmationModal = false;
@@ -42,16 +45,19 @@ class GuardReport extends Component
     public function updated($property)
     {
         if (in_array($property, ['startDate', 'endDate', 'submissionType'])) {
-            $this->resetPage();
-            $this->reset('selectedVehicleId', 'selectedVehicleEntries');
+            // Reseta a paginação para ambas as abas para evitar bugs
+            $this->resetPage('privatePage');
+            $this->resetPage('officialPage');
+            $this->reset('selectedVehicleId', 'selectedVehicleEntries', 'totalDistance');
         }
     }
 
     public function setSubmissionType(string $type)
     {
         $this->submissionType = $type;
-        $this->resetPage();
-        $this->reset('selectedVehicleId', 'selectedVehicleEntries');
+        $this->resetPage('privatePage');
+        $this->resetPage('officialPage');
+        $this->reset('selectedVehicleId', 'selectedVehicleEntries', 'totalDistance');
     }
 
     public function selectVehicle(int $vehicleId)
@@ -64,14 +70,16 @@ class GuardReport extends Component
             ->whereNull('report_submission_id')
             ->orderBy('departure_datetime', 'asc')
             ->get();
+
+        $this->totalDistance = $this->selectedVehicleEntries->sum('distance_traveled');
     }
 
     public function clearSelectedVehicle()
     {
-        $this->reset('selectedVehicleId', 'selectedVehicleEntries', 'observation');
+        $this->reset('selectedVehicleId', 'selectedVehicleEntries', 'observation', 'totalDistance');
     }
 
-    // --- NOVA LÓGICA DE SUBMISSÃO (EFICIENTE) ---
+    // --- LÓGICA DE SUBMISSÃO (EFICIENTE) ---
 
     public function submitPrivateReport()
     {
@@ -85,12 +93,19 @@ class GuardReport extends Component
             return;
         }
 
+        $fiscal = User::where('role', 'fiscal')
+            ->whereIn('fiscal_type', ['private', 'both'])
+            ->inRandomOrder()
+            ->first();
+
         $submission = ReportSubmission::create([
-            'user_id'    => Auth::id(),
-            'start_date' => $this->startDate,
-            'end_date'   => $this->endDate,
-            'type'       => 'private',
-            'status'     => 'pending',
+            // --- CORREÇÃO APLICADA AQUI ---
+            'guard_id'           => Auth::id(), // Alterado de 'user_id' para 'guard_id'
+            'assigned_fiscal_id' => $fiscal ? $fiscal->id : null,
+            'start_date'         => $this->startDate,
+            'end_date'           => $this->endDate,
+            'type'               => 'private',
+            'status'             => 'pending',
         ]);
 
         PrivateEntry::whereIn('id', $entryIds)->update(['report_submission_id' => $submission->id]);
@@ -106,27 +121,32 @@ class GuardReport extends Component
             'selectedVehicleEntries' => 'required|min:1'
         ]);
 
+        $fiscal = User::where('role', 'fiscal')
+            ->whereIn('fiscal_type', ['official', 'both'])
+            ->inRandomOrder()
+            ->first();
+
         $submission = ReportSubmission::create([
-            'user_id'     => Auth::id(),
-            'vehicle_id'  => $this->selectedVehicleId,
-            'start_date'  => $this->startDate,
-            'end_date'    => $this->endDate,
-            'observation' => $this->observation,
-            'type'        => 'official',
-            'status'      => 'pending',
+            // --- CORREÇÃO APLICADA AQUI ---
+            'guard_id'           => Auth::id(), // Alterado de 'user_id' para 'guard_id'
+            'assigned_fiscal_id' => $fiscal ? $fiscal->id : null,
+            'vehicle_id'         => $this->selectedVehicleId,
+            'start_date'         => $this->startDate,
+            'end_date'           => $this->endDate,
+            'observation'        => $this->observation,
+            'type'               => 'official',
+            'status'             => 'pending',
         ]);
 
         OfficialTrip::whereIn('id', $this->selectedVehicleEntries->pluck('id'))->update(['report_submission_id' => $submission->id]);
         session()->flash('success', 'Relatório do veículo submetido com sucesso!');
         $this->clearSelectedVehicle();
     }
-
     // --- LÓGICA DO MODAL ADAPTADA ---
 
     public function confirmSubmission(string $type)
     {
         if ($type === 'private') {
-            // Conta os registros antes de abrir o modal
             $count = PrivateEntry::where('guard_on_entry', Auth::user()->name)
                 ->whereBetween('entry_at', [Carbon::parse($this->startDate)->startOfDay(), Carbon::parse($this->endDate)->endOfDay()])
                 ->whereNull('report_submission_id')
@@ -136,18 +156,10 @@ class GuardReport extends Component
                 session()->flash('error', 'Nenhum registro para submeter.');
                 return;
             }
-            $this->confirmAction(
-                'submitPrivateReport',
-                'Confirmar Submissão',
-                "Tem certeza que deseja submeter os {$count} registros de veículos particulares deste período?"
-            );
+            $this->confirmAction('submitPrivateReport', 'Confirmar Submissão', "Tem certeza que deseja submeter os {$count} registros de veículos particulares deste período?");
         } elseif ($type === 'official') {
             $this->validate(['selectedVehicleId' => 'required']);
-            $this->confirmAction(
-                'submitOfficialReport',
-                'Confirmar Submissão',
-                'Tem certeza que deseja submeter o relatório para o veículo selecionado? Esta ação não pode ser desfeita.'
-            );
+            $this->confirmAction('submitOfficialReport', 'Confirmar Submissão', 'Tem certeza que deseja submeter o relatório para o veículo selecionado? Esta ação não pode ser desfeita.');
         }
     }
 
@@ -172,7 +184,7 @@ class GuardReport extends Component
     {
         $privateEntries = collect();
         $vehiclesWithOfficialTrips = collect();
-        $officialTrips = null;
+        $officialTripsPaginator = null;
 
         if ($this->submissionType === 'private') {
             $privateEntries = PrivateEntry::with('vehicle', 'driver')
@@ -184,17 +196,49 @@ class GuardReport extends Component
         }
 
         if ($this->submissionType === 'official') {
-            $officialTrips = OfficialTrip::with(['vehicle' => fn($q) => $q->withTrashed()])
+            // --- NOVA LÓGICA DE PAGINAÇÃO CORRETA ---
+
+            // 1. Cria a consulta base para encontrar as viagens relevantes.
+            $baseQuery = OfficialTrip::query()
                 ->where('guard_on_departure', Auth::user()->name)
                 ->whereBetween('departure_datetime', [Carbon::parse($this->startDate)->startOfDay(), Carbon::parse($this->endDate)->endOfDay()])
                 ->whereNull('report_submission_id')
-                ->whereHas('vehicle', fn($q) => $q->withTrashed())
-                ->paginate(15, ['*'], 'officialPage');
+                ->whereHas('vehicle', fn($q) => $q->withTrashed());
 
-            $vehiclesWithOfficialTrips = $officialTrips->groupBy('vehicle_id')->map(function ($vehicleTrips) {
+            // 2. Obtém TODOS os IDs de veículos únicos que correspondem aos critérios. Esta é uma consulta leve.
+            $allMatchingVehicleIds = $baseQuery->clone()->select('vehicle_id')->distinct()->pluck('vehicle_id');
+
+            // 3. Pagina manualmente a coleção de IDs.
+            $perPage = 10;
+            $currentPage = $this->getPage('officialPage');
+            $pagedVehicleIds = $allMatchingVehicleIds->slice(($currentPage - 1) * $perPage, $perPage);
+
+            // 4. Cria a instância do paginador com o TOTAL CORRETO (o número de veículos únicos).
+            $officialTripsPaginator = new LengthAwarePaginator(
+                $pagedVehicleIds,
+                $allMatchingVehicleIds->count(), // << Usa a contagem de veículos únicos
+                $perPage,
+                $currentPage,
+                ['path' => request()->url(), 'pageName' => 'officialPage']
+            );
+
+            // 5. Busca os detalhes das viagens APENAS para os veículos da página atual.
+            $tripsForCurrentPage = collect();
+            if ($pagedVehicleIds->isNotEmpty()) {
+                $tripsForCurrentPage = OfficialTrip::with(['vehicle' => fn($q) => $q->withTrashed()])
+                    ->whereIn('vehicle_id', $pagedVehicleIds)
+                    ->where('guard_on_departure', Auth::user()->name)
+                    ->whereBetween('departure_datetime', [Carbon::parse($this->startDate)->startOfDay(), Carbon::parse($this->endDate)->endOfDay()])
+                    ->whereNull('report_submission_id')
+                    ->get();
+            }
+
+            // 6. Agrupa os resultados da página atual para exibir na tela.
+            $vehiclesWithOfficialTrips = $tripsForCurrentPage->groupBy('vehicle_id')->map(function ($vehicleTrips) {
                 return [
                     'vehicle' => $vehicleTrips->first()->vehicle,
                     'count' => $vehicleTrips->count(),
+                    'oldest_trip_date' => $vehicleTrips->min('departure_datetime'),
                 ];
             });
         }
@@ -202,7 +246,7 @@ class GuardReport extends Component
         return view('livewire.guard-report', [
             'privateEntries' => $privateEntries,
             'vehiclesWithOfficialTrips' => $vehiclesWithOfficialTrips,
-            'officialTrips' => $officialTrips,
+            'officialTrips' => $officialTripsPaginator, // Passa o objeto paginador correto para a view
         ]);
     }
 }

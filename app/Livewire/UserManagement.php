@@ -17,8 +17,12 @@ class UserManagement extends Component
     public $userIdToDelete;
     public $userNameToDelete;
     public string $successMessage = '';
+    public ?string $fiscal_type = null;
 
-    public function layoutData() { return ['header' => 'Gerenciamento de Usuários']; }
+    public function layoutData()
+    {
+        return ['header' => 'Gerenciamento de Usuários'];
+    }
 
     public function render()
     {
@@ -27,18 +31,31 @@ class UserManagement extends Component
         ]);
     }
 
-    protected function rules() {
+    protected function rules()
+    {
         return [
             'name' => 'required|min:3',
             'email' => ['required', 'email', Rule::unique('users')->ignore($this->userId)],
             'role' => ['required', Rule::in(['admin', 'fiscal', 'porteiro'])],
             'password' => [$this->userId ? 'nullable' : 'required', 'min:8'],
+            'fiscal_type' => 'nullable|required_if:role,fiscal|in:official,private,both',
         ];
     }
 
-    public function create() { $this->resetInputFields(); $this->isModalOpen = true; }
-    public function closeModal() { $this->isModalOpen = false; }
-    private function resetInputFields(){ $this->reset(['name', 'email', 'role', 'password', 'userId', 'successMessage']); $this->resetErrorBag(); }
+    public function create()
+    {
+        $this->resetInputFields();
+        $this->isModalOpen = true;
+    }
+    public function closeModal()
+    {
+        $this->isModalOpen = false;
+    }
+    private function resetInputFields()
+    {
+        $this->reset(['name', 'email', 'role', 'password', 'userId', 'successMessage','fiscal_type']);
+        $this->resetErrorBag();
+    }
 
     public function edit($id)
     {
@@ -47,13 +64,14 @@ class UserManagement extends Component
         $this->name = $user->name;
         $this->email = $user->email;
         $this->role = $user->role;
+        $this->fiscal_type = $user->fiscal_type;
         $this->isModalOpen = true;
     }
 
     public function store()
     {
         $validatedData = $this->validate();
-        $data = ['name' => $validatedData['name'], 'email' => $validatedData['email'], 'role' => $validatedData['role']];
+        $data = ['name' => $validatedData['name'], 'email' => $validatedData['email'], 'role' => $validatedData['role'], 'fiscal_type' => $this->role === 'fiscal' ? $this->fiscal_type : null,];
 
         if (!empty($validatedData['password'])) {
             $data['password'] = Hash::make($validatedData['password']);
@@ -71,7 +89,7 @@ class UserManagement extends Component
         $this->userNameToDelete = $user->name;
         $this->isConfirmModalOpen = true;
     }
-    
+
     public function deleteUser()
     {
         // Impede que o usuário apague a si mesmo
@@ -89,5 +107,8 @@ class UserManagement extends Component
         $this->closeConfirmModal();
     }
 
-    public function closeConfirmModal() { $this->isConfirmModalOpen = false; }
+    public function closeConfirmModal()
+    {
+        $this->isConfirmModalOpen = false;
+    }
 }

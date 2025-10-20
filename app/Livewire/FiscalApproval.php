@@ -21,6 +21,8 @@ class FiscalApproval extends Component
     public Collection $submissionEntries;
     public bool $showDetailsModal = false;
     public string $filterStatus = 'pending';
+    public int $totalDistance = 0;
+    public string $typeFilter = '';
 
     public function layoutData()
     {
@@ -33,16 +35,37 @@ class FiscalApproval extends Component
         $this->resetPage(); // Reseta a paginação ao mudar de aba
     }
 
+    public function setTypeFilter(string $type)
+    {
+        $this->typeFilter = $type;
+        $this->resetPage();
+    }
+
     public function render()
     {
-        // Usamos o null-safe operator (?->) para segurança, embora guardUser não deva ser nulo
-        $query = ReportSubmission::with(['guardUser', 'fiscal'])
+        $query = ReportSubmission::with(['guardUser', 'fiscal', 'vehicle' => fn($q) => $q->withTrashed()]) // Adiciona o 'vehicle' para a tabela principal
             ->where('status', $this->filterStatus);
 
+        $user = auth()->user();
+
+        if ($user->role !== 'admin') {
+            if ($user->fiscal_type === 'official') {
+                $query->where('type', 'official');
+            } elseif ($user->fiscal_type === 'private') {
+                $query->where('type', 'private');
+            }
+        }
+
+        // Aplica o filtro de tipo da interface, se um for selecionado
+        if ($this->typeFilter) {
+            $query->where('type', $this->typeFilter);
+        }
+        // A sua lógica de ordenação permanece a mesma
         if ($this->filterStatus === 'approved') {
             $query->orderBy('approved_at', 'desc');
         } else {
-            $query->orderBy('submitted_at', 'asc');
+            // Ordena os pendentes pelos mais antigos primeiro
+            $query->orderBy('created_at', 'asc');
         }
 
         $submissions = $query->paginate(10);
@@ -56,21 +79,16 @@ class FiscalApproval extends Component
     {
         $this->selectedSubmission = ReportSubmission::with(['guardUser', 'fiscal'])->findOrFail($submissionId);
 
-        // Busca registos de veículos particulares
-        $privateEntries = PrivateEntry::with('vehicle', 'driver')
-            ->where('report_submission_id', $submissionId)
-            ->get();
-
-        // Busca registos de frota oficial
-        // ---- A CORREÇÃO CRÍTICA ESTAVA AQUI ----
-        $officialTrips = OfficialTrip::with('vehicle', 'driver')
-            ->where('report_submission_id', $submissionId) // Corrigido de '>' para '='
-            ->get();
-
-        // Junta as duas coleções e ordena
-        $this->submissionEntries = $privateEntries->concat($officialTrips)->sortBy(function ($entry) {
-            return $entry instanceof PrivateEntry ? $entry->entry_at : $entry->departure_datetime;
-        });
+        if ($this->selectedSubmission->type === 'private') {
+            $this->submissionEntries = PrivateEntry::with(['vehicle' => fn($q) => $q->withTrashed(), 'driver' => fn($q) => $q->withTrashed()])
+                ->where('report_submission_id', $submissionId)
+                ->get();
+        } else {
+            $this->submissionEntries = OfficialTrip::with(['vehicle' => fn($q) => $q->withTrashed(), 'driver' => fn($q) => $q->withTrashed()])
+                ->where('report_submission_id', $submissionId)
+                ->get();
+            $this->totalDistance = $this->submissionEntries->sum('distance_traveled');
+        }
 
         $this->showDetailsModal = true;
     }
@@ -83,12 +101,17 @@ class FiscalApproval extends Component
         }
 
         $this->selectedSubmission->update([
-            'fiscal_id'   => Auth::id(),
+            'fiscal_id'   => Auth::id(), // Registra quem aprovou
             'approved_at' => now(),
             'status'      => 'approved',
         ]);
 
-        // Usamos o null-safe operator para segurança
+        // Atribui o fiscal que aprovou ao relatório, caso não tenha sido atribuído antes
+        if (is_null($this->selectedSubmission->assigned_fiscal_id)) {
+            $this->selectedSubmission->assigned_fiscal_id = Auth::id();
+            $this->selectedSubmission->save();
+        }
+
         session()->flash('message', 'Relatório do porteiro ' . $this->selectedSubmission->guardUser?->name . ' foi aprovado com sucesso.');
 
         $this->showDetailsModal = false;
@@ -98,6 +121,6 @@ class FiscalApproval extends Component
     public function cancelView()
     {
         $this->showDetailsModal = false;
-        $this->reset('selectedSubmission');
+        $this->reset('selectedSubmission', 'totalDistance');
     }
 }
