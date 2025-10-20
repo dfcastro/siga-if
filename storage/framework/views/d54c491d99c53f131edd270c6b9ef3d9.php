@@ -149,7 +149,7 @@
 <?php $component = $__componentOriginale3da9d84bb64e4bc2eeebaafabfb2581; ?>
 <?php unset($__componentOriginale3da9d84bb64e4bc2eeebaafabfb2581); ?>
 <?php endif; ?>
-            <textarea wire:model="observation" id="observation" rows="3"
+            <textarea wire:model="observation" id="observation" maxlength="100" cols="10" rows="1"
                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-ifnmg-green focus:ring-ifnmg-green"></textarea>
             <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['observation'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');

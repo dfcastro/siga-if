@@ -520,6 +520,17 @@
 <?php $component = $__componentOriginal18c21970322f9e5c938bc954620c12bb; ?>
 <?php unset($__componentOriginal18c21970322f9e5c938bc954620c12bb); ?>
 <?php endif; ?>
+
+                        
+                        <!--[if BLOCK]><![endif]--><?php if($lastOdometer !== null): ?>
+                            <p class="text-sm text-gray-500 mt-1">
+                                Último odómetro registado: <strong><?php echo e(number_format($lastOdometer, 0, ',', '.')); ?>
+
+                                    km</strong>.
+                            </p>
+                        <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                        
+
                         <?php if (isset($component)) { $__componentOriginalf94ed9c5393ef72725d159fe01139746 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalf94ed9c5393ef72725d159fe01139746 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.input-error','data' => ['messages' => $errors->get('departure_odometer'),'class' => 'mt-2']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
@@ -540,11 +551,11 @@
 <?php $component = $__componentOriginalf94ed9c5393ef72725d159fe01139746; ?>
 <?php unset($__componentOriginalf94ed9c5393ef72725d159fe01139746); ?>
 <?php endif; ?>
-                    </div>
                 </div>
+            </div>
 
-                <div class="mt-6">
-                    <?php if (isset($component)) { $__componentOriginale3da9d84bb64e4bc2eeebaafabfb2581 = $component; } ?>
+            <div class="mt-6">
+                <?php if (isset($component)) { $__componentOriginale3da9d84bb64e4bc2eeebaafabfb2581 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginale3da9d84bb64e4bc2eeebaafabfb2581 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.input-label','data' => ['for' => 'passengers','value' => __('Passageiros (opcional)')]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('input-label'); ?>
@@ -564,11 +575,11 @@
 <?php $component = $__componentOriginale3da9d84bb64e4bc2eeebaafabfb2581; ?>
 <?php unset($__componentOriginale3da9d84bb64e4bc2eeebaafabfb2581); ?>
 <?php endif; ?>
-                    <textarea id="passengers" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" wire:model="passengers"
-                        rows="2" maxlength="1000"></textarea>
-                </div>
-                <div class="mt-6">
-                    <?php if (isset($component)) { $__componentOriginale3da9d84bb64e4bc2eeebaafabfb2581 = $component; } ?>
+                <textarea id="passengers" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" wire:model="passengers"
+                    rows="2" maxlength="1000"></textarea>
+            </div>
+            <div class="mt-6">
+                <?php if (isset($component)) { $__componentOriginale3da9d84bb64e4bc2eeebaafabfb2581 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginale3da9d84bb64e4bc2eeebaafabfb2581 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.input-label','data' => ['for' => 'return_observation','value' => __('Observação / Previsão de Retorno (opcional)')]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('input-label'); ?>
@@ -588,14 +599,14 @@
 <?php $component = $__componentOriginale3da9d84bb64e4bc2eeebaafabfb2581; ?>
 <?php unset($__componentOriginale3da9d84bb64e4bc2eeebaafabfb2581); ?>
 <?php endif; ?>
-                    <textarea id="return_observation" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
-                        wire:model="return_observation" rows="2" maxlength="1000"
-                        placeholder="Ex: Viagem para Salinas, retorno hoje às 18h."></textarea>
-                </div>
+                <textarea id="return_observation" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+                    wire:model="return_observation" rows="2" maxlength="1000"
+                    placeholder="Ex: Viagem para Salinas, retorno hoje às 18h."></textarea>
             </div>
+</div>
 
-            <div class="px-6 py-4 bg-gray-50 flex items-center justify-end space-x-2">
-                <?php if (isset($component)) { $__componentOriginal3b0e04e43cf890250cc4d85cff4d94af = $component; } ?>
+<div class="px-6 py-4 bg-gray-50 flex items-center justify-end space-x-2">
+    <?php if (isset($component)) { $__componentOriginal3b0e04e43cf890250cc4d85cff4d94af = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal3b0e04e43cf890250cc4d85cff4d94af = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.secondary-button','data' => ['type' => 'button','wire:click' => 'closeDepartureModal']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('secondary-button'); ?>
@@ -614,7 +625,7 @@
 <?php $component = $__componentOriginal3b0e04e43cf890250cc4d85cff4d94af; ?>
 <?php unset($__componentOriginal3b0e04e43cf890250cc4d85cff4d94af); ?>
 <?php endif; ?>
-                <?php if (isset($component)) { $__componentOriginald411d1792bd6cc877d687758b753742c = $component; } ?>
+    <?php if (isset($component)) { $__componentOriginald411d1792bd6cc877d687758b753742c = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginald411d1792bd6cc877d687758b753742c = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.primary-button','data' => ['type' => 'submit','wire:loading.attr' => 'disabled']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('primary-button'); ?>
@@ -633,9 +644,9 @@
 <?php $component = $__componentOriginald411d1792bd6cc877d687758b753742c; ?>
 <?php unset($__componentOriginald411d1792bd6cc877d687758b753742c); ?>
 <?php endif; ?>
-            </div>
-        </form>
-     <?php echo $__env->renderComponent(); ?>
+</div>
+</form>
+ <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginal9f64f32e90b9102968f2bc548315018c)): ?>
 <?php $attributes = $__attributesOriginal9f64f32e90b9102968f2bc548315018c; ?>
@@ -646,8 +657,8 @@
 <?php unset($__componentOriginal9f64f32e90b9102968f2bc548315018c); ?>
 <?php endif; ?>
 
-    
-    <?php if (isset($component)) { $__componentOriginal9f64f32e90b9102968f2bc548315018c = $component; } ?>
+
+<?php if (isset($component)) { $__componentOriginal9f64f32e90b9102968f2bc548315018c = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal9f64f32e90b9102968f2bc548315018c = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.modal','data' => ['wire:model.live' => 'isArrivalModalOpen','maxWidth' => 'lg']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('modal'); ?>
@@ -657,29 +668,29 @@
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
 <?php $component->withAttributes(['wire:model.live' => 'isArrivalModalOpen','maxWidth' => 'lg']); ?>
-        <!--[if BLOCK]><![endif]--><?php if($tripToUpdate): ?>
-            <div class="px-6 py-4 border-b">
-                <h3 class="text-lg font-semibold">Registrar Chegada de Veículo</h3>
-            </div>
-            <form wire:submit="storeArrival" x-data="{
-                formatNumber(value) {
-                    if (!value) return '';
-                    let clean = value.toString().replace(/[^0-9]/g, '');
-                    let limited = clean.substring(0, 7); // Limita a 7 dígitos
-                    return limited.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-                }
-            }">
-                <div class="p-6 space-y-3">
-                    <p><strong>Veículo:</strong> <?php echo e($tripToUpdate->vehicle->model); ?>
+    <!--[if BLOCK]><![endif]--><?php if($tripToUpdate): ?>
+        <div class="px-6 py-4 border-b">
+            <h3 class="text-lg font-semibold">Registrar Chegada de Veículo</h3>
+        </div>
+        <form wire:submit="storeArrival" x-data="{
+            formatNumber(value) {
+                if (!value) return '';
+                let clean = value.toString().replace(/[^0-9]/g, '');
+                let limited = clean.substring(0, 7); // Limita a 7 dígitos
+                return limited.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            }
+        }">
+            <div class="p-6 space-y-3">
+                <p><strong>Veículo:</strong> <?php echo e($tripToUpdate->vehicle->model); ?>
 
-                        (<?php echo e($tripToUpdate->vehicle->license_plate); ?>)</p>
-                    <p><strong>Condutor:</strong> <?php echo e($tripToUpdate->driver->name); ?></p>
-                    <p><strong>Destino:</strong> <?php echo e($tripToUpdate->destination); ?></p>
-                    <p><strong>KM de Saída:</strong>
-                        <?php echo e(number_format($tripToUpdate->departure_odometer, 0, ',', '.')); ?> km</p>
-                    <hr class="border-gray-200">
-                    <div>
-                        <?php if (isset($component)) { $__componentOriginale3da9d84bb64e4bc2eeebaafabfb2581 = $component; } ?>
+                    (<?php echo e($tripToUpdate->vehicle->license_plate); ?>)</p>
+                <p><strong>Condutor:</strong> <?php echo e($tripToUpdate->driver->name); ?></p>
+                <p><strong>Destino:</strong> <?php echo e($tripToUpdate->destination); ?></p>
+                <p><strong>KM de Saída:</strong>
+                    <?php echo e(number_format($tripToUpdate->departure_odometer, 0, ',', '.')); ?> km</p>
+                <hr class="border-gray-200">
+                <div>
+                    <?php if (isset($component)) { $__componentOriginale3da9d84bb64e4bc2eeebaafabfb2581 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginale3da9d84bb64e4bc2eeebaafabfb2581 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.input-label','data' => ['for' => 'arrival_odometer','value' => __('Quilometragem de Chegada (km)')]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('input-label'); ?>
@@ -699,7 +710,7 @@
 <?php $component = $__componentOriginale3da9d84bb64e4bc2eeebaafabfb2581; ?>
 <?php unset($__componentOriginale3da9d84bb64e4bc2eeebaafabfb2581); ?>
 <?php endif; ?>
-                        <?php if (isset($component)) { $__componentOriginal18c21970322f9e5c938bc954620c12bb = $component; } ?>
+                    <?php if (isset($component)) { $__componentOriginal18c21970322f9e5c938bc954620c12bb = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal18c21970322f9e5c938bc954620c12bb = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.text-input','data' => ['type' => 'text','id' => 'arrival_odometer','class' => 'mt-1 block w-full','xOn:input' => '$event.target.value = formatNumber($event.target.value)','wire:model' => 'arrival_odometer']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('text-input'); ?>
@@ -719,7 +730,7 @@
 <?php $component = $__componentOriginal18c21970322f9e5c938bc954620c12bb; ?>
 <?php unset($__componentOriginal18c21970322f9e5c938bc954620c12bb); ?>
 <?php endif; ?>
-                        <?php if (isset($component)) { $__componentOriginalf94ed9c5393ef72725d159fe01139746 = $component; } ?>
+                    <?php if (isset($component)) { $__componentOriginalf94ed9c5393ef72725d159fe01139746 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalf94ed9c5393ef72725d159fe01139746 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.input-error','data' => ['messages' => $errors->get('arrival_odometer'),'class' => 'mt-2']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('input-error'); ?>
@@ -739,10 +750,10 @@
 <?php $component = $__componentOriginalf94ed9c5393ef72725d159fe01139746; ?>
 <?php unset($__componentOriginalf94ed9c5393ef72725d159fe01139746); ?>
 <?php endif; ?>
-                    </div>
                 </div>
-                <div class="px-6 py-4 bg-gray-50 flex items-center justify-end space-x-2">
-                    <?php if (isset($component)) { $__componentOriginal3b0e04e43cf890250cc4d85cff4d94af = $component; } ?>
+            </div>
+            <div class="px-6 py-4 bg-gray-50 flex items-center justify-end space-x-2">
+                <?php if (isset($component)) { $__componentOriginal3b0e04e43cf890250cc4d85cff4d94af = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal3b0e04e43cf890250cc4d85cff4d94af = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.secondary-button','data' => ['type' => 'button','wire:click' => 'closeArrivalModal']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('secondary-button'); ?>
@@ -761,7 +772,7 @@
 <?php $component = $__componentOriginal3b0e04e43cf890250cc4d85cff4d94af; ?>
 <?php unset($__componentOriginal3b0e04e43cf890250cc4d85cff4d94af); ?>
 <?php endif; ?>
-                    <?php if (isset($component)) { $__componentOriginald411d1792bd6cc877d687758b753742c = $component; } ?>
+                <?php if (isset($component)) { $__componentOriginald411d1792bd6cc877d687758b753742c = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginald411d1792bd6cc877d687758b753742c = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.primary-button','data' => ['type' => 'submit','class' => 'bg-green-600 hover:bg-green-700','wire:loading.attr' => 'disabled']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('primary-button'); ?>
@@ -780,10 +791,10 @@
 <?php $component = $__componentOriginald411d1792bd6cc877d687758b753742c; ?>
 <?php unset($__componentOriginald411d1792bd6cc877d687758b753742c); ?>
 <?php endif; ?>
-                </div>
-            </form>
-        <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
-     <?php echo $__env->renderComponent(); ?>
+            </div>
+        </form>
+    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+ <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginal9f64f32e90b9102968f2bc548315018c)): ?>
 <?php $attributes = $__attributesOriginal9f64f32e90b9102968f2bc548315018c; ?>

@@ -276,66 +276,76 @@
                         <x-text-input type="text" id="departure_odometer" class="mt-1 block w-full"
                             x-on:input="$event.target.value = formatNumber($event.target.value)"
                             wire:model="departure_odometer" />
-                        <x-input-error :messages="$errors->get('departure_odometer')" class="mt-2" />
-                    </div>
-                </div>
 
-                <div class="mt-6">
-                    <x-input-label for="passengers" :value="__('Passageiros (opcional)')" />
-                    <textarea id="passengers" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" wire:model="passengers"
-                        rows="2" maxlength="1000"></textarea>
-                </div>
-                <div class="mt-6">
-                    <x-input-label for="return_observation" :value="__('Observação / Previsão de Retorno (opcional)')" />
-                    <textarea id="return_observation" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
-                        wire:model="return_observation" rows="2" maxlength="1000"
-                        placeholder="Ex: Viagem para Salinas, retorno hoje às 18h."></textarea>
+                        {{-- >>> ADICIONE ESTE BLOCO <<< --}}
+                        @if ($lastOdometer !== null)
+                            <p class="text-sm text-gray-500 mt-1">
+                                Último odómetro registado: <strong>{{ number_format($lastOdometer, 0, ',', '.') }}
+                                    km</strong>.
+                            </p>
+                        @endif
+                        {{-- >>> FIM DO BLOCO <<< --}}
+
+                        <x-input-error :messages="$errors->get('departure_odometer')" class="mt-2" />
                 </div>
             </div>
 
+            <div class="mt-6">
+                <x-input-label for="passengers" :value="__('Passageiros (opcional)')" />
+                <textarea id="passengers" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" wire:model="passengers"
+                    rows="2" maxlength="1000"></textarea>
+            </div>
+            <div class="mt-6">
+                <x-input-label for="return_observation" :value="__('Observação / Previsão de Retorno (opcional)')" />
+                <textarea id="return_observation" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+                    wire:model="return_observation" rows="2" maxlength="1000"
+                    placeholder="Ex: Viagem para Salinas, retorno hoje às 18h."></textarea>
+            </div>
+</div>
+
+<div class="px-6 py-4 bg-gray-50 flex items-center justify-end space-x-2">
+    <x-secondary-button type="button" wire:click="closeDepartureModal">Fechar</x-secondary-button>
+    <x-primary-button type="submit" wire:loading.attr="disabled">Salvar Saída</x-primary-button>
+</div>
+</form>
+</x-modal>
+
+{{-- Modal de Registro de Chegada --}}
+<x-modal wire:model.live="isArrivalModalOpen" maxWidth="lg">
+    @if ($tripToUpdate)
+        <div class="px-6 py-4 border-b">
+            <h3 class="text-lg font-semibold">Registrar Chegada de Veículo</h3>
+        </div>
+        <form wire:submit="storeArrival" x-data="{
+            formatNumber(value) {
+                if (!value) return '';
+                let clean = value.toString().replace(/[^0-9]/g, '');
+                let limited = clean.substring(0, 7); // Limita a 7 dígitos
+                return limited.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            }
+        }">
+            <div class="p-6 space-y-3">
+                <p><strong>Veículo:</strong> {{ $tripToUpdate->vehicle->model }}
+                    ({{ $tripToUpdate->vehicle->license_plate }})</p>
+                <p><strong>Condutor:</strong> {{ $tripToUpdate->driver->name }}</p>
+                <p><strong>Destino:</strong> {{ $tripToUpdate->destination }}</p>
+                <p><strong>KM de Saída:</strong>
+                    {{ number_format($tripToUpdate->departure_odometer, 0, ',', '.') }} km</p>
+                <hr class="border-gray-200">
+                <div>
+                    <x-input-label for="arrival_odometer" :value="__('Quilometragem de Chegada (km)')" />
+                    <x-text-input type="text" id="arrival_odometer" class="mt-1 block w-full"
+                        x-on:input="$event.target.value = formatNumber($event.target.value)"
+                        wire:model="arrival_odometer" />
+                    <x-input-error :messages="$errors->get('arrival_odometer')" class="mt-2" />
+                </div>
+            </div>
             <div class="px-6 py-4 bg-gray-50 flex items-center justify-end space-x-2">
-                <x-secondary-button type="button" wire:click="closeDepartureModal">Fechar</x-secondary-button>
-                <x-primary-button type="submit" wire:loading.attr="disabled">Salvar Saída</x-primary-button>
+                <x-secondary-button type="button" wire:click="closeArrivalModal">Fechar</x-secondary-button>
+                <x-primary-button type="submit" class="bg-green-600 hover:bg-green-700"
+                    wire:loading.attr="disabled">Salvar Chegada</x-primary-button>
             </div>
         </form>
-    </x-modal>
-
-    {{-- Modal de Registro de Chegada --}}
-    <x-modal wire:model.live="isArrivalModalOpen" maxWidth="lg">
-        @if ($tripToUpdate)
-            <div class="px-6 py-4 border-b">
-                <h3 class="text-lg font-semibold">Registrar Chegada de Veículo</h3>
-            </div>
-            <form wire:submit="storeArrival" x-data="{
-                formatNumber(value) {
-                    if (!value) return '';
-                    let clean = value.toString().replace(/[^0-9]/g, '');
-                    let limited = clean.substring(0, 7); // Limita a 7 dígitos
-                    return limited.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-                }
-            }">
-                <div class="p-6 space-y-3">
-                    <p><strong>Veículo:</strong> {{ $tripToUpdate->vehicle->model }}
-                        ({{ $tripToUpdate->vehicle->license_plate }})</p>
-                    <p><strong>Condutor:</strong> {{ $tripToUpdate->driver->name }}</p>
-                    <p><strong>Destino:</strong> {{ $tripToUpdate->destination }}</p>
-                    <p><strong>KM de Saída:</strong>
-                        {{ number_format($tripToUpdate->departure_odometer, 0, ',', '.') }} km</p>
-                    <hr class="border-gray-200">
-                    <div>
-                        <x-input-label for="arrival_odometer" :value="__('Quilometragem de Chegada (km)')" />
-                        <x-text-input type="text" id="arrival_odometer" class="mt-1 block w-full"
-                            x-on:input="$event.target.value = formatNumber($event.target.value)"
-                            wire:model="arrival_odometer" />
-                        <x-input-error :messages="$errors->get('arrival_odometer')" class="mt-2" />
-                    </div>
-                </div>
-                <div class="px-6 py-4 bg-gray-50 flex items-center justify-end space-x-2">
-                    <x-secondary-button type="button" wire:click="closeArrivalModal">Fechar</x-secondary-button>
-                    <x-primary-button type="submit" class="bg-green-600 hover:bg-green-700"
-                        wire:loading.attr="disabled">Salvar Chegada</x-primary-button>
-                </div>
-            </form>
-        @endif
-    </x-modal>
+    @endif
+</x-modal>
 </div>

@@ -6,6 +6,7 @@ use App\Models\OfficialTrip;
 use App\Models\PrivateEntry;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
+use Illuminate\Validation\ValidationException; // Importar para erros customizados
 
 class PendingExits extends Component
 {
@@ -19,7 +20,7 @@ class PendingExits extends Component
 
     // Propriedades para o modal de CHEGADA (veículos oficiais)
     public ?OfficialTrip $tripToUpdate = null;
-    public $arrival_km;
+    public $arrival_odometer; // NOME CORRIGIDO para corresponder à base de dados
     public bool $isArrivalModalOpen = false;
 
     public function mount()
@@ -29,6 +30,7 @@ class PendingExits extends Component
 
     public function loadPendingData()
     {
+        // A sua lógica para carregar dados pendentes está ótima, sem necessidade de alteração.
         $guardName = Auth::user()->name;
 
         $this->pendingPrivateEntries = PrivateEntry::where('guard_on_entry', $guardName)
@@ -45,7 +47,7 @@ class PendingExits extends Component
             ->get();
     }
 
-    // --- Lógica para SAÍDA de Veículos Particulares ---
+    // --- Lógica para SAÍDA de Veículos Particulares (sem alterações) ---
 
     public function confirmRegistration($id, $type, $action)
     {
@@ -64,9 +66,6 @@ class PendingExits extends Component
                 'guard_on_exit' => Auth::user()->name,
             ]);
             session()->flash('message', 'Saída de veículo particular registrada com sucesso.');
-
-            // --- CORREÇÃO APLICADA AQUI ---
-            // Dispara o evento para atualizar os cartões de estatísticas no dashboard.
             $this->dispatch('stats-updated');
         }
 
@@ -81,45 +80,53 @@ class PendingExits extends Component
         $this->actionType = null;
     }
 
-    // --- Lógica para CHEGADA de Veículos Oficiais ---
+    // --- Lógica para CHEGADA de Veículos Oficiais (ATUALIZADA) ---
 
     public function openArrivalModal($tripId)
     {
         $this->resetErrorBag();
         $this->tripToUpdate = OfficialTrip::with(['vehicle', 'driver'])->findOrFail($tripId);
-        $this->arrival_km = $this->tripToUpdate->departure_odometer;
+        $this->arrival_odometer = ''; // Limpa o campo para forçar a inserção manual
         $this->isArrivalModalOpen = true;
     }
 
     public function saveArrival()
     {
-        if (is_string($this->arrival_km)) {
-            $this->arrival_km = str_replace('.', '', $this->arrival_km);
+        // Limpeza do valor do odómetro
+        if (is_string($this->arrival_odometer)) {
+            $this->arrival_odometer = str_replace(['.', ','], '', $this->arrival_odometer);
         }
 
+        // ### VALIDAÇÃO PRINCIPAL DA CHEGADA ###
+        // Garante que o odómetro de chegada é um número e estritamente MAIOR que o de saída.
         $this->validate([
-            'arrival_km' => 'required|integer|min:' . $this->tripToUpdate->departure_odometer
+            'arrival_odometer' => 'required|integer|gt:' . $this->tripToUpdate->departure_odometer
         ], [
-            'arrival_km.min' => 'A quilometragem de chegada não pode ser menor que a de saída.'
+            'arrival_odometer.gt' => 'A quilometragem de chegada deve ser maior que a de saída (' . number_format($this->tripToUpdate->departure_odometer, 0, ',', '.') . ' km).',
         ]);
+
+        // ### CÁLCULO AUTOMÁTICO DA DISTÂNCIA ###
+        $distance = $this->arrival_odometer - $this->tripToUpdate->departure_odometer;
 
         $this->tripToUpdate->update([
-            'arrival_km' => $this->arrival_km,
+            'arrival_odometer' => $this->arrival_odometer, // NOME CORRETO da coluna
             'arrival_datetime' => now(),
             'guard_on_arrival' => auth()->user()->name,
-            'is_finished' => true,
+            'distance_traveled' => $distance, // Guarda a distância calculada
+            // 'is_finished' => true, // Este campo parece não existir no seu model, removido para evitar erros.
         ]);
 
-        session()->flash('message', 'Chegada de veículo oficial registrada com sucesso.');
+        session()->flash('message', 'Chegada de veículo oficial registrada com sucesso!');
         $this->closeArrivalModal();
         $this->loadPendingData();
-        $this->dispatch('stats-updated'); // Esta linha já estava correta
+        $this->dispatch('stats-updated');
     }
 
     public function closeArrivalModal()
     {
         $this->isArrivalModalOpen = false;
         $this->tripToUpdate = null;
+        $this->reset('arrival_odometer');
     }
 
     public function render()

@@ -65,6 +65,9 @@ Route::middleware('auth')->group(function () {
     // Rota para processar a submissão do relatório do porteiro
     Route::post('/reports/submit-guard-report', [ReportController::class, 'submitGuardReport'])->name('reports.submitGuardReport');
 
+    Route::get('/relatorios/status', \App\Livewire\ReportStatus::class)
+    ->name('reports.status');
+
     // --- ROTAS DE PERFIL ---
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

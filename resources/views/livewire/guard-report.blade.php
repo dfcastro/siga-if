@@ -23,17 +23,16 @@
                     @endif
 
                     {{-- Filtros de Data --}}
-                    <div class="flex flex-wrap items-center space-y-4 md:space-y-0 md:space-x-4 mb-6">
-                        <div>
-                            <x-input-label for="startDate" :value="__('Data de Início')" />
-                            <x-text-input wire:model.lazy="startDate" id="startDate" class="block mt-1 w-full"
-                                type="date" />
-                        </div>
-                        <div>
-                            <x-input-label for="endDate" :value="__('Data de Fim')" />
-                            <x-text-input wire:model.lazy="endDate" id="endDate" class="block mt-1 w-full"
-                                type="date" />
-                        </div>
+                    {{-- Código Novo --}}
+                    <div class="col-span-6 sm:col-span-3">
+                        <label for="report_month" class="block font-medium text-sm text-gray-700">Mês do
+                            Relatório</label>
+                        {{-- Usamos .live para que a página atualize os dados assim que o mês for alterado --}}
+                        <input type="month" wire:model.live="reportMonth" id="report_month"
+                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-ifnmg-green focus:ring-ifnmg-green">
+                        @error('reportMonth')
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                        @enderror
                     </div>
 
                     {{-- Navegação das Abas --}}

@@ -126,7 +126,7 @@
         <h4 class="font-semibold text-md text-gray-800">Submeter Relatório para Fiscal</h4>
         <div class="mt-4">
             <x-input-label for="observation" value="Observações Gerais do Relatório (opcional)" />
-            <textarea wire:model="observation" id="observation" rows="3"
+            <textarea wire:model="observation" id="observation" maxlength="100" cols="10" rows="1"
                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-ifnmg-green focus:ring-ifnmg-green"></textarea>
             @error('observation')
                 <span class="text-sm text-red-600 mt-1">{{ $message }}</span>

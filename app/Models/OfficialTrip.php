@@ -24,6 +24,7 @@ class OfficialTrip extends Model
         'guard_on_departure',
         'guard_on_arrival',
         'return_observation', // Garanta que este campo esteja no fillable também
+        
     ];
 
     protected $casts = [

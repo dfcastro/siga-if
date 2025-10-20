@@ -10,14 +10,15 @@ use Livewire\Component;
 use Livewire\Attributes\Layout;
 use Livewire\WithPagination;
 use App\Livewire\Traits\WithSearchableDropdowns;
+use Illuminate\Validation\ValidationException; // Importar para erros customizados
 
 #[Layout('layouts.app')]
 class OfficialFleetManagement extends Component
 {
     use WithPagination;
-    use WithSearchableDropdowns; 
+    use WithSearchableDropdowns;
 
-    // ... (suas propriedades não mudam)
+    // --- PROPRIEDADES EXISTENTES ---
     public $vehicle_id = null;
     public $driver_id = null;
     public string $destination = '';
@@ -36,63 +37,37 @@ class OfficialFleetManagement extends Component
     public bool $isArrivalModalOpen = false;
     public string $search = '';
 
+    // --- NOVA PROPRIEDADE ---
+    public $lastOdometer = null; // Para guardar e exibir o último odómetro registado
 
     public function layoutData()
     {
         return ['header' => 'Diário de Bordo - Frota Oficial'];
     }
+
     public function updatingSearch()
     {
         $this->resetPage();
     }
 
-    // public function updatedVehicleSearch(string $value): void
-    // {
-    //     if (strlen($value) >= 2) {
-    //         $ongoingTripVehicleIds = OfficialTrip::whereNull('arrival_datetime')->pluck('vehicle_id');
-    //         // --- CORREÇÃO: Removido o .toArray() para retornar uma Coleção de Objetos ---
-    //         $this->vehicle_results = Vehicle::where('type', 'Oficial')
-    //             ->whereNotIn('id', $ongoingTripVehicleIds)
-    //             ->where(fn($q) => $q->where('model', 'like', "%{$value}%")->orWhere('license_plate', 'like', "%{$value}%"))
-    //             ->limit(5)->get();
-    //         $this->show_vehicle_dropdown = true;
-    //     } else {
-    //         $this->vehicle_results = collect(); // Usar uma coleção vazia
-    //         $this->show_vehicle_dropdown = false;
-    //     }
-    //     $this->vehicle_id = null;
-    // }
+    /**
+     * NOVA FUNÇÃO: Executada sempre que o `vehicle_id` muda no formulário de saída.
+     * Busca o último odómetro registado para o veículo selecionado.
+     */
+    public function updatedVehicleId($vehicleId)
+    {
+        if ($vehicleId) {
+            $lastTrip = OfficialTrip::where('vehicle_id', $vehicleId)
+                ->whereNotNull('arrival_odometer')
+                ->latest('arrival_datetime')
+                ->first();
 
-    // public function updatedDriverSearch(string $value): void
-    // {
-    //     if (strlen($value) >= 2) {
-
-    //         $this->driver_results = Driver::where('name', 'like', '%' . $value . '%')
-    //             ->where('is_authorized', true)
-    //             ->limit(5)->get();
-    //         $this->show_driver_dropdown = true;
-    //     } else {
-    //         $this->driver_results = collect();
-    //         $this->show_driver_dropdown = false;
-    //     }
-    //     $this->driver_id = null;
-    // }
-
-    // public function selectVehicle($id, $text)
-    // {
-    //     $this->vehicle_id = $id;
-    //     $this->vehicle_search = $text;
-    //     $this->show_vehicle_dropdown = false;
-    //     $this->vehicle_results = collect();
-    // }
-    
-    // public function selectDriver($id, $name)
-    // {
-    //     $this->driver_id = $id;
-    //     $this->driver_search = $name;
-    //     $this->show_driver_dropdown = false;
-    //     $this->driver_results = collect();
-    // }
+            // Define o último odómetro encontrado ou 0 se for a primeira viagem
+            $this->lastOdometer = $lastTrip ? $lastTrip->arrival_odometer : 0;
+        } else {
+            $this->lastOdometer = null;
+        }
+    }
 
     public function create()
     {
@@ -100,23 +75,37 @@ class OfficialFleetManagement extends Component
         $this->isDepartureModalOpen = true;
     }
 
+    /**
+     * MÉTODO DE SAÍDA ATUALIZADO
+     */
     public function storeDeparture()
     {
+        // Limpeza do valor do odómetro (já existente no seu código)
         if (is_string($this->departure_odometer)) {
-            $this->departure_odometer = str_replace('.', '', $this->departure_odometer);
+            $this->departure_odometer = str_replace(['.', ','], '', $this->departure_odometer);
         }
 
+        // Validação dos campos, incluindo a verificação de que o veículo não está em viagem
         $this->validate([
             'vehicle_id' => ['required', 'exists:vehicles,id', Rule::unique('official_trips')->whereNull('arrival_datetime')],
-            'driver_id' => ['required', 'exists:drivers,id', Rule::unique('official_trips')->whereNull('arrival_datetime')],
+            'driver_id' => ['required', 'exists:drivers,id'/*, Rule::unique('official_trips')->whereNull('arrival_datetime')*/], // A regra unique para motorista pode ser muito restritiva, opcional
             'destination' => 'required|string|max:255',
-            'departure_odometer' => 'required|integer',
+            'departure_odometer' => 'required|integer|min:0', // Garante que é um número
         ], [
             'vehicle_id.required' => 'O campo veículo é obrigatório.',
             'vehicle_id.unique' => 'Este veículo já está em viagem.',
             'driver_id.required' => 'O campo condutor é obrigatório.',
-            'driver_id.unique' => 'Este motorista já está em viagem.',
+            //'driver_id.unique' => 'Este motorista já está em viagem.',
         ]);
+
+        // ### VALIDAÇÃO PRINCIPAL DA SAÍDA ###
+        // Compara o odómetro de saída com o último odómetro registado
+        $this->updatedVehicleId($this->vehicle_id); // Garante que lastOdometer está atualizado
+        if ($this->departure_odometer < $this->lastOdometer) {
+            throw ValidationException::withMessages([
+                'departure_odometer' => 'O odómetro de saída não pode ser menor que o da última chegada (' . $this->lastOdometer . ' km).',
+            ]);
+        }
 
         OfficialTrip::create([
             'vehicle_id' => $this->vehicle_id,
@@ -125,9 +114,8 @@ class OfficialFleetManagement extends Component
             'departure_odometer' => $this->departure_odometer,
             'departure_datetime' => now(),
             'passengers' => $this->passengers,
-            'return_observation' => $this->return_observation,
-            'user_id' => auth()->id(),
             'guard_on_departure' => auth()->user()->name,
+            // Removido 'user_id' e 'return_observation' que não pertencem à saída
         ]);
 
         session()->flash('successMessage', 'Saída de veículo oficial registrada com sucesso!');
@@ -137,10 +125,15 @@ class OfficialFleetManagement extends Component
     public function openArrivalModal($tripId)
     {
         $this->tripToUpdate = OfficialTrip::with(['vehicle', 'driver'])->findOrFail($tripId);
-        $this->arrival_odometer = $this->tripToUpdate->departure_odometer;
+        // Preenche o campo com o odómetro de partida para facilitar, mas o porteiro deve alterar
+        $this->arrival_odometer = ''; // Limpa o campo para forçar a inserção
+        $this->return_observation = ''; // Limpa a observação
         $this->isArrivalModalOpen = true;
     }
 
+    /**
+     * MÉTODO DE CHEGADA ATUALIZADO
+     */
     public function storeArrival()
     {
         if (auth()->user()->role === 'fiscal') {
@@ -148,19 +141,28 @@ class OfficialFleetManagement extends Component
         }
 
         if (is_string($this->arrival_odometer)) {
-            $this->arrival_odometer = str_replace('.', '', $this->arrival_odometer);
+            $this->arrival_odometer = str_replace(['.', ','], '', $this->arrival_odometer);
         }
 
+        // ### VALIDAÇÃO PRINCIPAL DA CHEGADA ###
+        // O odómetro de chegada deve ser um inteiro e maior ou igual ao de partida
+        // Usar `gt` (greater than) para garantir que andou pelo menos 1km
         $this->validate([
-            'arrival_odometer' => 'required|integer|min:' . $this->tripToUpdate->departure_odometer
+            'arrival_odometer' => 'required|integer|gt:' . $this->tripToUpdate->departure_odometer,
+            'return_observation' => 'nullable|string|max:500',
         ], [
-            'arrival_odometer.min' => 'A quilometragem de chegada não pode ser menor que a de saída.'
+            'arrival_odometer.gt' => 'O odómetro de chegada deve ser maior que o de saída (' . $this->tripToUpdate->departure_odometer . ' km).',
         ]);
+
+        // ### CÁLCULO AUTOMÁTICO DA DISTÂNCIA ###
+        $distance = $this->arrival_odometer - $this->tripToUpdate->departure_odometer;
 
         $this->tripToUpdate->update([
             'arrival_odometer' => $this->arrival_odometer,
             'arrival_datetime' => now(),
             'guard_on_arrival' => auth()->user()->name,
+            'return_observation' => $this->return_observation,
+            'distance_traveled' => $distance, // Guarda a distância calculada
         ]);
 
         session()->flash('successMessage', 'Chegada de veículo registrada com sucesso!');
@@ -172,21 +174,36 @@ class OfficialFleetManagement extends Component
         $this->isDepartureModalOpen = false;
         $this->resetDepartureForm();
     }
+
     public function resetDepartureForm()
     {
-        $this->reset();
+        // Limpa especificamente cada propriedade do formulário de saída.
+        $this->reset([
+            'vehicle_id',
+            'driver_id',
+            'destination',
+            'departure_odometer',
+            'passengers',
+            'return_observation',
+            'vehicle_search',
+            'driver_search',
+            'lastOdometer'
+        ]);
+
+        // Limpa também quaisquer erros de validação antigos.
         $this->resetErrorBag();
     }
+
     public function closeArrivalModal()
     {
         $this->isArrivalModalOpen = false;
         $this->tripToUpdate = null;
+        $this->reset('arrival_odometer', 'return_observation');
     }
 
-   public function render()
+    public function render()
     {
-        // **CORREÇÃO APLICADA AQUI**
-        // Agora, ao buscar os relacionamentos 'vehicle' e 'driver', incluímos os que estão na lixeira.
+        // O seu método render continua o mesmo...
         $ongoingTrips = OfficialTrip::whereNull('arrival_datetime')
             ->with([
                 'vehicle' => fn($query) => $query->withTrashed(),
@@ -195,7 +212,6 @@ class OfficialFleetManagement extends Component
             ->latest('departure_datetime')
             ->get();
 
-        // **CORREÇÃO APLICADA AQUI TAMBÉM**
         $completedTripsQuery = OfficialTrip::whereNotNull('arrival_datetime')
             ->with([
                 'vehicle' => fn($query) => $query->withTrashed(),
@@ -214,9 +230,8 @@ class OfficialFleetManagement extends Component
         $completedTrips = $completedTripsQuery->latest('arrival_datetime')->paginate(10);
 
         return view('livewire.official-fleet-management', [
-            'ongoingTrips' => $ongoingTrips, 
+            'ongoingTrips' => $ongoingTrips,
             'completedTrips' => $completedTrips
         ]);
     }
 }
-

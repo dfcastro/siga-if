@@ -80,10 +80,16 @@
                         <x-slot name="content">
                             @if (Auth::user()->role === 'porteiro')
                                 <x-dropdown-link :href="route('guard.report')">Submeter Relatórios</x-dropdown-link>
+                                <x-nav-link :href="route('reports.status')" :active="request()->routeIs('reports.status')">
+                                    {{ __('Status dos Relatórios') }}
+                                </x-nav-link>
                                 <x-dropdown-link :href="route('reports')">Gerar PDF Mensal</x-dropdown-link>
                             @endif
                             @if (in_array(Auth::user()->role, ['admin', 'fiscal']))
                                 <x-dropdown-link :href="route('reports')">Visão Geral</x-dropdown-link>
+                                <x-nav-link :href="route('reports.status')" :active="request()->routeIs('reports.status')">
+                                    {{ __('Status dos Relatórios') }}
+                                </x-nav-link>
                                 <x-dropdown-link :href="route('fiscal.approval')">Aprovações Pendentes</x-dropdown-link>
                             @endif
                         </x-slot>
@@ -176,10 +182,16 @@
                 @if (Auth::user()->role === 'porteiro')
                     <x-responsive-nav-link :href="route('guard.report')">Submeter Relatórios</x-responsive-nav-link>
                     <x-responsive-nav-link :href="route('reports')">Gerar PDF Mensal</x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('reports.status')" :active="request()->routeIs('reports.status')">
+                        {{ __('Status dos Relatórios') }}
+                        </x-nav-link>
                 @endif
                 @if (in_array(Auth::user()->role, ['admin', 'fiscal']))
                     <x-responsive-nav-link :href="route('reports')">Visão Geral</x-responsive-nav-link>
                     <x-responsive-nav-link :href="route('fiscal.approval')">Aprovações Pendentes</x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('reports.status')" :active="request()->routeIs('reports.status')">
+                        {{ __('Status dos Relatórios') }}
+                    </x-responsive-nav-link>
                 @endif
 
                 {{-- Logout (Mobile) --}}
