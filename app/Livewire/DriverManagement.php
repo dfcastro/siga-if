@@ -197,7 +197,7 @@ class DriverManagement extends Component
     protected function rules()
     {
         return [
-            'name' => 'required|min:3|max:100',
+            'name' => 'required|min:3|max:50',
             'document' => ['required', new Cpf, Rule::unique('drivers')->ignore($this->driverId)],
             'telefone' => 'nullable|string|max:20',
             'type' => 'required|in:Servidor,Aluno,Terceirizado,Visitante', // Garante que o tipo é válido

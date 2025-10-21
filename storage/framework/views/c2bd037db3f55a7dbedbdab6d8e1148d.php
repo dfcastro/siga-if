@@ -11,7 +11,8 @@
                 </div>
 
                 
-                <div class="hidden sm:flex sm:items-center sm:gap-x-2 sm:ms-10">
+                
+                <div class="hidden lg:flex lg:items-center lg:gap-x-2 lg:ms-10">
                     <?php if (isset($component)) { $__componentOriginalc295f12dca9d42f28a259237a5724830 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalc295f12dca9d42f28a259237a5724830 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.nav-link','data' => ['href' => route('dashboard'),'active' => request()->routeIs('dashboard'),'icon' => 'home']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
@@ -390,7 +391,8 @@
             </div>
 
             
-            <div class="hidden sm:flex sm:items-center sm:ms-6">
+            
+            <div class="hidden lg:flex lg:items-center lg:ms-6">
                 <?php if (isset($component)) { $__componentOriginaldf8083d4a852c446488d8d384bbc7cbe = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginaldf8083d4a852c446488d8d384bbc7cbe = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.dropdown','data' => ['align' => 'right','width' => '48']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
@@ -474,7 +476,8 @@
             </div>
 
             
-            <div class="-me-2 flex items-center sm:hidden">
+            
+            <div class="-me-2 flex items-center lg:hidden">
                 <button @click="open = !open"
                     class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none transition">
                     <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
@@ -490,7 +493,8 @@
     </div>
 
     
-    <div :class="{ 'block': open, 'hidden': !open }" class="hidden sm:hidden">
+    
+    <div :class="{ 'block': open, 'hidden': !open }" class="hidden lg:hidden">
         <div class="pt-2 pb-3 space-y-1">
             <?php if (isset($component)) { $__componentOriginald69b52d99510f1e7cd3d80070b28ca18 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginald69b52d99510f1e7cd3d80070b28ca18 = $attributes; } ?>
@@ -700,7 +704,7 @@
 <?php $component->withAttributes(['href' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(route('reports.status')),'active' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(request()->routeIs('reports.status'))]); ?>
                         <?php echo e(__('Status dos Relatórios')); ?>
 
-                         <?php echo $__env->renderComponent(); ?>
+                     <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginald69b52d99510f1e7cd3d80070b28ca18)): ?>
 <?php $attributes = $__attributesOriginald69b52d99510f1e7cd3d80070b28ca18; ?>

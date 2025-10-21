@@ -11,7 +11,8 @@
                 </div>
 
                 {{-- Links Principais (Desktop) --}}
-                <div class="hidden sm:flex sm:items-center sm:gap-x-2 sm:ms-10">
+                {{-- ALTERAÇÃO: Trocado 'sm:flex' por 'lg:flex' para aparecer apenas em ecrãs grandes --}}
+                <div class="hidden lg:flex lg:items-center lg:gap-x-2 lg:ms-10">
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" icon="home">
                         Início
                     </x-nav-link>
@@ -98,7 +99,8 @@
             </div>
 
             {{-- Dropdown do Usuário (Direita) --}}
-            <div class="hidden sm:flex sm:items-center sm:ms-6">
+            {{-- ALTERAÇÃO: Trocado 'sm:flex' por 'lg:flex' --}}
+            <div class="hidden lg:flex lg:items-center lg:ms-6">
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
                         <button
@@ -128,7 +130,8 @@
             </div>
 
             {{-- Botão Hamburguer (Mobile) --}}
-            <div class="-me-2 flex items-center sm:hidden">
+            {{-- ALTERAÇÃO: Trocado 'sm:hidden' por 'lg:hidden' para aparecer em tablets --}}
+            <div class="-me-2 flex items-center lg:hidden">
                 <button @click="open = !open"
                     class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none transition">
                     <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
@@ -144,7 +147,8 @@
     </div>
 
     {{-- Menu Mobile Responsivo --}}
-    <div :class="{ 'block': open, 'hidden': !open }" class="hidden sm:hidden">
+    {{-- ALTERAÇÃO: Trocado 'sm:hidden' por 'lg:hidden' --}}
+    <div :class="{ 'block': open, 'hidden': !open }" class="hidden lg:hidden">
         <div class="pt-2 pb-3 space-y-1">
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">{{ __('Início') }}</x-responsive-nav-link>
             @if (in_array(Auth::user()->role, ['admin', 'porteiro']))
@@ -184,7 +188,7 @@
                     <x-responsive-nav-link :href="route('reports')">Gerar PDF Mensal</x-responsive-nav-link>
                     <x-responsive-nav-link :href="route('reports.status')" :active="request()->routeIs('reports.status')">
                         {{ __('Status dos Relatórios') }}
-                        </x-nav-link>
+                    </x-responsive-nav-link>
                 @endif
                 @if (in_array(Auth::user()->role, ['admin', 'fiscal']))
                     <x-responsive-nav-link :href="route('reports')">Visão Geral</x-responsive-nav-link>

@@ -10,14 +10,15 @@ use Livewire\Attributes\Layout;
 use Illuminate\Support\Str;
 use Livewire\WithPagination;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\DB; // É importante importar a facade DB
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth; // <-- Garanta que Auth está importado
 
 #[Layout('layouts.app')]
 class VehicleManagement extends Component
 {
     use WithPagination;
 
-    // --- PROPRIEDADES DO FORMULÁRIO ---
+    // --- SUAS PROPRIEDADES (sem alterações) ---
     public string $license_plate = '';
     public string $model = '';
     public string $color = '';
@@ -26,8 +27,6 @@ class VehicleManagement extends Component
     public $driver_id = '';
     public string $driver_search = '';
     public bool $show_driver_dropdown = false;
-
-    // --- CONTROLES DA UI ---
     public bool $isModalOpen = false;
     public bool $isConfirmModalOpen = false;
     public $vehicleIdToDelete;
@@ -35,12 +34,9 @@ class VehicleManagement extends Component
     public string $successMessage = '';
     public string $search = '';
     public string $filter = 'active';
-
-    // --- PROPRIEDADES DO MODAL DE HISTÓRICO ---
     public $isHistoryModalOpen = false;
     public $vehicleForHistory = null;
     public string $historySearch = '';
-
     public array $commonColors = ['PRETO', 'BRANCO', 'PRATA', 'CINZA', 'VERMELHO', 'AZUL', 'VERDE', 'AMARELO', 'DOURADO', 'MARROM', 'BEGE', 'LARANJA', 'ROXO'];
     protected $paginationTheme = 'tailwind';
 
@@ -49,17 +45,14 @@ class VehicleManagement extends Component
         return ['header' => 'Gerenciamento de Veículos'];
     }
 
-    // --- LÓGICA DE BUSCA DE MOTORISTA (SEM ALTERAÇÃO) ---
+    // --- LÓGICA DE BUSCA DE MOTORISTA ---
     public function getFoundDriversProperty()
     {
         if (strlen(trim($this->driver_search)) < 2) {
             return collect();
         }
-        return Driver::where('name', 'like', '%' . $this->driver_search . '%')
-            ->take(5)
-            ->get();
+        return Driver::where('name', 'like', '%' . $this->driver_search . '%')->take(5)->get();
     }
-
     public function selectDriver($id, $name)
     {
         $this->driver_id = $id;
@@ -67,24 +60,85 @@ class VehicleManagement extends Component
         $this->show_driver_dropdown = false;
     }
 
-    // --- MÉTODOS DE CICLO DE VIDA (SEM ALTERAÇÃO) ---
+    // --- MÉTODOS DE CICLO DE VIDA ---
     public function updatingSearch()
     {
         $this->resetPage();
     }
-
     public function updatingHistorySearch()
     {
         $this->resetPage('historyPage');
     }
 
-    // --- RENDERIZAÇÃO (COM LÓGICA DE HISTÓRICO OTIMIZADA) ---
+    // ### ADICIONE ESTA FUNÇÃO AQUI ###
+    /**
+     * Verifica se o usuário atual pode gerenciar um veículo específico ou um tipo de veículo.
+     *
+     * @param Vehicle|null $vehicle O veículo a ser verificado (para editar/excluir).
+     * @param string|null $requestedType O tipo de veículo solicitado (para criar).
+     * @return bool
+     */
+    public function canManageVehicle(Vehicle $vehicle = null, string $requestedType = null): bool
+    {
+        $user = Auth::user();
+        $targetType = $vehicle ? $vehicle->type : $requestedType;
+
+        if (!$targetType) {
+            return false;
+        } // Se não houver tipo, nega
+        if ($user->role === 'admin') {
+            return true;
+        } // Admin pode tudo
+
+        if ($user->role === 'fiscal') {
+            if (!$user->fiscal_type) {
+                return false;
+            } // Fiscal sem tipo não pode
+            if ($user->fiscal_type === 'official' && $targetType === 'Oficial') return true;
+            if ($user->fiscal_type === 'private' && $targetType === 'Particular') return true;
+            if ($user->fiscal_type === 'both') return true;
+        }
+
+        if ($user->role === 'porteiro') {
+            if ($targetType === 'Particular') return true; // Porteiro só Particular
+        }
+
+        return false; // Nega por padrão
+    }
+    // ### FIM DA FUNÇÃO ADICIONADA ###
+
+    // --- RENDERIZAÇÃO (COM FILTRO) ---
     public function render()
     {
         $query = Vehicle::with('driver');
+        $user = Auth::user();
+
+        // Filtro principal baseado no perfil
+        if ($user->role === 'fiscal') {
+            if ($user->fiscal_type === 'official') {
+                $query->where('type', 'Oficial');
+            } elseif ($user->fiscal_type === 'private') {
+                $query->where('type', 'Particular');
+            }
+        } elseif ($user->role === 'porteiro') {
+            $query->where('type', 'Particular');
+        }
+
+        // Filtro de lixeira (aplicando permissão também)
         if ($this->filter === 'trashed') {
             $query->onlyTrashed();
+            if ($user->role === 'fiscal' && $user->fiscal_type === 'official') {
+                $query->where('type', 'Oficial');
+            }
+            if ($user->role === 'fiscal' && $user->fiscal_type === 'private') {
+                $query->where('type', 'Particular');
+            }
+            if ($user->role === 'porteiro') {
+                $query->where('type', 'Particular');
+            }
         }
+
+        // Filtro de busca
         if (!empty($this->search)) {
             $query->where(function ($subQuery) {
                 $searchTerm = '%' . $this->search . '%';
@@ -98,6 +152,7 @@ class VehicleManagement extends Component
         }
         $vehicles = $query->orderBy('model', 'asc')->paginate(10);
 
+        // Lógica de Histórico
         $vehicleHistoryPaginator = null;
         if ($this->isHistoryModalOpen && $this->vehicleForHistory) {
             $private = DB::table('private_entries')->join('drivers', 'private_entries.driver_id', '=', 'drivers.id')->select(DB::raw("'Particular' as type"), 'private_entries.entry_at as start_time', 'private_entries.exit_at as end_time', 'drivers.name as driver_name', 'private_entries.entry_reason as detail')->where('private_entries.vehicle_id', $this->vehicleForHistory->id);
@@ -118,34 +173,27 @@ class VehicleManagement extends Component
         ]);
     }
 
-    // --- AÇÕES DO CRUD COM AS NOVAS REGRAS DE PERMISSÃO ---
+    // --- AÇÕES DO CRUD (usando a função canManageVehicle) ---
     public function store()
     {
-        $userRole = auth()->user()->role;
-
-        if (
-            ($this->type === 'Oficial' && !in_array($userRole, ['admin', 'fiscal'])) ||
-            ($this->type === 'Particular' && !in_array($userRole, ['admin', 'porteiro']))
-        ) {
+        if (!$this->canManageVehicle(requestedType: $this->type)) {
             abort(403, 'Você não tem permissão para criar ou editar este tipo de veículo.');
         }
 
-        $this->validate([
+        $validatedData = $this->validate([
             'license_plate' => ['required', 'string', 'regex:/^[A-Z]{3}[0-9][A-Z][0-9]{2}$|^[A-Z]{3}-[0-9]{4}$/i', Rule::unique('vehicles')->ignore($this->vehicleId)],
             'model' => 'required|string|max:25',
             'color' => 'required|string|max:20',
             'type' => 'required|string|in:Oficial,Particular',
-            // **CORREÇÃO DE LÓGICA:** Validação de motorista só se aplica a veículos 'Particulares'.
             'driver_id' => $this->type === 'Particular' ? 'nullable|exists:drivers,id' : '',
         ], ['license_plate.regex' => 'O formato da placa é inválido.']);
 
         Vehicle::updateOrCreate(['id' => $this->vehicleId], [
-            'license_plate' => strtoupper($this->license_plate),
-            'model'         => Str::upper($this->model),
-            'color'         => Str::upper($this->color),
-            'type'          => $this->type,
-            // **CORREÇÃO DE LÓGICA:** Salva o driver_id apenas se for 'Particular', senão, salva null.
-            'driver_id'     => $this->type === 'Particular' ? ($this->driver_id ?: null) : null,
+            'license_plate' => strtoupper($validatedData['license_plate']),
+            'model'         => Str::upper($validatedData['model']),
+            'color'         => Str::upper($validatedData['color']),
+            'type'          => $validatedData['type'],
+            'driver_id'     => $validatedData['type'] === 'Particular' ? ($validatedData['driver_id'] ?: null) : null,
         ]);
 
         session()->flash('successMessage', $this->vehicleId ? 'Veículo atualizado!' : 'Veículo criado!');
@@ -154,32 +202,20 @@ class VehicleManagement extends Component
 
     public function create()
     {
-        if (!in_array(auth()->user()->role, ['admin', 'porteiro', 'fiscal'])) {
-            abort(403, 'Ação não autorizada.');
+        if (!in_array(Auth::user()->role, ['admin', 'porteiro', 'fiscal'])) {
+            abort(403);
         }
         $this->resetInputFields();
-
-        if (auth()->user()->role === 'fiscal') {
-            $this->type = 'Oficial';
-        } else {
-            $this->type = 'Particular';
-        }
-
         $this->isModalOpen = true;
     }
 
     public function edit($id)
     {
         $vehicle = Vehicle::withTrashed()->findOrFail($id);
-        $userRole = auth()->user()->role;
-
-        if (
-            ($vehicle->type === 'Oficial' && !in_array($userRole, ['admin', 'fiscal'])) ||
-            ($vehicle->type === 'Particular' && !in_array($userRole, ['admin', 'porteiro']))
-        ) {
-            abort(403, 'Você não tem permissão para editar este veículo.');
+        if (!$this->canManageVehicle($vehicle)) {
+            session()->flash('error', 'Você não tem permissão para editar este veículo.');
+            return;
         }
-
         $this->vehicleId = $id;
         $this->license_plate = $vehicle->license_plate;
         $this->model = $vehicle->model;
@@ -198,24 +234,24 @@ class VehicleManagement extends Component
 
     private function resetInputFields()
     {
-        $this->reset(['license_plate', 'model', 'color', 'vehicleId', 'type']);
+        $user = Auth::user();
+        $defaultType = 'Particular';
+        if ($user->role === 'fiscal') {
+            if ($user->fiscal_type === 'official') $defaultType = 'Oficial';
+        }
+        $this->reset(['license_plate', 'model', 'color', 'vehicleId', 'driver_id', 'driver_search', 'show_driver_dropdown']);
+        $this->type = $defaultType;
         $this->resetErrorBag();
-        $this->reset(['driver_id', 'driver_search', 'show_driver_dropdown']);
     }
 
-    // --- MÉTODOS DE EXCLUSÃO COM PERMISSÕES E SEGURANÇA ---
+    // --- MÉTODOS DE EXCLUSÃO ---
     public function confirmDelete($id)
     {
         $vehicle = Vehicle::findOrFail($id);
-        $userRole = auth()->user()->role;
-
-        if (
-            ($vehicle->type === 'Oficial' && !in_array($userRole, ['admin', 'fiscal'])) ||
-            ($vehicle->type === 'Particular' && !in_array($userRole, ['admin', 'porteiro']))
-        ) {
-            abort(403, 'Ação não autorizada.');
+        if (!$this->canManageVehicle($vehicle)) {
+            session()->flash('error', 'Ação não autorizada.');
+            return;
         }
-
         $this->vehicleIdToDelete = $id;
         $this->vehiclePlateToDelete = $vehicle->license_plate;
         $this->isConfirmModalOpen = true;
@@ -224,15 +260,11 @@ class VehicleManagement extends Component
     public function deleteVehicle()
     {
         $vehicle = Vehicle::findOrFail($this->vehicleIdToDelete);
-        $userRole = auth()->user()->role;
-
-        if (
-            ($vehicle->type === 'Oficial' && !in_array($userRole, ['admin', 'fiscal'])) ||
-            ($vehicle->type === 'Particular' && !in_array($userRole, ['admin', 'porteiro']))
-        ) {
-            abort(403, 'Você não tem permissão para mover este veículo para a lixeira.');
+        if (!$this->canManageVehicle($vehicle)) {
+            $this->closeConfirmModal();
+            session()->flash('error', '...');
+            return;
         }
-
         $vehicle->delete();
         session()->flash('successMessage', 'Veículo movido para a lixeira.');
         $this->closeConfirmModal();
@@ -241,20 +273,16 @@ class VehicleManagement extends Component
     public function closeConfirmModal()
     {
         $this->isConfirmModalOpen = false;
+        $this->reset(['vehicleIdToDelete', 'vehiclePlateToDelete']);
     }
 
     public function restore($id)
     {
         $vehicle = Vehicle::withTrashed()->findOrFail($id);
-        $userRole = auth()->user()->role;
-
-        if (
-            ($vehicle->type === 'Oficial' && !in_array($userRole, ['admin', 'fiscal'])) ||
-            ($vehicle->type === 'Particular' && !in_array($userRole, ['admin', 'porteiro']))
-        ) {
-            abort(403, 'Ação não autorizada.');
+        if (!$this->canManageVehicle($vehicle)) {
+            session()->flash('error', 'Ação não autorizada.');
+            return;
         }
-
         $vehicle->restore();
         session()->flash('successMessage', 'Veículo restaurado.');
     }
@@ -262,15 +290,10 @@ class VehicleManagement extends Component
     public function confirmForceDelete($id)
     {
         $vehicle = Vehicle::withTrashed()->findOrFail($id);
-        $userRole = auth()->user()->role;
-
-        if (
-            ($vehicle->type === 'Oficial' && !in_array($userRole, ['admin', 'fiscal'])) ||
-            ($vehicle->type === 'Particular' && !in_array($userRole, ['admin', 'porteiro']))
-        ) {
-            abort(403, 'Ação não autorizada.');
+        if (!$this->canManageVehicle($vehicle)) {
+            session()->flash('error', 'Ação não autorizada.');
+            return;
         }
-
         $this->vehicleIdToDelete = $id;
         $this->vehiclePlateToDelete = $vehicle->license_plate;
         $this->isConfirmModalOpen = true;
@@ -279,36 +302,35 @@ class VehicleManagement extends Component
     public function forceDeleteVehicle()
     {
         $vehicle = Vehicle::withTrashed()->find($this->vehicleIdToDelete);
-        $userRole = auth()->user()->role;
-
         if (!$vehicle) {
             session()->flash('error', 'Veículo não encontrado.');
             $this->closeConfirmModal();
             return;
         }
-
-        if (
-            ($vehicle->type === 'Oficial' && !in_array($userRole, ['admin', 'fiscal'])) ||
-            ($vehicle->type === 'Particular' && !in_array($userRole, ['admin', 'porteiro']))
-        ) {
-            abort(403, 'Você não tem permissão para excluir este veículo permanentemente.');
+        if (!$this->canManageVehicle($vehicle)) {
+            $this->closeConfirmModal();
+            session()->flash('error', '...');
+            return;
         }
-
         if ($vehicle->officialTrips()->exists() || $vehicle->privateEntries()->exists()) {
             session()->flash('error', 'Não é possível excluir: o veículo possui registros associados.');
             $this->closeConfirmModal();
             return;
         }
-
         $vehicle->forceDelete();
         session()->flash('successMessage', 'Veículo excluído permanentemente.');
         $this->closeConfirmModal();
     }
 
-    // --- MÉTODOS DE HISTÓRICO (SEM ALTERAÇÃO) ---
+    // --- MÉTODOS DE HISTÓRICO ---
     public function showHistory($vehicleId)
     {
-        $this->vehicleForHistory = Vehicle::withTrashed()->findOrFail($vehicleId);
+        $vehicle = Vehicle::withTrashed()->findOrFail($vehicleId);
+        if (!$this->canManageVehicle($vehicle)) {
+            session()->flash('error', 'Você não tem permissão para ver o histórico deste veículo.');
+            return;
+        }
+        $this->vehicleForHistory = $vehicle;
         $this->resetPage('historyPage');
         $this->reset('historySearch');
         $this->isHistoryModalOpen = true;
@@ -318,5 +340,6 @@ class VehicleManagement extends Component
     {
         $this->isHistoryModalOpen = false;
         $this->vehicleForHistory = null;
+        $this->reset('historySearch');
     }
 }
