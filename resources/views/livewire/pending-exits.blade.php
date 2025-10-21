@@ -139,7 +139,7 @@
                         <x-input-label for="arrival_km_pending" :value="__('Quilometragem de Chegada (km)')" />
                         <x-text-input type="text" id="arrival_km_pending" class="mt-1 block w-full"
                             x-on:input="$event.target.value = formatNumber($event.target.value)"
-                            wire:model="arrival_km" />
+                            wire:model="arrival_odometer" />
                         <x-input-error :messages="$errors->get('arrival_km')" class="mt-2" />
                     </div>
                 </div>

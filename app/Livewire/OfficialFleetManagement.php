@@ -88,14 +88,14 @@ class OfficialFleetManagement extends Component
         // Validação dos campos, incluindo a verificação de que o veículo não está em viagem
         $this->validate([
             'vehicle_id' => ['required', 'exists:vehicles,id', Rule::unique('official_trips')->whereNull('arrival_datetime')],
-            'driver_id' => ['required', 'exists:drivers,id'/*, Rule::unique('official_trips')->whereNull('arrival_datetime')*/], // A regra unique para motorista pode ser muito restritiva, opcional
+            'driver_id' => ['required', 'exists:drivers,id', Rule::unique('official_trips')->whereNull('arrival_datetime')], // A regra unique para motorista pode ser muito restritiva, opcional
             'destination' => 'required|string|max:255',
             'departure_odometer' => 'required|integer|min:0', // Garante que é um número
         ], [
             'vehicle_id.required' => 'O campo veículo é obrigatório.',
             'vehicle_id.unique' => 'Este veículo já está em viagem.',
             'driver_id.required' => 'O campo condutor é obrigatório.',
-            //'driver_id.unique' => 'Este motorista já está em viagem.',
+            'driver_id.unique' => 'Este motorista já está em viagem.',
         ]);
 
         // ### VALIDAÇÃO PRINCIPAL DA SAÍDA ###

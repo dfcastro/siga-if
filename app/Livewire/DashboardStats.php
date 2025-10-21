@@ -76,8 +76,8 @@ class DashboardStats extends Component
         $selectedCarbonDate = Carbon::parse($this->selectedDate);
 
         // 1. Calcula o total de entradas para o card (ainda necessário aqui)
-        $totalEntriesToday = PrivateEntry::whereDate('entry_at', $selectedCarbonDate)->count()
-            + OfficialTrip::whereDate('departure_datetime', $selectedCarbonDate)->count();
+        $totalPrivateEntriesToday = PrivateEntry::whereDate('entry_at', $selectedCarbonDate)->count();
+        $totalOfficialDeparturesToday = OfficialTrip::whereDate('departure_datetime', $selectedCarbonDate)->count();
 
         // 2. Calcula os dados do gráfico para a CARGA INICIAL da página.
         // As atualizações serão tratadas pelo método 'updatedSelectedDate'.
@@ -92,8 +92,9 @@ class DashboardStats extends Component
         // 3. Envia os dados para a view.
         // Note que não disparamos mais o evento daqui.
         return view('livewire.dashboard-stats', [
-            'totalEntriesToday' => $totalEntriesToday,
-            'entriesByHourData' => $entriesByHourData, // Usado para a carga inicial do gráfico
+            'totalPrivateEntriesToday' => $totalPrivateEntriesToday, // Novo
+            'totalOfficialDeparturesToday' => $totalOfficialDeparturesToday, // Novo
+            'entriesByHourData' => $entriesByHourData,
         ]);
     }
 

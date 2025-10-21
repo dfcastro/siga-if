@@ -74,20 +74,50 @@
 
         
         <div class="flex flex-col gap-8">
+
             
             <?php if (isset($component)) { $__componentOriginal8f216e051c231b98198765acd723fb77 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal8f216e051c231b98198765acd723fb77 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.stats-card','data' => ['title' => 'Total de Entradas ('.e(\Carbon\Carbon::parse($selectedDate)->format('d/m')).')','value' => $totalEntriesToday,'color' => 'ifnmg-green']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.stats-card','data' => ['title' => 'Entradas Particulares ('.e(\Carbon\Carbon::parse($selectedDate)->format('d/m')).')','value' => $totalPrivateEntriesToday,'color' => 'ifnmg-green']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('stats-card'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['title' => 'Total de Entradas ('.e(\Carbon\Carbon::parse($selectedDate)->format('d/m')).')','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($totalEntriesToday),'color' => 'ifnmg-green']); ?>
+<?php $component->withAttributes(['title' => 'Entradas Particulares ('.e(\Carbon\Carbon::parse($selectedDate)->format('d/m')).')','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($totalPrivateEntriesToday),'color' => 'ifnmg-green']); ?>
+                
                 <svg class="w-8 h-8 text-ifnmg-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                </svg>
+             <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal8f216e051c231b98198765acd723fb77)): ?>
+<?php $attributes = $__attributesOriginal8f216e051c231b98198765acd723fb77; ?>
+<?php unset($__attributesOriginal8f216e051c231b98198765acd723fb77); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal8f216e051c231b98198765acd723fb77)): ?>
+<?php $component = $__componentOriginal8f216e051c231b98198765acd723fb77; ?>
+<?php unset($__componentOriginal8f216e051c231b98198765acd723fb77); ?>
+<?php endif; ?>
+
+            
+            <?php if (isset($component)) { $__componentOriginal8f216e051c231b98198765acd723fb77 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal8f216e051c231b98198765acd723fb77 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.stats-card','data' => ['title' => 'Saídas Oficiais ('.e(\Carbon\Carbon::parse($selectedDate)->format('d/m')).')','value' => $totalOfficialDeparturesToday,'color' => 'teal']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('stats-card'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['title' => 'Saídas Oficiais ('.e(\Carbon\Carbon::parse($selectedDate)->format('d/m')).')','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($totalOfficialDeparturesToday),'color' => 'teal']); ?> 
+                
+                <svg class="w-8 h-8 text-teal-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
                 </svg>
              <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
@@ -111,7 +141,7 @@
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
 <?php $component->withAttributes(['title' => 'Veículos Particulares no Pátio','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($vehiclesInYard),'color' => 'orange']); ?>
-                <svg class="w-8 h-8 text-orange-600" xmlns="http://www.w.org/2000/svg" fill="none"
+                <svg class="w-8 h-8 text-orange-600" xmlns="http://www.w3.org/2000/svg" fill="none"
                     viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round"
                         d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.125-.504 1.125-1.125V14.25m-17.25 4.5h12.75" />
@@ -153,6 +183,8 @@
 <?php $component = $__componentOriginal8f216e051c231b98198765acd723fb77; ?>
 <?php unset($__componentOriginal8f216e051c231b98198765acd723fb77); ?>
 <?php endif; ?>
+
+            
         </div>
     </div>
 </div>

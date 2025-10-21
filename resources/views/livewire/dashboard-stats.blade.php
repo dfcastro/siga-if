@@ -72,27 +72,40 @@
             </div>
         </div>
 
-        {{-- COLUNA DIREITA (CARDS DE ESTATÍSTICAS) - Ocupa 1 das 3 colunas em telas grandes --}}
+        {{-- COLUNA DIREITA (CARDS DE ESTATÍSTICAS) --}}
         <div class="flex flex-col gap-8">
-            {{-- Card de Total de Entradas --}}
-            <x-stats-card title="Total de Entradas ({{ \Carbon\Carbon::parse($selectedDate)->format('d/m') }})"
-                :value="$totalEntriesToday" color="ifnmg-green">
+
+            {{-- NOVO Card de Entradas Particulares --}}
+            <x-stats-card title="Entradas Particulares ({{ \Carbon\Carbon::parse($selectedDate)->format('d/m') }})"
+                :value="$totalPrivateEntriesToday" color="ifnmg-green">
+                {{-- Ícone de Entrada ou Calendário --}}
                 <svg class="w-8 h-8 text-ifnmg-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
                 </svg>
             </x-stats-card>
 
-            {{-- Card de Veículos no Pátio --}}
+            {{-- NOVO Card de Saídas Oficiais --}}
+            <x-stats-card title="Saídas Oficiais ({{ \Carbon\Carbon::parse($selectedDate)->format('d/m') }})"
+                :value="$totalOfficialDeparturesToday" color="teal"> {{-- Usei a cor 'teal' como sugestão --}}
+                {{-- Ícone de Saída --}}
+                <svg class="w-8 h-8 text-teal-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
+                </svg>
+            </x-stats-card>
+
+            {{-- Card de Veículos no Pátio (mantém-se) --}}
             <x-stats-card title="Veículos Particulares no Pátio" :value="$vehiclesInYard" color="orange">
-                <svg class="w-8 h-8 text-orange-600" xmlns="http://www.w.org/2000/svg" fill="none"
+                <svg class="w-8 h-8 text-orange-600" xmlns="http://www.w3.org/2000/svg" fill="none"
                     viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round"
                         d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.125-.504 1.125-1.125V14.25m-17.25 4.5h12.75" />
                 </svg>
             </x-stats-card>
 
-            {{-- Card de Viagens Oficiais --}}
+            {{-- Card de Viagens Oficiais (mantém-se) --}}
             <x-stats-card title="Viagens Oficiais em Andamento" :value="$officialTripsInProgress" color="blue">
                 <svg class="w-8 h-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"
                     aria-hidden="true">
@@ -100,6 +113,8 @@
                         d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
             </x-stats-card>
+
+            {{-- Nota: Agora temos 4 cards nesta coluna. Verifique se o layout fica bom em telas menores. Se necessário, podemos ajustar o grid geral. --}}
         </div>
     </div>
 </div>

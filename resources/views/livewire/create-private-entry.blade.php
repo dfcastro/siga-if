@@ -271,6 +271,9 @@
                                         Motorista</th>
                                     <th
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Telefone</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Entrada</th>
                                     <th
                                         class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -287,6 +290,9 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                                             {{ $entry->driver->name ?? 'N/A' }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                            {{ $entry->driver->telefone ?? 'Não informado' }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                                             {{ $entry->entry_at->format('d/m/Y H:i') }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                                             <button wire:click="confirmExit({{ $entry->id }})"
@@ -297,7 +303,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="5" class="px-6 py-4 text-center text-gray-500">Nenhum veículo
+                                        <td colspan="6" class="px-6 py-4 text-center text-gray-500">Nenhum veículo
                                             no pátio.</td>
                                     </tr>
                                 @endforelse
@@ -320,6 +326,9 @@
                                     <p class="text-sm text-gray-600 mt-1"><span
                                             class="font-semibold">Motorista:</span>
                                         {{ $entry->driver->name ?? 'N/A' }}</p>
+                                    <p class="text-sm text-gray-600 mt-1"><span class="font-semibold">Telefone:</span>
+                                        {{ $entry->driver->telefone ?? 'Não informado' }}
+                                    </p>
                                 </div>
                                 <div class="mt-4">
                                     <button wire:click="confirmExit({{ $entry->id }})"

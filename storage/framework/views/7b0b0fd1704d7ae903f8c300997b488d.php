@@ -224,14 +224,14 @@
 <?php endif; ?>
                         <?php if (isset($component)) { $__componentOriginal18c21970322f9e5c938bc954620c12bb = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal18c21970322f9e5c938bc954620c12bb = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.text-input','data' => ['type' => 'text','id' => 'arrival_km_pending','class' => 'mt-1 block w-full','xOn:input' => '$event.target.value = formatNumber($event.target.value)','wire:model' => 'arrival_km']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.text-input','data' => ['type' => 'text','id' => 'arrival_km_pending','class' => 'mt-1 block w-full','xOn:input' => '$event.target.value = formatNumber($event.target.value)','wire:model' => 'arrival_odometer']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('text-input'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['type' => 'text','id' => 'arrival_km_pending','class' => 'mt-1 block w-full','x-on:input' => '$event.target.value = formatNumber($event.target.value)','wire:model' => 'arrival_km']); ?>
+<?php $component->withAttributes(['type' => 'text','id' => 'arrival_km_pending','class' => 'mt-1 block w-full','x-on:input' => '$event.target.value = formatNumber($event.target.value)','wire:model' => 'arrival_odometer']); ?>
 <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginal18c21970322f9e5c938bc954620c12bb)): ?>

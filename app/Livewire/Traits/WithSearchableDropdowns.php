@@ -20,19 +20,26 @@ trait WithSearchableDropdowns
     public bool $show_vehicle_dropdown = false;
 
     // Lógica de busca para Motoristas
-    public function updatedDriverSearch(string $value): void
+   public function updatedDriverSearch(string $value): void
     {
         if (strlen($value) >= 2) {
+            
+            // 1. Busca os IDs dos motoristas que estão em viagens não finalizadas.
+            $ongoingTripDriverIds = OfficialTrip::whereNull('arrival_datetime')->pluck('driver_id');
+
+            // 2. Na busca por nome, exclui os motoristas que estão na lista de IDs acima.
             $this->driver_results = Driver::where('name', 'like', '%' . $value . '%')
-                ->where('is_authorized', true) // Pode ser específico de um componente, ajuste se necessário
+                ->where('is_authorized', true)
+                ->whereNotIn('id', $ongoingTripDriverIds) // <-- Adiciona este filtro
                 ->limit(5)
                 ->get();
+
             $this->show_driver_dropdown = true;
         } else {
             $this->driver_results = collect();
             $this->show_driver_dropdown = false;
         }
-        $this->driver_id = null; // Limpa o ID se o texto mudar
+        $this->driver_id = null; // Reseta o ID selecionado ao mudar a busca
     }
 
     // Lógica de busca para Veículos Oficiais (exemplo)
