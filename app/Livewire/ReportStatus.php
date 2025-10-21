@@ -2,11 +2,13 @@
 
 namespace App\Livewire;
 
+use App\Models\User;
 use Livewire\Component;
 use App\Models\Vehicle;
 use App\Models\ReportSubmission;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB; // ### ADICIONAR IMPORT ###
 use Livewire\Attributes\Layout;
 
 #[Layout('layouts.app')]
@@ -16,6 +18,12 @@ class ReportStatus extends Component
     public $submissions;
     public $vehicles;
     public string $reportType = 'official';
+    public $porteiros;
+
+    // ### INÍCIO DAS NOVAS PROPRIEDADES ###
+    public $selectedYear;
+    public $availableYears = [];
+    // ### FIM DAS NOVAS PROPRIEDADES ###
 
     public function layoutData()
     {
@@ -29,14 +37,32 @@ class ReportStatus extends Component
     {
         $user = Auth::user();
 
-        // Define a aba padrão com base no perfil do fiscal
+        // ### INÍCIO - LÓGICA DO FILTRO DE ANO ###
+        // Busca o ano da primeira submissão registada
+        $firstYear = ReportSubmission::min(DB::raw('YEAR(start_date)'));
+        $currentYear = Carbon::now()->year;
+
+        // Se não houver registos, usa o ano atual
+        if (!$firstYear) {
+            $firstYear = $currentYear;
+        }
+
+        // Cria um array de anos, do mais recente para o mais antigo
+        $this->availableYears = range($currentYear, (int)$firstYear);
+        // Define o ano atual como padrão
+        $this->selectedYear = $currentYear;
+        // ### FIM - LÓGICA DO FILTRO DE ANO ###
+
+
+        // (Lógica de aba padrão - mantida da versão anterior)
         if ($user->role === 'fiscal') {
             if ($user->fiscal_type === 'private') {
                 $this->reportType = 'private';
             } else {
-                // 'official' e 'both' começam na aba oficial por padrão
                 $this->reportType = 'official';
             }
+        } elseif ($user->role === 'porteiro') {
+            $this->reportType = 'private';
         }
 
         $this->loadReportData();
@@ -50,6 +76,17 @@ class ReportStatus extends Component
         $this->loadReportData();
     }
 
+    // ### INÍCIO - NOVO MÉTODO ###
+    /**
+     * Recarrega os dados quando o utilizador troca o ano.
+     */
+    public function updatedSelectedYear()
+    {
+        $this->loadReportData();
+    }
+    // ### FIM - NOVO MÉTODO ###
+
+
     /**
      * Carrega os dados corretos para a aba selecionada, aplicando as regras de permissão.
      */
@@ -57,8 +94,20 @@ class ReportStatus extends Component
     {
         $user = Auth::user();
 
-        $this->months = collect(range(0, 11))->map(fn($i) => Carbon::now()->subMonths($i))->reverse();
-        $query = ReportSubmission::where('start_date', '>=', $this->months->first()->copy()->startOfMonth());
+        // ### ALTERAÇÃO NA LÓGICA DE DADOS ###
+
+        // 1. Gera os 12 meses do ano selecionado (Jan/Ano, Fev/Ano, ...)
+        $this->months = collect(range(1, 12))->map(fn($month) => Carbon::create((int)$this->selectedYear, $month, 1));
+
+        // 2. Cria a consulta base filtrando pelo ano selecionado
+        $query = ReportSubmission::whereYear('start_date', $this->selectedYear);
+
+        // ### FIM DA ALTERAÇÃO ###
+
+        // Resetar dados (lógica mantida)
+        $this->vehicles = collect();
+        $this->porteiros = collect();
+        $this->submissions = collect();
 
         if ($this->reportType === 'official') {
             $this->handleOfficialReports($user, $query);
@@ -69,15 +118,25 @@ class ReportStatus extends Component
 
     private function handleOfficialReports($user, $query)
     {
-        // Se for um fiscal sem permissão, retorna vazio
+        // (Lógica interna mantida - o $query já está filtrado por ano)
         if ($user->role === 'fiscal' && !in_array($user->fiscal_type, ['official', 'both'])) {
             $this->vehicles = collect();
             $this->submissions = collect();
             return;
         }
 
+        if ($user->role === 'porteiro') {
+            $this->vehicles = collect();
+            $this->submissions = collect();
+            return;
+        }
+
         $this->vehicles = Vehicle::where('type', 'Oficial')->orderBy('model')->get();
-        $this->submissions = $query->where('type', 'official')
+
+        // Clona a query para não afetar a query original passada para handlePrivateReports
+        $officialQuery = clone $query;
+
+        $this->submissions = $officialQuery->where('type', 'official')
             ->get()
             ->groupBy('vehicle_id')
             ->map(fn($group) => $group->keyBy(fn($item) => Carbon::parse($item->start_date)->format('Y-m')));
@@ -85,23 +144,29 @@ class ReportStatus extends Component
 
     private function handlePrivateReports($user, $query)
     {
-        // Se for um fiscal sem permissão, retorna vazio
+        // (Lógica interna mantida - o $query já está filtrado por ano)
         if ($user->role === 'fiscal' && !in_array($user->fiscal_type, ['private', 'both'])) {
             $this->submissions = collect();
             return;
         }
 
-        $this->vehicles = null; // Não aplicável para a visão de relatórios particulares
+        // Clona a query
+        $privateQuery = clone $query;
 
-        // Se for porteiro, vê apenas os seus próprios relatórios
         if ($user->role === 'porteiro') {
-            $query->where('guard_id', $user->id);
-        }
-        // Fiscais e Admins veem todos os relatórios particulares
+            $privateQuery->where('guard_id', $user->id);
 
-        $this->submissions = $query->where('type', 'private')
-            ->get()
-            ->keyBy(fn($item) => Carbon::parse($item->start_date)->format('Y-m'));
+            $this->submissions = $privateQuery->where('type', 'private')
+                ->get()
+                ->keyBy(fn($item) => Carbon::parse($item->start_date)->format('Y-m'));
+        } else {
+            $this->porteiros = User::where('role', 'porteiro')->orderBy('name')->get();
+
+            $this->submissions = $privateQuery->where('type', 'private')
+                ->get()
+                ->groupBy('guard_id')
+                ->map(fn($group) => $group->keyBy(fn($item) => Carbon::parse($item->start_date)->format('Y-m')));
+        }
     }
 
     public function render()

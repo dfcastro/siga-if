@@ -147,13 +147,14 @@ class GuardReport extends Component
         $dates = $this->getReportDates();
 
         $existing = ReportSubmission::where('type', 'official')
+            ->where('guard_id', Auth::id()) // ### ADICIONE ESTA LINHA ###
             ->where('vehicle_id', $this->selectedVehicleId)
             ->whereYear('start_date', $dates['start']->year)
             ->whereMonth('start_date', $dates['start']->month)
             ->exists();
 
         if ($existing) {
-            session()->flash('error', 'Já existe um relatório para este veículo no mês selecionado.');
+            session()->flash('error', 'Você já submeteu um relatório para este veículo no mês selecionado.');
             $this->clearSelectedVehicle();
             return;
         }
