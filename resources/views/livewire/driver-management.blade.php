@@ -115,18 +115,37 @@
                                 </td>
                                 <td class="px-6 py-4 space-x-2 text-center whitespace-nowrap">
                                     @if ($driver->trashed())
-                                        <button wire:click="restore({{ $driver->id }})"
-                                            class="font-medium text-green-600 hover:text-green-800">Restaurar</button>
-                                        <button wire:click="confirmForceDelete({{ $driver->id }})"
-                                            class="font-medium text-red-600 hover:text-red-800 ml-2">Excluir
-                                            Perm.</button>
+                                        {{-- Botões Restaurar/Excluir Perm. --}}
+                                        {{-- Adiciona verificação de permissão aqui também --}}
+                                        @if ($this->canManageDriver($driver))
+                                            {{-- Adapte se o nome da função for diferente --}}
+                                            <button wire:click="restore({{ $driver->id }})"
+                                                class="font-medium text-green-600 hover:text-green-800">Restaurar</button>
+                                            <button wire:click="confirmForceDelete({{ $driver->id }})"
+                                                class="font-medium text-red-600 hover:text-red-800 ml-2">Excluir
+                                                Perm.</button>
+                                        @else
+                                            <span class="text-xs text-gray-400 italic">Sem permissão</span>
+                                        @endif
                                     @else
                                         <button wire:click="showHistory({{ $driver->id }})"
                                             class="font-medium text-blue-600 hover:text-blue-800">Histórico</button>
-                                        <x-secondary-button
-                                            wire:click="edit({{ $driver->id }})">Editar</x-secondary-button>
-                                        <x-danger-button
-                                            wire:click="confirmDelete({{ $driver->id }})">Excluir</x-danger-button>
+
+                                        {{-- ### CONDIÇÃO ADICIONADA AQUI ### --}}
+                                        {{-- Só mostra Editar/Excluir se o user puder gerenciar ESTE motorista --}}
+                                        @if ($this->canManageDriver($driver))
+                                            {{-- Adapte se o nome da função for diferente --}}
+                                            <x-secondary-button
+                                                wire:click="edit({{ $driver->id }})">Editar</x-secondary-button>
+                                            <x-danger-button
+                                                wire:click="confirmDelete({{ $driver->id }})">Excluir</x-danger-button>
+                                        @else
+                                            {{-- Opcional: Mostrar uma indicação visual para o porteiro --}}
+                                            <span class="text-xs text-gray-400 italic"
+                                                title="Apenas Admin/Fiscais podem gerenciar motoristas autorizados.">Não
+                                                editável</span>
+                                        @endif
+                                        {{-- ### FIM DA CONDIÇÃO ### --}}
                                     @endif
                                 </td>
                             </tr>
@@ -161,18 +180,34 @@
                         </div>
                         <div class="mt-4 pt-4 border-t border-gray-200 flex flex-wrap gap-2 justify-end">
                             @if ($driver->trashed())
-                                <x-secondary-button class="flex-grow"
-                                    wire:click="restore({{ $driver->id }})">Restaurar</x-secondary-button>
-                                <x-danger-button class="flex-grow"
-                                    wire:click="confirmForceDelete({{ $driver->id }})">Excluir
-                                    Perm.</x-danger-button>
+                                {{-- Botões Restaurar/Excluir Perm. --}}
+                                @if ($this->canManageDriver($driver))
+                                    {{-- Adapte se o nome da função for diferente --}}
+                                    <x-secondary-button class="flex-grow"
+                                        wire:click="restore({{ $driver->id }})">Restaurar</x-secondary-button>
+                                    <x-danger-button class="flex-grow"
+                                        wire:click="confirmForceDelete({{ $driver->id }})">Excluir
+                                        Perm.</x-danger-button>
+                                @else
+                                    <span class="text-xs text-gray-400 italic w-full text-right">Sem permissão</span>
+                                @endif
                             @else
                                 <x-primary-button class="flex-grow"
                                     wire:click="showHistory({{ $driver->id }})">Histórico</x-primary-button>
-                                <x-secondary-button class="flex-grow"
-                                    wire:click="edit({{ $driver->id }})">Editar</x-secondary-button>
-                                <x-danger-button class="flex-grow"
-                                    wire:click="confirmDelete({{ $driver->id }})">Excluir</x-danger-button>
+
+                                {{-- ### CONDIÇÃO ADICIONADA AQUI ### --}}
+                                @if ($this->canManageDriver($driver))
+                                    {{-- Adapte se o nome da função for diferente --}}
+                                    <x-secondary-button class="flex-grow"
+                                        wire:click="edit({{ $driver->id }})">Editar</x-secondary-button>
+                                    <x-danger-button class="flex-grow"
+                                        wire:click="confirmDelete({{ $driver->id }})">Excluir</x-danger-button>
+                                @else
+                                    <span class="text-xs text-gray-400 italic w-full text-right"
+                                        title="Apenas Admin/Fiscais podem gerenciar motoristas autorizados.">Não
+                                        editável</span>
+                                @endif
+                                {{-- ### FIM DA CONDIÇÃO ### --}}
                             @endif
                         </div>
                     </div>
@@ -232,21 +267,21 @@
                         </div>
                         {{-- Campo Autorizado (com lógica condicional) --}}
                         @if (auth()->user()->role === 'admin' || auth()->user()->role === 'fiscal')
-                            {{-- Usa x-show para esconder OU x-bind:disabled para desabilitar --}}
-                            {{-- Opção 1: Esconder a checkbox --}}
-                            {{-- <div class="flex items-center pt-2" x-show="driverType === 'Servidor' || driverType === 'Terceirizado'"> --}}
-
-                            {{-- Opção 2: Desabilitar a checkbox (recomendado) --}}
-                            <div class="flex items-center pt-2" x-data="{ isDisabled: driverType === 'Aluno' || driverType === 'Visitante' }" x-init="$watch('driverType', value => isDisabled = (value === 'Aluno' || value === 'Visitante'))">
+                            {{-- Mantém o x-data para controlar isDisabled --}}
+                            <div class="flex items-center pt-2" x-data="{ isDisabled: driverType === 'Aluno' || driverType === 'Visitante' }" x-init="$watch('driverType', value => {
+                                isDisabled = (value === 'Aluno' || value === 'Visitante');
+                                // SE desabilitar, FORÇA o valor no Livewire para false
+                                if (isDisabled) {
+                                    $wire.set('is_authorized', false);
+                                }
+                            })">
                                 <input id="is_authorized" type="checkbox"
                                     class="h-4 w-4 text-ifnmg-green border-gray-300 rounded focus:ring-ifnmg-green disabled:opacity-50 disabled:cursor-not-allowed"
-                                    wire:model="is_authorized" {{-- Desabilita E desmarca se o tipo for inválido --}} x-bind:disabled="isDisabled"
-                                    x-bind:checked="!isDisabled && $wire.is_authorized">
+                                    wire:model="is_authorized" {{-- Apenas desabilita com base no tipo --}} x-bind:disabled="isDisabled">
                                 <label for="is_authorized" class="ml-2 block text-sm text-gray-900"
                                     :class="{ 'text-gray-500': isDisabled }">
                                     Autorizado a dirigir frota oficial?
                                 </label>
-                                {{-- Mostra erro de validação do backend se houver --}}
                                 <x-input-error for="is_authorized" class="mt-1 ml-6 text-xs" />
                             </div>
                         @endif

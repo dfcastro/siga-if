@@ -53,7 +53,7 @@ class DriverManagement extends Component
 
 
     // ### FUNÇÃO AUXILIAR PARA VERIFICAR PERMISSÃO ###
-    private function canManageDriver(Driver $driver = null): bool
+    public function canManageDriver(Driver $driver = null): bool
     {
         $user = Auth::user();
 
@@ -69,14 +69,19 @@ class DriverManagement extends Component
 
         // Fiscal de oficial SÓ PODE gerenciar motoristas AUTORIZADOS
         if ($user->role === 'fiscal' && $user->fiscal_type === 'official') {
-            // Se $driver existe, verifica se ele É autorizado.
-            // Se $driver não existe (criação), permite abrir o modal, a restrição será no store().
-            return $driver ? $driver->is_authorized : true;
+            return $driver ? $driver->is_authorized : true; // Permite criar (driver é null), mas só edita/exclui se for autorizado
         }
 
-        // Fiscal de particular ou ambos, e Porteiros podem gerenciar qualquer motorista
-        if (($user->role === 'fiscal' && in_array($user->fiscal_type, ['private', 'both'])) || $user->role === 'porteiro') {
+        // Fiscal de particular ou ambos podem gerenciar qualquer motorista
+        if ($user->role === 'fiscal' && in_array($user->fiscal_type, ['private', 'both'])) {
             return true;
+        }
+
+        // Porteiro SÓ PODE gerenciar motoristas NÃO AUTORIZADOS
+        if ($user->role === 'porteiro') {
+            // Se $driver existe, verifica se ele NÃO É autorizado.
+            // Se $driver não existe (criação), permite abrir o modal, a restrição será no store().
+            return $driver ? !$driver->is_authorized : true;
         }
 
         return false; // Nega por padrão
@@ -89,15 +94,24 @@ class DriverManagement extends Component
         $query = Driver::query();
         $user = Auth::user();
 
-        // ### FILTRO DE PERMISSÃO NA LISTAGEM ###
-        // Fiscal de oficial só vê motoristas autorizados
         if ($user->role === 'fiscal' && $user->fiscal_type === 'official') {
             $query->where('is_authorized', true);
         }
+        // ### NOVO FILTRO PARA PORTEIRO NA LISTAGEM ###
+        // O Porteiro também não precisa ver motoristas autorizados na lista principal? (Opcional)
+        // Se quiser esconder os autorizados da lista do porteiro, descomente a linha abaixo:
+        // elseif ($user->role === 'porteiro') {
+        //     $query->where('is_authorized', false);
+        // }
 
-        // Filtros de lixeira e busca (mantidos)
+
         if ($this->filter === 'trashed') {
             $query->onlyTrashed();
+            // Na lixeira, o porteiro PODE ver autorizados para restaurar? Ou não?
+            // Se não puder nem ver na lixeira, adicione o filtro aqui também.
+            if ($user->role === 'porteiro') {
+                $query->where('is_authorized', false); // Impede porteiro de ver autorizados na lixeira
+            }
         }
         if (!empty($this->search)) {
             $query->where(function ($subQuery) {
@@ -109,17 +123,37 @@ class DriverManagement extends Component
 
         $drivers = $query->orderBy('name', 'asc')->paginate(10);
 
-        // Lógica do Histórico (mantida)
+        // ... (Lógica do Histórico mantida)
         $driverHistoryPaginator = null;
         if ($this->isHistoryModalOpen && $this->driverForHistory) {
-            // ... (sua lógica de histórico)
             $this->driverForHistory->load('privateEntries.vehicle', 'officialTrips.vehicle');
-            $privateEntries = $this->driverForHistory->privateEntries->map(/*...*/);
-            $officialTrips = $this->driverForHistory->officialTrips->map(/*...*/);
+            // ... (código map/filter/paginate do histórico) ...
+            $privateEntries = $this->driverForHistory->privateEntries->map(function ($entry) {
+                return [
+                    'type' => 'Particular',
+                    'start_time' => $entry->entry_at,
+                    'end_time' => $entry->exit_at,
+                    'vehicle_info' => $entry->vehicle ? "{$entry->vehicle->model} ({$entry->vehicle->license_plate})" : 'Veículo Removido',
+                    'detail' => $entry->entry_reason,
+                ];
+            });
+            $officialTrips = $this->driverForHistory->officialTrips->map(function ($trip) {
+                return [
+                    'type' => 'Oficial',
+                    'start_time' => $trip->departure_datetime,
+                    'end_time' => $trip->arrival_datetime,
+                    'vehicle_info' => $trip->vehicle ? "{$trip->vehicle->model} ({$trip->vehicle->license_plate})" : 'Veículo Removido',
+                    'detail' => $trip->destination,
+                ];
+            });
             $fullHistory = $privateEntries->concat($officialTrips)->sortByDesc('start_time');
             if (!empty($this->historySearch)) {
                 $searchTerm = strtolower($this->historySearch);
-                $fullHistory = $fullHistory->filter(/*...*/);
+                $fullHistory = $fullHistory->filter(function ($entry) use ($searchTerm) {
+                    return str_contains(strtolower($entry['vehicle_info']), $searchTerm) ||
+                        str_contains(strtolower($entry['detail']), $searchTerm) ||
+                        str_contains(strtolower(\Carbon\Carbon::parse($entry['start_time'])->format('d/m/Y')), $searchTerm);
+                });
             }
             $fullHistory = $fullHistory->values();
             $currentPage = LengthAwarePaginator::resolveCurrentPage('historyPage');
@@ -130,6 +164,7 @@ class DriverManagement extends Component
                 'pageName' => 'historyPage',
             ]);
         }
+
 
         return view('livewire.driver-management', [
             'drivers' => $drivers,
@@ -262,15 +297,22 @@ class DriverManagement extends Component
     private function resetInputFields()
     {
         $this->reset(['name', 'document', 'type', 'driverId', 'is_authorized', 'telefone']);
-        $this->type = 'Servidor';
-        // Define is_authorized padrão com base no perfil ao resetar
+        $this->type = 'Servidor'; // Padrão
         $user = Auth::user();
-        $this->is_authorized = !($user->role === 'fiscal' && $user->fiscal_type === 'official'); // Fiscal oficial começa com true, os outros podem começar com false se preferir, mas true é mais seguro
-        if ($user->role === 'fiscal' && $user->fiscal_type === 'official') {
-            $this->is_authorized = true;
+
+
+        // Define is_authorized padrão com base no perfil:
+        // Apenas Admin e Fiscais podem *definir* a autorização.
+        // Para eles, começamos com 'true' como padrão seguro (especialmente Fiscal Oficial).
+        // Para o Porteiro, o padrão deve ser 'false', pois ele não controla essa flag.
+        if ($user->role === 'admin' || $user->role === 'fiscal') {
+            // Fiscal oficial DEVE ser true, os outros podem começar como true por segurança.
+            $this->is_authorized = ($user->role === 'fiscal' && $user->fiscal_type === 'official') ? true : true;
         } else {
-            $this->is_authorized = true; // Mantém true como padrão geral
+            // Porteiro e outros perfis (se houver) começam com false.
+            $this->is_authorized = false;
         }
+        // ### FIM DA CORREÇÃO ###
 
         $this->resetErrorBag();
     }

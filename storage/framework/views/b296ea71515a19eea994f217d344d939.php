@@ -135,15 +135,27 @@
                                 </td>
                                 <td class="px-6 py-4 space-x-2 text-center whitespace-nowrap">
                                     <!--[if BLOCK]><![endif]--><?php if($driver->trashed()): ?>
-                                        <button wire:click="restore(<?php echo e($driver->id); ?>)"
-                                            class="font-medium text-green-600 hover:text-green-800">Restaurar</button>
-                                        <button wire:click="confirmForceDelete(<?php echo e($driver->id); ?>)"
-                                            class="font-medium text-red-600 hover:text-red-800 ml-2">Excluir
-                                            Perm.</button>
+                                        
+                                        
+                                        <!--[if BLOCK]><![endif]--><?php if($this->canManageDriver($driver)): ?>
+                                            
+                                            <button wire:click="restore(<?php echo e($driver->id); ?>)"
+                                                class="font-medium text-green-600 hover:text-green-800">Restaurar</button>
+                                            <button wire:click="confirmForceDelete(<?php echo e($driver->id); ?>)"
+                                                class="font-medium text-red-600 hover:text-red-800 ml-2">Excluir
+                                                Perm.</button>
+                                        <?php else: ?>
+                                            <span class="text-xs text-gray-400 italic">Sem permissão</span>
+                                        <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
                                     <?php else: ?>
                                         <button wire:click="showHistory(<?php echo e($driver->id); ?>)"
                                             class="font-medium text-blue-600 hover:text-blue-800">Histórico</button>
-                                        <?php if (isset($component)) { $__componentOriginal3b0e04e43cf890250cc4d85cff4d94af = $component; } ?>
+
+                                        
+                                        
+                                        <!--[if BLOCK]><![endif]--><?php if($this->canManageDriver($driver)): ?>
+                                            
+                                            <?php if (isset($component)) { $__componentOriginal3b0e04e43cf890250cc4d85cff4d94af = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal3b0e04e43cf890250cc4d85cff4d94af = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.secondary-button','data' => ['wire:click' => 'edit('.e($driver->id).')']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('secondary-button'); ?>
@@ -162,7 +174,7 @@
 <?php $component = $__componentOriginal3b0e04e43cf890250cc4d85cff4d94af; ?>
 <?php unset($__componentOriginal3b0e04e43cf890250cc4d85cff4d94af); ?>
 <?php endif; ?>
-                                        <?php if (isset($component)) { $__componentOriginal656e8c5ea4d9a4fa173298297bfe3f11 = $component; } ?>
+                                            <?php if (isset($component)) { $__componentOriginal656e8c5ea4d9a4fa173298297bfe3f11 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal656e8c5ea4d9a4fa173298297bfe3f11 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.danger-button','data' => ['wire:click' => 'confirmDelete('.e($driver->id).')']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('danger-button'); ?>
@@ -181,6 +193,13 @@
 <?php $component = $__componentOriginal656e8c5ea4d9a4fa173298297bfe3f11; ?>
 <?php unset($__componentOriginal656e8c5ea4d9a4fa173298297bfe3f11); ?>
 <?php endif; ?>
+                                        <?php else: ?>
+                                            
+                                            <span class="text-xs text-gray-400 italic"
+                                                title="Apenas Admin/Fiscais podem gerenciar motoristas autorizados.">Não
+                                                editável</span>
+                                        <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                                        
                                     <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
                                 </td>
                             </tr>
@@ -216,7 +235,10 @@
                         </div>
                         <div class="mt-4 pt-4 border-t border-gray-200 flex flex-wrap gap-2 justify-end">
                             <!--[if BLOCK]><![endif]--><?php if($driver->trashed()): ?>
-                                <?php if (isset($component)) { $__componentOriginal3b0e04e43cf890250cc4d85cff4d94af = $component; } ?>
+                                
+                                <!--[if BLOCK]><![endif]--><?php if($this->canManageDriver($driver)): ?>
+                                    
+                                    <?php if (isset($component)) { $__componentOriginal3b0e04e43cf890250cc4d85cff4d94af = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal3b0e04e43cf890250cc4d85cff4d94af = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.secondary-button','data' => ['class' => 'flex-grow','wire:click' => 'restore('.e($driver->id).')']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('secondary-button'); ?>
@@ -235,7 +257,7 @@
 <?php $component = $__componentOriginal3b0e04e43cf890250cc4d85cff4d94af; ?>
 <?php unset($__componentOriginal3b0e04e43cf890250cc4d85cff4d94af); ?>
 <?php endif; ?>
-                                <?php if (isset($component)) { $__componentOriginal656e8c5ea4d9a4fa173298297bfe3f11 = $component; } ?>
+                                    <?php if (isset($component)) { $__componentOriginal656e8c5ea4d9a4fa173298297bfe3f11 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal656e8c5ea4d9a4fa173298297bfe3f11 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.danger-button','data' => ['class' => 'flex-grow','wire:click' => 'confirmForceDelete('.e($driver->id).')']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('danger-button'); ?>
@@ -245,7 +267,7 @@
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
 <?php $component->withAttributes(['class' => 'flex-grow','wire:click' => 'confirmForceDelete('.e($driver->id).')']); ?>Excluir
-                                    Perm. <?php echo $__env->renderComponent(); ?>
+                                        Perm. <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginal656e8c5ea4d9a4fa173298297bfe3f11)): ?>
 <?php $attributes = $__attributesOriginal656e8c5ea4d9a4fa173298297bfe3f11; ?>
@@ -255,6 +277,9 @@
 <?php $component = $__componentOriginal656e8c5ea4d9a4fa173298297bfe3f11; ?>
 <?php unset($__componentOriginal656e8c5ea4d9a4fa173298297bfe3f11); ?>
 <?php endif; ?>
+                                <?php else: ?>
+                                    <span class="text-xs text-gray-400 italic w-full text-right">Sem permissão</span>
+                                <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
                             <?php else: ?>
                                 <?php if (isset($component)) { $__componentOriginald411d1792bd6cc877d687758b753742c = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginald411d1792bd6cc877d687758b753742c = $attributes; } ?>
@@ -275,7 +300,11 @@
 <?php $component = $__componentOriginald411d1792bd6cc877d687758b753742c; ?>
 <?php unset($__componentOriginald411d1792bd6cc877d687758b753742c); ?>
 <?php endif; ?>
-                                <?php if (isset($component)) { $__componentOriginal3b0e04e43cf890250cc4d85cff4d94af = $component; } ?>
+
+                                
+                                <!--[if BLOCK]><![endif]--><?php if($this->canManageDriver($driver)): ?>
+                                    
+                                    <?php if (isset($component)) { $__componentOriginal3b0e04e43cf890250cc4d85cff4d94af = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal3b0e04e43cf890250cc4d85cff4d94af = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.secondary-button','data' => ['class' => 'flex-grow','wire:click' => 'edit('.e($driver->id).')']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('secondary-button'); ?>
@@ -294,7 +323,7 @@
 <?php $component = $__componentOriginal3b0e04e43cf890250cc4d85cff4d94af; ?>
 <?php unset($__componentOriginal3b0e04e43cf890250cc4d85cff4d94af); ?>
 <?php endif; ?>
-                                <?php if (isset($component)) { $__componentOriginal656e8c5ea4d9a4fa173298297bfe3f11 = $component; } ?>
+                                    <?php if (isset($component)) { $__componentOriginal656e8c5ea4d9a4fa173298297bfe3f11 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal656e8c5ea4d9a4fa173298297bfe3f11 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.danger-button','data' => ['class' => 'flex-grow','wire:click' => 'confirmDelete('.e($driver->id).')']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('danger-button'); ?>
@@ -313,6 +342,12 @@
 <?php $component = $__componentOriginal656e8c5ea4d9a4fa173298297bfe3f11; ?>
 <?php unset($__componentOriginal656e8c5ea4d9a4fa173298297bfe3f11); ?>
 <?php endif; ?>
+                                <?php else: ?>
+                                    <span class="text-xs text-gray-400 italic w-full text-right"
+                                        title="Apenas Admin/Fiscais podem gerenciar motoristas autorizados.">Não
+                                        editável</span>
+                                <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                                
                             <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
                         </div>
                     </div>
@@ -580,20 +615,20 @@
                         
                         <!--[if BLOCK]><![endif]--><?php if(auth()->user()->role === 'admin' || auth()->user()->role === 'fiscal'): ?>
                             
-                            
-                            
-
-                            
-                            <div class="flex items-center pt-2" x-data="{ isDisabled: driverType === 'Aluno' || driverType === 'Visitante' }" x-init="$watch('driverType', value => isDisabled = (value === 'Aluno' || value === 'Visitante'))">
+                            <div class="flex items-center pt-2" x-data="{ isDisabled: driverType === 'Aluno' || driverType === 'Visitante' }" x-init="$watch('driverType', value => {
+                                isDisabled = (value === 'Aluno' || value === 'Visitante');
+                                // SE desabilitar, FORÇA o valor no Livewire para false
+                                if (isDisabled) {
+                                    $wire.set('is_authorized', false);
+                                }
+                            })">
                                 <input id="is_authorized" type="checkbox"
                                     class="h-4 w-4 text-ifnmg-green border-gray-300 rounded focus:ring-ifnmg-green disabled:opacity-50 disabled:cursor-not-allowed"
-                                    wire:model="is_authorized"  x-bind:disabled="isDisabled"
-                                    x-bind:checked="!isDisabled && $wire.is_authorized">
+                                    wire:model="is_authorized"  x-bind:disabled="isDisabled">
                                 <label for="is_authorized" class="ml-2 block text-sm text-gray-900"
                                     :class="{ 'text-gray-500': isDisabled }">
                                     Autorizado a dirigir frota oficial?
                                 </label>
-                                
                                 <?php if (isset($component)) { $__componentOriginalf94ed9c5393ef72725d159fe01139746 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalf94ed9c5393ef72725d159fe01139746 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.input-error','data' => ['for' => 'is_authorized','class' => 'mt-1 ml-6 text-xs']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
