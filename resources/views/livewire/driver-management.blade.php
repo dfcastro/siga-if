@@ -198,7 +198,7 @@
                         {{ $driverId ? 'Editar Motorista' : 'Cadastrar Novo Motorista' }}</h3>
                 </div>
                 <form wire:submit="store">
-                    <div class="p-6 space-y-4">
+                    <div class="p-6 space-y-4" x-data="{ driverType: @entangle('type').live }">
                         <div>
                             <x-input-label for="name" value="Nome Completo" />
                             <x-text-input type="text" id="name" class="mt-1 block w-full capitalize"
@@ -217,11 +217,12 @@
                                 wire:model="telefone" x-data x-mask="(99) 99999-9999" />
                             <x-input-error for="telefone" class="mt-1" />
                         </div>
+                        {{-- Campo Tipo --}}
                         <div>
                             <x-input-label for="type" value="Tipo" />
                             <select id="type"
                                 class="mt-1 block w-full border-gray-300 focus:border-ifnmg-green focus:ring-ifnmg-green rounded-md shadow-sm"
-                                wire:model="type">
+                                {{-- Usa wire:model.live para atualizar o Alpine.js --}} wire:model.live="type">
                                 <option value="Servidor">Servidor</option>
                                 <option value="Aluno">Aluno</option>
                                 <option value="Terceirizado">Terceirizado</option>
@@ -229,13 +230,24 @@
                             </select>
                             <x-input-error for="type" class="mt-1" />
                         </div>
+                        {{-- Campo Autorizado (com lógica condicional) --}}
                         @if (auth()->user()->role === 'admin' || auth()->user()->role === 'fiscal')
-                            <div class="flex items-center pt-2">
+                            {{-- Usa x-show para esconder OU x-bind:disabled para desabilitar --}}
+                            {{-- Opção 1: Esconder a checkbox --}}
+                            {{-- <div class="flex items-center pt-2" x-show="driverType === 'Servidor' || driverType === 'Terceirizado'"> --}}
+
+                            {{-- Opção 2: Desabilitar a checkbox (recomendado) --}}
+                            <div class="flex items-center pt-2" x-data="{ isDisabled: driverType === 'Aluno' || driverType === 'Visitante' }" x-init="$watch('driverType', value => isDisabled = (value === 'Aluno' || value === 'Visitante'))">
                                 <input id="is_authorized" type="checkbox"
-                                    class="h-4 w-4 text-ifnmg-green border-gray-300 rounded focus:ring-ifnmg-green"
-                                    wire:model="is_authorized">
-                                <label for="is_authorized" class="ml-2 block text-sm text-gray-900">Autorizado a
-                                    dirigir frota oficial?</label>
+                                    class="h-4 w-4 text-ifnmg-green border-gray-300 rounded focus:ring-ifnmg-green disabled:opacity-50 disabled:cursor-not-allowed"
+                                    wire:model="is_authorized" {{-- Desabilita E desmarca se o tipo for inválido --}} x-bind:disabled="isDisabled"
+                                    x-bind:checked="!isDisabled && $wire.is_authorized">
+                                <label for="is_authorized" class="ml-2 block text-sm text-gray-900"
+                                    :class="{ 'text-gray-500': isDisabled }">
+                                    Autorizado a dirigir frota oficial?
+                                </label>
+                                {{-- Mostra erro de validação do backend se houver --}}
+                                <x-input-error for="is_authorized" class="mt-1 ml-6 text-xs" />
                             </div>
                         @endif
                     </div>

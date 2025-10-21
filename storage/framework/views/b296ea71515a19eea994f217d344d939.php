@@ -339,7 +339,7 @@
                         <?php echo e($driverId ? 'Editar Motorista' : 'Cadastrar Novo Motorista'); ?></h3>
                 </div>
                 <form wire:submit="store">
-                    <div class="p-6 space-y-4">
+                    <div class="p-6 space-y-4" x-data="{ driverType: <?php if ((object) ('type') instanceof \Livewire\WireDirective) : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('type'->value()); ?>')<?php echo e('type'->hasModifier('live') ? '.live' : ''); ?><?php else : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('type'); ?>')<?php endif; ?>.live }">
                         <div>
                             <?php if (isset($component)) { $__componentOriginale3da9d84bb64e4bc2eeebaafabfb2581 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginale3da9d84bb64e4bc2eeebaafabfb2581 = $attributes; } ?>
@@ -526,6 +526,7 @@
 <?php unset($__componentOriginalf94ed9c5393ef72725d159fe01139746); ?>
 <?php endif; ?>
                         </div>
+                        
                         <div>
                             <?php if (isset($component)) { $__componentOriginale3da9d84bb64e4bc2eeebaafabfb2581 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginale3da9d84bb64e4bc2eeebaafabfb2581 = $attributes; } ?>
@@ -549,7 +550,7 @@
 <?php endif; ?>
                             <select id="type"
                                 class="mt-1 block w-full border-gray-300 focus:border-ifnmg-green focus:ring-ifnmg-green rounded-md shadow-sm"
-                                wire:model="type">
+                                 wire:model.live="type">
                                 <option value="Servidor">Servidor</option>
                                 <option value="Aluno">Aluno</option>
                                 <option value="Terceirizado">Terceirizado</option>
@@ -576,13 +577,43 @@
 <?php unset($__componentOriginalf94ed9c5393ef72725d159fe01139746); ?>
 <?php endif; ?>
                         </div>
+                        
                         <!--[if BLOCK]><![endif]--><?php if(auth()->user()->role === 'admin' || auth()->user()->role === 'fiscal'): ?>
-                            <div class="flex items-center pt-2">
+                            
+                            
+                            
+
+                            
+                            <div class="flex items-center pt-2" x-data="{ isDisabled: driverType === 'Aluno' || driverType === 'Visitante' }" x-init="$watch('driverType', value => isDisabled = (value === 'Aluno' || value === 'Visitante'))">
                                 <input id="is_authorized" type="checkbox"
-                                    class="h-4 w-4 text-ifnmg-green border-gray-300 rounded focus:ring-ifnmg-green"
-                                    wire:model="is_authorized">
-                                <label for="is_authorized" class="ml-2 block text-sm text-gray-900">Autorizado a
-                                    dirigir frota oficial?</label>
+                                    class="h-4 w-4 text-ifnmg-green border-gray-300 rounded focus:ring-ifnmg-green disabled:opacity-50 disabled:cursor-not-allowed"
+                                    wire:model="is_authorized"  x-bind:disabled="isDisabled"
+                                    x-bind:checked="!isDisabled && $wire.is_authorized">
+                                <label for="is_authorized" class="ml-2 block text-sm text-gray-900"
+                                    :class="{ 'text-gray-500': isDisabled }">
+                                    Autorizado a dirigir frota oficial?
+                                </label>
+                                
+                                <?php if (isset($component)) { $__componentOriginalf94ed9c5393ef72725d159fe01139746 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalf94ed9c5393ef72725d159fe01139746 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.input-error','data' => ['for' => 'is_authorized','class' => 'mt-1 ml-6 text-xs']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('input-error'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['for' => 'is_authorized','class' => 'mt-1 ml-6 text-xs']); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalf94ed9c5393ef72725d159fe01139746)): ?>
+<?php $attributes = $__attributesOriginalf94ed9c5393ef72725d159fe01139746; ?>
+<?php unset($__attributesOriginalf94ed9c5393ef72725d159fe01139746); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalf94ed9c5393ef72725d159fe01139746)): ?>
+<?php $component = $__componentOriginalf94ed9c5393ef72725d159fe01139746; ?>
+<?php unset($__componentOriginalf94ed9c5393ef72725d159fe01139746); ?>
+<?php endif; ?>
                             </div>
                         <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
                     </div>

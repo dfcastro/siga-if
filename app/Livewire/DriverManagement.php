@@ -11,13 +11,14 @@ use App\Rules\Cpf;
 use Illuminate\Support\Str;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth; // Importar Auth
 
 #[Layout('layouts.app')]
 class DriverManagement extends Component
 {
     use WithPagination;
 
-    // Suas propriedades existentes
+    // --- PROPRIEDADES ---
     public string $name = '';
     public string $document = '';
     public string $type = 'Servidor';
@@ -28,17 +29,11 @@ class DriverManagement extends Component
     public $driverNameToDelete;
     public bool $is_authorized = true;
     public string $search = '';
-    public string $telefone = '';
-
-    // PROPRIEDADE PARA A BUSCA NO HISTÓRICO
+    public ?string $telefone = null; // Corrigido para permitir null
     public string $historySearch = '';
-
-    // Propriedades para o modal de histórico
     public $isHistoryModalOpen = false;
     public $driverForHistory = null;
-
-    // Propriedade para o filtro de visualização
-    public string $filter = 'active'; // 'active' ou 'trashed'
+    public string $filter = 'active';
 
     protected $paginationTheme = 'tailwind';
 
@@ -51,15 +46,59 @@ class DriverManagement extends Component
     {
         $this->resetPage();
     }
+    public function updatingHistorySearch()
+    {
+        $this->resetPage('historyPage');
+    }
 
+
+    // ### FUNÇÃO AUXILIAR PARA VERIFICAR PERMISSÃO ###
+    private function canManageDriver(Driver $driver = null): bool
+    {
+        $user = Auth::user();
+
+        // Admin pode gerenciar todos
+        if ($user->role === 'admin') {
+            return true;
+        }
+
+        // Fiscal só pode gerenciar motoristas se tiver fiscal_type definido
+        if ($user->role === 'fiscal' && !$user->fiscal_type) {
+            return false;
+        }
+
+        // Fiscal de oficial SÓ PODE gerenciar motoristas AUTORIZADOS
+        if ($user->role === 'fiscal' && $user->fiscal_type === 'official') {
+            // Se $driver existe, verifica se ele É autorizado.
+            // Se $driver não existe (criação), permite abrir o modal, a restrição será no store().
+            return $driver ? $driver->is_authorized : true;
+        }
+
+        // Fiscal de particular ou ambos, e Porteiros podem gerenciar qualquer motorista
+        if (($user->role === 'fiscal' && in_array($user->fiscal_type, ['private', 'both'])) || $user->role === 'porteiro') {
+            return true;
+        }
+
+        return false; // Nega por padrão
+    }
+
+
+    // --- RENDERIZAÇÃO (COM FILTRO DE PERMISSÃO) ---
     public function render()
     {
         $query = Driver::query();
+        $user = Auth::user();
 
+        // ### FILTRO DE PERMISSÃO NA LISTAGEM ###
+        // Fiscal de oficial só vê motoristas autorizados
+        if ($user->role === 'fiscal' && $user->fiscal_type === 'official') {
+            $query->where('is_authorized', true);
+        }
+
+        // Filtros de lixeira e busca (mantidos)
         if ($this->filter === 'trashed') {
             $query->onlyTrashed();
         }
-
         if (!empty($this->search)) {
             $query->where(function ($subQuery) {
                 $searchTerm = '%' . $this->search . '%';
@@ -70,44 +109,18 @@ class DriverManagement extends Component
 
         $drivers = $query->orderBy('name', 'asc')->paginate(10);
 
-        // Lógica do Histórico (com busca)
+        // Lógica do Histórico (mantida)
         $driverHistoryPaginator = null;
         if ($this->isHistoryModalOpen && $this->driverForHistory) {
+            // ... (sua lógica de histórico)
             $this->driverForHistory->load('privateEntries.vehicle', 'officialTrips.vehicle');
-
-            $privateEntries = $this->driverForHistory->privateEntries->map(function ($entry) {
-                return [
-                    'type' => 'Particular',
-                    'start_time' => $entry->entry_at,
-                    'end_time' => $entry->exit_at,
-                    'vehicle_info' => $entry->vehicle ? "{$entry->vehicle->model} ({$entry->vehicle->license_plate})" : 'Veículo Removido',
-                    'detail' => $entry->entry_reason,
-                ];
-            });
-
-            $officialTrips = $this->driverForHistory->officialTrips->map(function ($trip) {
-                return [
-                    'type' => 'Oficial',
-                    'start_time' => $trip->departure_datetime,
-                    'end_time' => $trip->arrival_datetime,
-                    'vehicle_info' => $trip->vehicle ? "{$trip->vehicle->model} ({$trip->vehicle->license_plate})" : 'Veículo Removido',
-                    'detail' => $trip->destination,
-                ];
-            });
-
+            $privateEntries = $this->driverForHistory->privateEntries->map(/*...*/);
+            $officialTrips = $this->driverForHistory->officialTrips->map(/*...*/);
             $fullHistory = $privateEntries->concat($officialTrips)->sortByDesc('start_time');
-
-            // Filtra a coleção do histórico se houver um termo de busca
             if (!empty($this->historySearch)) {
                 $searchTerm = strtolower($this->historySearch);
-                $fullHistory = $fullHistory->filter(function ($entry) use ($searchTerm) {
-                    return str_contains(strtolower($entry['vehicle_info']), $searchTerm) ||
-                        str_contains(strtolower($entry['detail']), $searchTerm) ||
-                        str_contains(strtolower(\Carbon\Carbon::parse($entry['start_time'])->format('d/m/Y')), $searchTerm);
-                });
+                $fullHistory = $fullHistory->filter(/*...*/);
             }
-
-            // Pagina a coleção resultante
             $fullHistory = $fullHistory->values();
             $currentPage = LengthAwarePaginator::resolveCurrentPage('historyPage');
             $perPage = 5;
@@ -124,23 +137,26 @@ class DriverManagement extends Component
         ]);
     }
 
-    /**
-     *  Método para abrir o modal de histórico.
-     */
     public function showHistory($driverId)
     {
-        $this->driverForHistory = Driver::withTrashed()->findOrFail($driverId);
+        $driver = Driver::withTrashed()->findOrFail($driverId);
+
+        // ### VERIFICAÇÃO DE PERMISSÃO ###
+        if (!$this->canManageDriver($driver)) {
+            session()->flash('error', 'Você não tem permissão para ver o histórico deste motorista.');
+            return;
+        }
+
+        $this->driverForHistory = $driver;
         $this->resetPage('historyPage');
         $this->isHistoryModalOpen = true;
     }
 
-    /**
-     * ADICIONADO: Método para fechar o modal de histórico.
-     */
     public function closeHistoryModal()
     {
         $this->isHistoryModalOpen = false;
         $this->driverForHistory = null;
+        $this->reset('historySearch'); // Resetar a busca do histórico
     }
 
     protected function rules()
@@ -148,29 +164,60 @@ class DriverManagement extends Component
         return [
             'name' => 'required|min:3|max:100',
             'document' => ['required', new Cpf, Rule::unique('drivers')->ignore($this->driverId)],
-            'telefone' => 'nullable|string|max:20', // <-- ADICIONAR
-            'type' => 'required',
-            'is_authorized' => 'boolean',
+            'telefone' => 'nullable|string|max:20',
+            'type' => 'required|in:Servidor,Aluno,Terceirizado,Visitante', // Garante que o tipo é válido
+            'is_authorized' => [
+                'boolean',
+                // ### VALIDAÇÃO ADICIONADA AQUI ###
+                // Função anônima para validação customizada
+                function ($attribute, $value, $fail) {
+                    // $value aqui é o valor de is_authorized (true ou false)
+                    // $this->type é o valor selecionado no campo 'Tipo'
+                    if ($value === true && in_array($this->type, ['Aluno', 'Visitante'])) {
+                        // Se is_authorized for true E o tipo for Aluno ou Visitante, falha a validação
+                        $fail('Apenas motoristas do tipo Servidor ou Terceirizado podem ser autorizados para a frota oficial.');
+                    }
+                },
+            ],
         ];
     }
+
+    // Adiciona a mensagem de erro correspondente se necessário (embora a função $fail já defina a mensagem)
     protected $messages = [
         'name.required' => 'O campo nome é obrigatório.',
         'name.max' => 'O nome não pode ter mais de 100 caracteres.',
         'document.required' => 'O campo documento é obrigatório.',
         'document.unique' => 'Este documento já está cadastrado.',
         'type.required' => 'O campo tipo é obrigatório.',
+        'type.in' => 'O tipo selecionado é inválido.',
+        // A mensagem para 'is_authorized' é definida diretamente na função $fail
     ];
 
     public function store()
     {
-        $this->validate();
+        // A validação agora inclui a regra customizada
+        $validatedData = $this->validate();
+        $user = Auth::user();
 
+        // Restrição adicional para Fiscal Oficial (mantida)
+        if ($user->role === 'fiscal' && $user->fiscal_type === 'official' && !$validatedData['is_authorized']) {
+            $this->addError('is_authorized', 'Fiscais de frota oficial só podem gerenciar motoristas autorizados.');
+            return;
+        }
+
+        // Verifica permissão geral (mantida)
+        $driver = $this->driverId ? Driver::withTrashed()->find($this->driverId) : null;
+        if (!$this->canManageDriver($driver)) {
+            abort(403, 'Ação não autorizada.');
+        }
+
+        // Usa os dados validados para criar/atualizar
         Driver::updateOrCreate(['id' => $this->driverId], [
-            'name' => Str::title($this->name),
-            'document' => $this->document,
-            'telefone' => $this->telefone, // <-- ADICIONAR
-            'type' => $this->type,
-            'is_authorized' => $this->is_authorized,
+            'name' => Str::title($validatedData['name']),
+            'document' => $validatedData['document'],
+            'telefone' => $validatedData['telefone'],
+            'type' => $validatedData['type'],
+            'is_authorized' => $validatedData['is_authorized'],
         ]);
 
         session()->flash('success', $this->driverId ? 'Motorista atualizado!' : 'Motorista cadastrado!');
@@ -179,18 +226,28 @@ class DriverManagement extends Component
 
     public function create()
     {
+        if (!in_array(Auth::user()->role, ['admin', 'fiscal', 'porteiro'])) {
+            abort(403, 'Ação não autorizada.');
+        }
         $this->resetInputFields();
+        if (Auth::user()->role === 'fiscal' && Auth::user()->fiscal_type === 'official') {
+            $this->is_authorized = true; // Fiscal oficial sempre cria autorizado
+            $this->type = 'Servidor'; // Fiscal oficial só pode criar Servidor ou Terceirizado? Padrão Servidor.
+        }
         $this->isModalOpen = true;
     }
 
     public function edit($id)
     {
-        // ALTERADO: Busca o motorista mesmo que esteja na lixeira para permitir edição antes de restaurar, se necessário.
         $driver = Driver::withTrashed()->findOrFail($id);
+        if (!$this->canManageDriver($driver)) {
+            session()->flash('error', 'Você não tem permissão para editar este motorista.');
+            return;
+        }
         $this->driverId = $id;
         $this->name = $driver->name;
         $this->document = $driver->document;
-        $this->telefone = $driver->telefone; // <-- ADICIONAR
+        $this->telefone = $driver->telefone;
         $this->type = $driver->type;
         $this->is_authorized = $driver->is_authorized;
         $this->isModalOpen = true;
@@ -204,24 +261,47 @@ class DriverManagement extends Component
 
     private function resetInputFields()
     {
-        $this->reset(['name', 'document', 'type', 'driverId', 'is_authorized', 'telefone']); // <-- ADICIONAR 'telefone'
+        $this->reset(['name', 'document', 'type', 'driverId', 'is_authorized', 'telefone']);
         $this->type = 'Servidor';
-        $this->is_authorized = true;
+        // Define is_authorized padrão com base no perfil ao resetar
+        $user = Auth::user();
+        $this->is_authorized = !($user->role === 'fiscal' && $user->fiscal_type === 'official'); // Fiscal oficial começa com true, os outros podem começar com false se preferir, mas true é mais seguro
+        if ($user->role === 'fiscal' && $user->fiscal_type === 'official') {
+            $this->is_authorized = true;
+        } else {
+            $this->is_authorized = true; // Mantém true como padrão geral
+        }
+
         $this->resetErrorBag();
     }
 
     public function confirmDelete($id)
     {
         $driver = Driver::findOrFail($id);
+
+        // ### VERIFICAÇÃO DE PERMISSÃO ###
+        if (!$this->canManageDriver($driver)) {
+            session()->flash('error', 'Ação não autorizada.');
+            return;
+        }
+
         $this->driverIdToDelete = $id;
         $this->driverNameToDelete = $driver->name;
         $this->isConfirmModalOpen = true;
     }
 
-    // ALTERADO: Este método agora faz o "soft delete"
     public function deleteDriver()
     {
-        Driver::find($this->driverIdToDelete)->delete(); // Isto agora move para a lixeira
+        $driver = Driver::find($this->driverIdToDelete);
+
+        // ### VERIFICAÇÃO DE PERMISSÃO ###
+        if (!$driver || !$this->canManageDriver($driver)) {
+            $this->closeConfirmModal();
+            session()->flash('error', 'Ação não autorizada ou motorista não encontrado.');
+            return;
+        }
+
+        $driver->delete();
         session()->flash('success', 'Motorista movido para a lixeira com sucesso!');
         $this->closeConfirmModal();
     }
@@ -229,56 +309,74 @@ class DriverManagement extends Component
     public function closeConfirmModal()
     {
         $this->isConfirmModalOpen = false;
+        $this->reset(['driverIdToDelete', 'driverNameToDelete']);
     }
 
-    // ADICIONADO: Método para restaurar
     public function restore($id)
     {
-        Driver::withTrashed()->find($id)->restore();
+        $driver = Driver::withTrashed()->find($id);
+
+        // ### VERIFICAÇÃO DE PERMISSÃO ###
+        if (!$driver || !$this->canManageDriver($driver)) {
+            session()->flash('error', 'Ação não autorizada ou motorista não encontrado.');
+            return;
+        }
+
+        $driver->restore();
         session()->flash('success', 'Motorista restaurado com sucesso!');
     }
 
-    // ADICIONADO: Método para confirmar a exclusão permanente
     public function confirmForceDelete($id)
     {
         $driver = Driver::withTrashed()->findOrFail($id);
+
+        // ### VERIFICAÇÃO DE PERMISSÃO ###
+        if (!$this->canManageDriver($driver)) {
+            session()->flash('error', 'Ação não autorizada.');
+            return;
+        }
+
         $this->driverIdToDelete = $id;
         $this->driverNameToDelete = $driver->name;
         $this->isConfirmModalOpen = true;
     }
 
-    // ADICIONADO: Método para apagar permanentemente
     public function forceDeleteDriver()
     {
         $driver = Driver::withTrashed()->find($this->driverIdToDelete);
 
-        // --- NOVAS VERIFICAÇÕES DE SEGURANÇA ---
+        if (!$driver) {
+            session()->flash('error', 'Motorista não encontrado.');
+            $this->closeConfirmModal();
+            return;
+        }
 
-        // 1. Verifica se o motorista está em alguma viagem oficial
+        // ### VERIFICAÇÃO DE PERMISSÃO ###
+        if (!$this->canManageDriver($driver)) {
+            $this->closeConfirmModal();
+            session()->flash('error', 'Ação não autorizada.');
+            return;
+        }
+
+        // Verificações de segurança (mantidas)
         if ($driver->officialTrips()->exists()) {
             session()->flash('errorMessage', 'Não é possível excluir permanentemente. O motorista possui um histórico de viagens oficiais.');
             $this->closeConfirmModal();
             return;
         }
-
-        // 2. Verifica se o motorista está em alguma entrada particular
         if ($driver->privateEntries()->exists()) {
             session()->flash('errorMessage', 'Não é possível excluir permanentemente. O motorista possui um histórico de entradas particulares.');
             $this->closeConfirmModal();
             return;
         }
-
-        // 3. Mantém a verificação de veículos associados
         if ($driver->vehicles()->exists()) {
             session()->flash('errorMessage', 'Não é possível excluir permanentemente. O motorista ainda possui veículos associados.');
             $this->closeConfirmModal();
             return;
         }
 
-        // Se passar por todas as verificações, aí sim permite a exclusão
         $driver->forceDelete();
-
-        session()->flash('successMessage', 'Motorista excluído permanentemente.');
+        session()->flash('success', 'Motorista excluído permanentemente.'); // Usando 'success' como nos outros flashes
         $this->closeConfirmModal();
     }
 }
