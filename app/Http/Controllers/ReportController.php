@@ -78,7 +78,7 @@ class ReportController extends Controller
         $vehicle = Vehicle::withTrashed()->find($request->vehicle_id); // Agora garantido que existe
         $driver = $request->filled('driver_id') ? Driver::withTrashed()->find($request->driver_id) : null;
         $totalKm = $trips->sum('distance_traveled');
-
+        $generatorName = Auth::user()?->name ?? 'Usuário Desconhecido';
         $data = [
             'vehicle' => $vehicle,
             'driver' => $driver,
@@ -86,6 +86,7 @@ class ReportController extends Controller
             'startDate' => $startDate->format('d/m/Y'), // Formatado para view
             'endDate' => $endDate->format('d/m/Y'),     // Formatado para view
             'totalKm' => $totalKm,
+            'generatorName' => $generatorName,
         ];
 
         // Carrega a view PDF (que já parece correta)
@@ -143,13 +144,14 @@ class ReportController extends Controller
 
         $vehicle = $request->filled('vehicle_id') ? Vehicle::withTrashed()->find($request->vehicle_id) : null;
         $driver = $request->filled('driver_id') ? Driver::withTrashed()->find($request->driver_id) : null;
-
+        $generatorName = Auth::user()?->name ?? 'Usuário Desconhecido';
         $data = [
             'entries' => $entries, // Dados limpos
             'startDate' => $startDate->format('d/m/Y'),
             'endDate' => $endDate->format('d/m/Y'),
             'vehicle' => $vehicle,
             'driver' => $driver,
+            'generatorName' => $generatorName,
         ];
 
         $pdf = Pdf::loadView('reports.pdf.private', $data);

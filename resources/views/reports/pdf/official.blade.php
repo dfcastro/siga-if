@@ -245,40 +245,43 @@
         @if ($trips->isNotEmpty())
             <tfoot class="total-row">
                 <tr>
-                    <td colspan="5" style="text-align: right;"><strong>Distância Total Rodada no Período:</strong>
+                    {{-- O texto ocupa as 5 primeiras colunas --}}
+                    <td colspan="5" style="text-align: right; border-right: none;"><strong>Distância Total Rodada no
+                            Período:</strong></td>
+                    {{-- O valor formatado + " km" ocupam a 6ª coluna (KM Rodado) --}}
+                    <td style="text-align: right; border-left: none;">
+                        <strong>{{ number_format($totalKm, 0, ',', '.') }} km</strong>
                     </td>
-                    <td style="text-align: right;"><strong>{{ number_format($totalKm, 0, ',', '.') }} km</strong></td>
+                    {{-- Células vazias para as colunas 7 e 8 (Porteiros) --}}
                     <td></td>
-                    <td></td> {{-- Células vazias corrigidas --}}
+                    <td></td>
                 </tr>
             </tfoot>
         @endif
     </table>
 
-    {{-- ### INÍCIO - NOVA SEÇÃO DE ASSINATURA COM DIV ### --}}
+    {{-- ### INÍCIO - SEÇÃO DE ASSINATURA CORRIGIDA ### --}}
     <div
-        style="margin-top: 50px; /* Ajuste o espaço conforme necessário */
-                page-break-inside: avoid; /* Tenta manter a div numa página */
-                text-align: center;
-                width: 250px;
+        style="margin-top: 50px; /* Espaçamento */
+                page-break-inside: avoid;
+                width: 280px; /* Largura ajustada */
                 margin-left: auto;
-                margin-right: auto;">
+                margin-right: auto;
+                text-align: center;">
 
-        <div
-            style="border-top: 1px solid #333;
-                    padding-top: 5px;
-                    font-size: 9px;">
-            @if (isset($porteiroName))
-                {{ $porteiroName }}<br>
-                <strong>Porteiro Responsável</strong>
-            @else
-                {{-- Linha em branco para espaço ou texto genérico --}}
-                <br>
-                <strong>Responsável pelo Relatório</strong>
-            @endif
+        {{-- Apenas a linha --}}
+        <div style="border-top: 1px solid #333; height: 1px; margin-bottom: 5px;">
+            {{-- Linha sem texto interno para melhor alinhamento --}}
+        </div>
+
+        {{-- Texto abaixo da linha --}}
+        <div style="font-size: 9px;">
+            {{-- Usa a variável $generatorName passada pelo Controller --}}
+            {{ $generatorName ?? 'Usuário Desconhecido' }}<br>
+            <strong>Responsável pela Emissão</strong> {{-- Texto mais apropriado --}}
         </div>
     </div>
-    {{-- ### FIM - NOVA SEÇÃO DE ASSINATURA COM DIV ### --}}
+    {{-- ### FIM - SEÇÃO DE ASSINATURA CORRIGIDA ### --}}
 
 
     {{-- Rodapé da Página --}}

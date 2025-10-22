@@ -247,11 +247,16 @@
         <?php if($trips->isNotEmpty()): ?>
             <tfoot class="total-row">
                 <tr>
-                    <td colspan="5" style="text-align: right;"><strong>Distância Total Rodada no Período:</strong>
+                    
+                    <td colspan="5" style="text-align: right; border-right: none;"><strong>Distância Total Rodada no
+                            Período:</strong></td>
+                    
+                    <td style="text-align: right; border-left: none;">
+                        <strong><?php echo e(number_format($totalKm, 0, ',', '.')); ?> km</strong>
                     </td>
-                    <td style="text-align: right;"><strong><?php echo e(number_format($totalKm, 0, ',', '.')); ?> km</strong></td>
+                    
                     <td></td>
-                    <td></td> 
+                    <td></td>
                 </tr>
             </tfoot>
         <?php endif; ?>
@@ -259,25 +264,23 @@
 
     
     <div
-        style="margin-top: 50px; /* Ajuste o espaço conforme necessário */
-                page-break-inside: avoid; /* Tenta manter a div numa página */
-                text-align: center;
-                width: 250px;
+        style="margin-top: 50px; /* Espaçamento */
+                page-break-inside: avoid;
+                width: 280px; /* Largura ajustada */
                 margin-left: auto;
-                margin-right: auto;">
+                margin-right: auto;
+                text-align: center;">
 
-        <div
-            style="border-top: 1px solid #333;
-                    padding-top: 5px;
-                    font-size: 9px;">
-            <?php if(isset($porteiroName)): ?>
-                <?php echo e($porteiroName); ?><br>
-                <strong>Porteiro Responsável</strong>
-            <?php else: ?>
-                
-                <br>
-                <strong>Responsável pelo Relatório</strong>
-            <?php endif; ?>
+        
+        <div style="border-top: 1px solid #333; height: 1px; margin-bottom: 5px;">
+            
+        </div>
+
+        
+        <div style="font-size: 9px;">
+            
+            <?php echo e($generatorName ?? 'Usuário Desconhecido'); ?><br>
+            <strong>Responsável pela Emissão</strong> 
         </div>
     </div>
     
