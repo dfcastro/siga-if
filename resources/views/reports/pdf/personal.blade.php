@@ -52,6 +52,7 @@
 
         .logo-ifnmg {
             width: 55px;
+            /* Ajustado */
         }
 
         .logo-siga {
@@ -60,44 +61,54 @@
 
         .summary-section {
             width: 100%;
-            margin-bottom: 25px;
-            font-size: 11px;
-            border-left: 4px solid #4a90e2;
-            padding-left: 15px;
+            margin-bottom: 15px;
+            /* Reduzido */
+            font-size: 10px;
+            /* Levemente maior */
+            border-left: 3px solid #4a90e2;
+            /* Mais fino */
+            padding-left: 10px;
             background-color: #f8fafc;
-            padding-top: 10px;
-            padding-bottom: 10px;
+            padding-top: 8px;
+            padding-bottom: 8px;
         }
 
         .summary-section td {
-            padding: 3px 0;
+            padding: 2px 0;
         }
 
         .main-table {
             width: 100%;
             border-collapse: collapse;
             table-layout: fixed;
+            /* Ajuda a controlar largura das colunas */
         }
 
         thead {
             display: table-header-group;
+            /* Repete cabeçalho */
         }
 
         .main-table th {
             border: 1px solid #ccc;
-            padding: 8px 6px;
+            padding: 6px 4px;
+            /* Ajustado padding */
             font-size: 8px;
             text-transform: uppercase;
             background: #f1f5f9;
             font-weight: 700;
             text-align: left;
+            vertical-align: middle;
+            /* Alinha melhor o texto do cabeçalho */
         }
 
         .main-table td {
             border: 1px solid #ccc;
-            padding: 6px;
+            padding: 5px 4px;
+            /* Ajustado padding */
             vertical-align: top;
             word-wrap: break-word;
+            /* Quebra palavras longas */
         }
 
         .main-table tbody tr {
@@ -109,8 +120,10 @@
         }
 
         .signature-section {
-            width: 280px;
-            margin-top: 60px;
+            width: 250px;
+            /* Reduzido */
+            margin-top: 40px;
+            /* Reduzido */
             margin-left: auto;
             margin-right: auto;
             text-align: center;
@@ -118,13 +131,18 @@
 
         .signature-line {
             border-top: 1px solid #333;
-            padding-top: 8px;
-            font-size: 10px;
+            padding-top: 5px;
+            /* Reduzido */
+            font-size: 9px;
+            /* Ajustado */
         }
 
         .not-available {
             color: #888;
-            font-size: 8.5px;
+            font-style: italic;
+            /* Adicionado */
+            font-size: 8px;
+            /* Reduzido */
         }
 
         .no-break {
@@ -134,18 +152,52 @@
         .text-center {
             text-align: center;
         }
+
+        /* Footer styles */
+        .footer {
+            position: fixed;
+            bottom: -20px;
+            left: 0;
+            right: 0;
+            height: 40px;
+            font-size: 8px;
+            border-top: 0.5px solid #ccc;
+            /* Mais fino */
+            padding-top: 5px;
+            margin: 0 20px;
+            /* Alinha com margens */
+        }
+
+        .footer .page-number {
+            float: right;
+        }
+
+        .footer .generation-date {
+            float: left;
+        }
     </style>
 </head>
 
 <body>
+    {{-- Script PHP para número de página e data no rodapé --}}
     <script type="text/php">
         if (isset($pdf)) {
-            $font = $fontMetrics->getFont("Helvetica");
-            $pdf->page_text($pdf->get_width() - 85, $pdf->get_height() - 35, "Página {PAGE_NUM} de {PAGE_COUNT}", $font, 8);
-            $pdf->page_text(25, $pdf->get_height() - 35, "SIGA-IF - Relatório emitido em {{ now()->format('d/m/Y H:i') }}", $font, 8);
+            $font = $fontMetrics->getFont("Helvetica", "normal");
+            $size = 8;
+            $pageWidth = $pdf->get_width();
+            $pageHeight = $pdf->get_height();
+            $x_page = $pageWidth - 85; // Posição X número página
+            $x_date = 20; // Posição X data
+            $y = $pageHeight - 35; // Posição Y comum
+
+            // Número da página
+            $pdf->page_text($x_page, $y, "Página {PAGE_NUM} de {PAGE_COUNT}", $font, $size);
+            // Data de geração
+            $pdf->page_text($x_date, $y, "SIGA-IF - Relatório emitido em {{ now()->format('d/m/Y H:i') }}", $font, $size);
         }
     </script>
 
+    {{-- Cabeçalho do Relatório --}}
     <div class="report-header">
         <table class="header-table">
             <tr>
@@ -164,6 +216,7 @@
         </table>
     </div>
 
+    {{-- Seção de Resumo/Filtros --}}
     <table class="summary-section">
         @if ($reportType === 'vehicle')
             <tr>
@@ -173,7 +226,7 @@
                 <td><strong>Período de Apuração:</strong> {{ $period }}</td>
             </tr>
         @else
-            {{-- Por padrão, assume o relatório pessoal --}}
+            {{-- Relatório Pessoal (private ou official) --}}
             <tr>
                 <td><strong>Porteiro:</strong> {{ $porteiroName }}</td>
             </tr>
@@ -183,43 +236,73 @@
         @endif
     </table>
 
+    {{-- Tabela Principal --}}
     <table class="main-table">
         <colgroup>
+            {{-- Define larguras das colunas baseadas no tipo de relatório --}}
             @if ($reportType === 'vehicle')
-                <col style="width:25%" />
-                <col style="width:25%" />
-                <col style="width:25%" />
-                <col style="width:25%" />
+                {{-- Relatório por Veículo Oficial --}}
+                <col style="width: 20%;" /> {{-- Condutor --}}
+                <col style="width: 20%;" /> {{-- Partida (Data/Hora) --}}
+                <col style="width: 20%;" /> {{-- Chegada (Data/Hora) --}}
+                <col style="width: 25%;" /> {{-- Destino/Motivo --}}
+                <col style="width: 15%;" /> {{-- Porteiro Chegada --}}
+            @elseif ($reportType === 'official')
+                {{-- Relatório Pessoal Oficial --}}
+                <col style="width: 20%;" /> {{-- Veículo --}}
+                <col style="width: 20%;" /> {{-- Condutor --}}
+                <col style="width: 15%;" /> {{-- Partida --}}
+                <col style="width: 15%;" /> {{-- Chegada --}}
+                <col style="width: 20%;" /> {{-- Destino --}}
+                <col style="width: 10%;" /> {{-- Porteiro Partida --}}
             @else
-                <col style="width:25%" />
-                <col style="width:20%" />
-                <col style="width:20%" />
-                <col style="width:25%" />
-                <col style="width:10%" />
+                {{-- Relatório Pessoal Particular --}}
+                <col style="width: 25%;" /> {{-- Veículo --}}
+                <col style="width: 20%;" /> {{-- Condutor --}}
+                <col style="width: 15%;" /> {{-- Entrada --}}
+                <col style="width: 15%;" /> {{-- Saída --}}
+                <col style="width: 15%;" /> {{-- Motivo --}}
+                <col style="width: 10%;" /> {{-- Porteiro Saída --}}
             @endif
         </colgroup>
         <thead>
+            {{-- Cabeçalho Principal da Tabela --}}
             <tr>
-                @if ($reportType === 'vehicle')
-                    <th colspan="4"
-                        style="background:#fff; border:none; font-size:12px; font-weight:bold; color:#1e2B3B; padding:10px 0;">
-                        Registos de Utilização</th>
-                @else
-                    <th colspan="5"
-                        style="background:#fff; border:none; font-size:12px; font-weight:bold; color:#1e2B3B; padding:10px 0;">
-                        Registos de Veículos Particulares</th>
-                @endif
+                @php
+                    $colspan = $reportType === 'vehicle' ? 5 : ($reportType === 'official' ? 6 : 6);
+                    $tableTitle =
+                        $reportType === 'vehicle'
+                            ? 'Registos de Utilização'
+                            : ($reportType === 'official'
+                                ? 'Registos de Viagens Oficiais'
+                                : 'Registos de Veículos Particulares');
+                @endphp
+                <th colspan="{{ $colspan }}"
+                    style="background:#fff; border:none; font-size:11px; font-weight:bold; color:#1e2B3B; padding:8px 0;">
+                    {{ $tableTitle }}
+                </th>
             </tr>
+            {{-- Cabeçalhos das Colunas --}}
             <tr>
                 @if ($reportType === 'vehicle')
+                    <th>Condutor</th>
+                    <th>Partida (Data/Hora)</th>
+                    <th>Chegada (Data/Hora)</th>
+                    <th>Destino</th>
+                    <th>Porteiro (Chegada)</th>
+                @elseif ($reportType === 'official')
+                    <th>Veículo (Placa)</th>
+                    <th>Condutor</th>
+                    <th>Partida</th>
+                    <th>Chegada</th>
+                    <th>Destino</th>
+                    <th>Porteiro (Partida)</th>
+                @else
+                    {{-- private --}}
+                    <th>Veículo (Placa)</th>
                     <th>Condutor</th>
                     <th>Entrada</th>
                     <th>Saída</th>
-                    <th>Motivo</th>
-                @else
-                    <th>Veículo</th>
-                    <th>Condutor</th>
-                    <th>Período (Entrada / Saída)</th>
                     <th>Motivo</th>
                     <th>Porteiro (Saída)</th>
                 @endif
@@ -229,37 +312,51 @@
             @forelse ($results as $entry)
                 <tr>
                     @if ($reportType === 'vehicle')
-                        <td>{{ $entry->driver?->name ?? 'Não informado' }}</td>
-                        <td><span
-                                class="no-break">{{ $entry->entry_at ? $entry->entry_at->format('d/m/y H:i') : 'N/A' }}</span>
-                        </td>
-                        <td><span
-                                class="no-break">{{ $entry->exit_at ? $entry->exit_at->format('d/m/y H:i') : '(No pátio)' }}</span>
-                        </td>
-                        <td>{{ $entry->entry_reason }}</td>
-                    @else
-                        <td>{{ $entry->vehicle?->model ?? $entry->vehicle_model }}<br><small
-                                class="not-available no-break">{!! str_replace('-', '&#8209;', $entry->vehicle?->license_plate ?? $entry->vehicle_plate) !!}</small></td>
-                        <td>{{ $entry->driver?->name ?? 'Não informado' }}</td>
+                        <td>{{ $entry->driver?->name ?? 'N/A' }}</td>
+                        <td><span class="no-break">{{ $entry->entry_at?->format('d/m H:i') }}</span></td>
+                        <td><span class="no-break">{{ $entry->exit_at?->format('d/m H:i') ?? '-' }}</span></td>
+                        <td>{{ $entry->entry_reason }}</td> {{-- entry_reason foi mapeado do destination --}}
+                        {{-- ### CORREÇÃO RELATÓRIO VEÍCULO ### --}}
+                        <td>{{ $entry->guardExit?->name ?? 'N/A' }}</td> {{-- Mapeado de guardArrival --}}
+                    @elseif ($reportType === 'official')
                         <td>
-                            <span
-                                class="no-break">{{ $entry->entry_at ? $entry->entry_at->format('d/m/y H:i') : 'N/A' }}</span><br>
-                            <span
-                                class="no-break">{{ $entry->exit_at ? $entry->exit_at->format('d/m/y H:i') : '(No pátio)' }}</span>
+                            {{ $entry->vehicle?->model ?? 'N/A' }}<br>
+                            <small
+                                class="not-available no-break">{{ $entry->vehicle?->license_plate ?? 'N/A' }}</small>
                         </td>
+                        <td>{{ $entry->driver?->name ?? 'N/A' }}</td>
+                        <td><span class="no-break">{{ $entry->departure_datetime?->format('d/m H:i') }}</span></td>
+                        <td><span class="no-break">{{ $entry->arrival_datetime?->format('d/m H:i') ?? '-' }}</span>
+                        </td>
+                        <td>{{ $entry->destination }}</td>
+                        {{-- ### CORREÇÃO RELATÓRIO PESSOAL OFICIAL ### --}}
+                        <td>{{ $entry->guardDeparture?->name ?? 'N/A' }}</td> {{-- Mostra quem registrou a PARTIDA --}}
+                    @else
+                        {{-- private --}}
+                        <td>
+                            {{ $entry->vehicle_model ?? ($entry->vehicle?->model ?? 'N/A') }}<br>
+                            <small
+                                class="not-available no-break">{{ $entry->license_plate ?? ($entry->vehicle?->license_plate ?? 'N/A') }}</small>
+                        </td>
+                        <td>{{ $entry->driver?->name ?? 'N/A' }}</td>
+                        <td><span class="no-break">{{ $entry->entry_at?->format('d/m H:i') }}</span></td>
+                        <td><span class="no-break">{{ $entry->exit_at?->format('d/m H:i') ?? '-' }}</span></td>
                         <td>{{ $entry->entry_reason }}</td>
-                        <td class="no-break">{{ $entry->guard_on_exit ?? 'N/A' }}</td>
+                        {{-- ### CORREÇÃO RELATÓRIO PESSOAL PARTICULAR ### --}}
+                        <td>{{ $entry->guardExit?->name ?? 'N/A' }}</td> {{-- Mostra quem registrou a SAÍDA --}}
                     @endif
                 </tr>
             @empty
                 <tr>
-                    <td colspan="{{ $reportType === 'vehicle' ? 4 : 5 }}" class="text-center" style="padding: 20px;">
-                        Nenhum registo encontrado para este período.</td>
+                    <td colspan="{{ $colspan }}" class="text-center" style="padding: 15px;">
+                        Nenhum registo encontrado para este período e filtros.
+                    </td>
                 </tr>
             @endforelse
         </tbody>
     </table>
 
+    {{-- Seção de Assinatura --}}
     <table class="signature-section">
         <tr>
             @if ($reportType === 'vehicle')
@@ -267,6 +364,7 @@
                     <strong>Responsável pelo Relatório</strong>
                 </td>
             @else
+                {{-- Relatório Pessoal --}}
                 <td class="signature-line">
                     {{ $porteiroName }}<br>
                     <strong>Porteiro Responsável</strong>
@@ -274,6 +372,9 @@
             @endif
         </tr>
     </table>
+
+    {{-- Rodapé será adicionado pelo script PHP --}}
+
 </body>
 
 </html>

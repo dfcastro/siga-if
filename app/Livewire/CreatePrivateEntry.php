@@ -171,7 +171,7 @@ class CreatePrivateEntry extends Component
             'vehicle_model' => $this->vehicle_model,
             'entry_reason' => $finalReason,
             'entry_at' => now(),
-            'guard_on_entry' => auth()->user()->name,
+            'guard_on_entry_id' => auth()->id(), // <-- Alterado para ID
             'vehicle_id' => $this->selectedVehicleId,
             'driver_id' => $driverId,
         ]);
@@ -278,7 +278,7 @@ class CreatePrivateEntry extends Component
 
         if ($this->entryToExit) {
             $this->entryToExit->exit_at = now();
-            $this->entryToExit->guard_on_exit = auth()->user()->name;
+            $this->entryToExit->guard_on_exit_id = auth()->id(); // <-- Alterado para ID
             $this->entryToExit->save();
 
             $this->successMessage = 'Saída do veículo ' . ($this->entryToExit->license_plate) . ' registrada com sucesso!';

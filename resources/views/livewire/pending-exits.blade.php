@@ -32,9 +32,10 @@
                                 <span class="font-semibold">{{ $entry->vehicle->model ?? $entry->vehicle_model }} -
                                     Placa:
                                     {{ $entry->vehicle->license_plate ?? $entry->license_plate }}</span>
+                                {{-- ### CORREÇÃO APLICADA AQUI ### --}}
                                 <span class="block text-xs text-gray-600">Entrou
                                     {{ \Carbon\Carbon::parse($entry->entry_at)->diffForHumans() }} por
-                                    {{ $entry->guard_on_entry }}.</span>
+                                    {{ $entry->guardEntry?->name ?? 'N/A' }}.</span> {{-- <-- CORRIGIDO --}}
                             </div>
                             <button wire:click="confirmRegistration({{ $entry->id }}, 'private', 'exit')"
                                 class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-3 rounded text-sm">

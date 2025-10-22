@@ -29,7 +29,9 @@
                             Relatório</label>
                         {{-- Usamos .live para que a página atualize os dados assim que o mês for alterado --}}
                         <input type="month" wire:model.live="reportMonth" id="report_month"
-                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-ifnmg-green focus:ring-ifnmg-green">
+                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-ifnmg-green focus:ring-ifnmg-green"
+                            {{-- ### ADIÇÃO AQUI ### --}} max="{{ Carbon\Carbon::now()->subMonth()->format('Y-m') }}"
+                            {{-- Impede a seleção do mês atual ou futuro --}}>
                         @error('reportMonth')
                             <span class="text-red-500 text-sm">{{ $message }}</span>
                         @enderror

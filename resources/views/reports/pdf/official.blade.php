@@ -3,22 +3,20 @@
 
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Controle de Veículo Oficial</title>
+    <title>Relatório de Frota Oficial</title>
     <style>
-        /* Estilos gerais */
         body {
             font-family: 'Helvetica', sans-serif;
-            font-size: 9px;
-            margin: 25px;
+            font-size: 8px;
+            margin: 10px;
+            color: #333;
         }
 
-        /* Cabeçalho */
         .header-table {
             width: 100%;
-            border: none;
+            border-bottom: 1px solid #333;
+            padding-bottom: 8px;
             margin-bottom: 15px;
-            border-bottom: 1px solid #000;
-            padding-bottom: 5px;
         }
 
         .header-table td {
@@ -27,11 +25,11 @@
         }
 
         .logo-ifnmg {
-            width: 130px;
+            width: 100px;
         }
 
         .logo-siga {
-            width: 130px;
+            width: 80px;
         }
 
         .header-text {
@@ -45,197 +43,250 @@
         }
 
         .header-text h4 {
-            font-size: 12px;
+            font-size: 10px;
             font-weight: bold;
         }
 
         .header-text h5 {
-            font-size: 10px;
+            font-size: 8px;
         }
 
-        /* Detalhes do veículo */
         .details {
-            margin-bottom: 10px;
-            border: 1px solid #000;
+            margin-bottom: 15px;
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        .details td {
+            border: 1px solid #ddd;
             padding: 5px;
+            font-size: 9px;
+            background-color: #f9f9f9;
         }
 
-        .details span {
-            margin-right: 30px;
-            font-size: 10px;
-        }
-
-        /* Tabela principal */
         table.main {
             width: 100%;
             border-collapse: collapse;
+            table-layout: fixed;
+            margin-bottom: 40px;
+            /* Espaço antes da assinatura */
+            /* ### NOVO: Tentar forçar a não quebra antes/depois da tabela inteira ### */
+            page-break-before: auto;
+            page-break-after: auto;
+            page-break-inside: auto;
+            /* Pode remover se causar problemas */
         }
 
         th,
         td {
-            border: 1px solid #000;
+            border: 1px solid #ccc;
             padding: 4px;
-            text-align: center;
+            text-align: left;
+            vertical-align: top;
+            word-wrap: break-word;
+            /* ### NOVO: Tentar forçar a não quebra DENTRO das células ### */
+            page-break-inside: avoid !important;
         }
 
         th {
-            background-color: #e3e3e3;
-            font-weight: bold;
-        }
-
-        /* Larguras otimizadas para paisagem */
-        .col-dia {
-            width: 4%;
-        }
-
-        .col-hora {
-            width: 5%;
-        }
-
-        .col-km {
-            width: 7%;
-        }
-
-        .col-destino {
-            width: 22%;
-            text-align: left;
-            padding-left: 5px;
-        }
-
-        .col-passageiros {
-            width: 22%;
-            text-align: left;
-            padding-left: 5px;
-        }
-
-        .col-condutor {
-            width: 15%;
-        }
-
-        .col-porteiro {
-            width: 10%;
-        }
-
-        /* Rodapé */
-        .footer {
-            margin-top: 25px;
-        }
-
-        .signature {
-            float: right;
-            line-height: 40px;
-        }
-
-        /* Alinha a assinatura com a caixa de KM */
-
-        /* NOVO: Caixa de destaque para os KMs */
-        .km-box {
-            float: left;
-            border: 1px solid #000;
-            padding: 8px;
+            /* Estilos do TH mantidos */
             background-color: #f2f2f2;
+            font-weight: bold;
+            font-size: 7px;
+            text-transform: uppercase;
+            white-space: nowrap;
         }
 
-        .km-box span {
-            font-size: 12px;
-            /* Fonte maior */
+        tr {
+            /* ### MODIFICADO: Mantém o avoid, mas remove !important por agora ### */
+            /* page-break-inside: avoid !important; */
+            page-break-inside: avoid;
+            /* ### NOVO: Tenta explicitamente impedir quebras antes/depois de CADA linha ### */
+            page-break-before: auto;
+            page-break-after: auto;
+        }
+
+        thead {
+            display: table-header-group;
+            /* ### NOVO: Tentar forçar a não quebra antes/depois do cabeçalho ### */
+            page-break-before: auto;
+            page-break-after: auto;
+        }
+
+        tbody {
+            /* ### NOVO: Tentar forçar a não quebra antes/depois do corpo ### */
+            page-break-before: auto;
+            page-break-after: auto;
+        }
+
+        tfoot {
+            display: table-row-group;
+            /* ### NOVO: Tentar forçar a não quebra antes/depois do rodapé da tabela ### */
+            page-break-before: auto;
+            /* Pode ajudar a manter o tfoot junto */
+            page-break-after: auto;
+        }
+
+        .total-row td {
             font-weight: bold;
-            /* Negrito */
+            background-color: #f8f8f8;
+        }
+
+        .no-break {
+            white-space: nowrap;
+        }
+
+        .observation-row td {
+            font-size: 7px;
+            color: #555;
+            padding: 2px 4px;
+            border-top: none;
+            background-color: #fdfdfd;
+        }
+
+        /* Estilos para Assinatura */
+        .signature-section {
+            width: 250px;
+            margin: 40px auto 0 auto;
+            /* Margem superior reduzida */
+            text-align: center;
+            /* page-break-inside: avoid; */
+            /* REMOVIDO */
+        }
+
+        .signature-line {
+            border-top: 1px solid #333;
+            padding-top: 5px;
+            font-size: 9px;
         }
     </style>
 </head>
 
 <body>
-    <table class="header-table">
+    {{-- Script PHP para rodapé --}}
+    <script type="text/php">
+        if (isset($pdf)) { /* ... (script mantido) ... */ }
+    </script>
+
+    {{-- Cabeçalho --}}
+    @include('reports.pdf._header', ['title' => 'RELATÓRIO DE UTILIZAÇÃO DA FROTA OFICIAL'])
+
+    {{-- Detalhes do Filtro --}}
+    <table class="details">
         <tr>
-            <td style="width: 20%; text-align: left;">
-                <img src="{{ public_path('images/logo-ifnmg.png') }}" alt="Logo IFNMG" class="logo-ifnmg">
-            </td>
-            <td class="header-text" style="width: 60%;">
-                <h4>MINISTÉRIO DA EDUCAÇÃO</h4>
-                <h5>SECRETARIA DE EDUCAÇÃO PROFISSIONAL E TECNOLÓGICA</h5>
-                <h5>INSTITUTO FEDERAL DO NORTE DE MINAS GERAIS – CAMPUS ALMENARA</h5>
-                <h4>CONTROLE DE SAÍDA E CHEGADA DE VEÍCULOS OFICIAIS</h4>
-            </td>
-            <td style="width: 20%; text-align: right;">
-                <img src="{{ public_path('images/logo-siga.png') }}" alt="Logo SIGA" class="logo-siga">
-            </td>
+            <td><strong>Período:</strong> {{ $startDate }} a {{ $endDate }}</td>
+            @if ($vehicle)
+                <td><strong>Veículo:</strong> {{ $vehicle->model }} ({{ $vehicle->license_plate }})</td>
+            @endif
+            @if ($driver)
+                <td><strong>Motorista:</strong> {{ $driver->name }}</td>
+            @endif
         </tr>
     </table>
 
-    <div class="details">
-        <span><strong>Automóvel:</strong> {{ $vehicle->model }}</span>
-        <span><strong>Placa:</strong> {{ $vehicle->license_plate }}</span>
-        <span><strong>Período (mês/ano):</strong> {{ \Carbon\Carbon::parse($startDate)->format('m/Y') }}</span>
-    </div>
-
+    {{-- Tabela Principal --}}
     <table class="main">
+        <colgroup>
+            <col style="width: 15%;">
+            <col style="width: 15%;">
+            <col style="width: 15%;">
+            <col style="width: 15%;">
+            <col style="width: 14%;">
+            <col style="width: 8%;">
+            <col style="width: 9%;">
+            <col style="width: 9%;">
+        </colgroup>
         <thead>
             <tr>
-                <th colspan="3">SAÍDA</th>
-                <th colspan="3">CHEGADA</th>
-                <th rowspan="2" class="col-destino">DESTINO</th>
-                <th rowspan="2" class="col-passageiros">PASSAGEIROS</th>
-                <th rowspan="2" class="col-condutor">CONDUTOR</th>
-                <th rowspan="2" class="col-porteiro">PORTEIRO (Saída)</th>
-            </tr>
-            <tr>
-                <th class="col-dia">DIA</th>
-                <th class="col-hora">HORA</th>
-                <th class="col-km">KM</th>
-                <th class="col-dia">DIA</th>
-                <th class="col-hora">HORA</th>
-                <th class="col-km">KM</th>
+                <th>Veículo (Placa)</th>
+                <th>Condutor</th>
+                <th>Partida (Data/Hora - KM)</th>
+                <th>Chegada (Data/Hora - KM)</th>
+                <th>Destino</th>
+                <th>KM Rodado</th>
+                <th>Porteiro (Partida)</th>
+                <th>Porteiro (Chegada)</th>
             </tr>
         </thead>
         <tbody>
             @forelse ($trips as $trip)
                 <tr>
-                    <td>{{ $trip->departure_datetime->format('d') }}</td>
-                    <td>{{ $trip->departure_datetime->format('H:i') }}</td>
-                    <td>{{ number_format($trip->departure_odometer, 0, ',', '.') }}</td>
-                    <td>{{ $trip->arrival_datetime?->format('d') }}</td>
-                    <td>{{ $trip->arrival_datetime?->format('H:i') }}</td>
-                    <td>{{ $trip->arrival_odometer ? number_format($trip->arrival_odometer, 0, ',', '.') : '' }}</td>
-                    <td class="col-destino">{{ $trip->destination }}</td>
-                    <td class="col-passageiros">{{ $trip->passengers ?: 'N/A' }}</td>
+                    <td>{{ $trip->vehicle?->model ?? 'N/A' }}<br><small style="color: #555;"
+                            class="no-break">({{ $trip->vehicle?->license_plate ?? 'N/A' }})</small></td>
                     <td>{{ $trip->driver?->name ?? 'N/A' }}</td>
-                    <td>{{ $trip->guard_on_departure }}</td>
+                    <td class="no-break">
+                        {{ $trip->departure_datetime?->format('d/m H:i') }}<br><small>{{ number_format($trip->departure_odometer, 0, ',', '.') }}
+                            km</small></td>
+                    <td class="no-break">
+                        {{ $trip->arrival_datetime?->format('d/m H:i') ?? '-' }}<br><small>{{ $trip->arrival_odometer ? number_format($trip->arrival_odometer, 0, ',', '.') . ' km' : '-' }}</small>
+                    </td>
+                    <td>{{ $trip->destination }}</td>
+                    <td style="text-align: right;">{{ $trip->distance_traveled ?? 'N/A' }}</td>
+                    <td>{{ $trip->guardDeparture?->name ?? 'N/A' }}</td>
+                    <td>{{ $trip->guardArrival?->name ?? 'N/A' }}</td>
                 </tr>
+                @if ($trip->return_observation || $trip->passengers)
+                    <tr class="observation-row">
+                        <td colspan="8">
+                            @if ($trip->passengers)
+                                <strong>Passageiros:</strong> {{ $trip->passengers }}<br>
+                                @endif @if ($trip->return_observation)
+                                    <strong>Obs. Retorno:</strong> {{ $trip->return_observation }}
+                                @endif
+                        </td>
+                    </tr>
+                @endif
             @empty
                 <tr>
-                    <td colspan="10" style="padding: 15px;">Nenhuma viagem encontrada para este veículo no período
-                        selecionado.</td>
+                    <td colspan="8" style="text-align: center; padding: 20px;">Nenhuma viagem encontrada.</td>
                 </tr>
             @endforelse
-            {{-- Adiciona linhas em branco para preencher a folha --}}
-            @for ($i = 0; $i < 20 - $trips->count(); $i++)
-                <tr>
-                    <td>&nbsp;</td>
-                    <td>&nbsp;</td>
-                    <td>&nbsp;</td>
-                    <td>&nbsp;</td>
-                    <td>&nbsp;</td>
-                    <td>&nbsp;</td>
-                    <td>&nbsp;</td>
-                    <td>&nbsp;</td>
-                    <td>&nbsp;</td>
-                    <td>&nbsp;</td>
-                </tr>
-            @endfor
         </tbody>
+        @if ($trips->isNotEmpty())
+            <tfoot class="total-row">
+                <tr>
+                    <td colspan="5" style="text-align: right;"><strong>Distância Total Rodada no Período:</strong>
+                    </td>
+                    <td style="text-align: right;"><strong>{{ number_format($totalKm, 0, ',', '.') }} km</strong></td>
+                    <td></td>
+                    <td></td> {{-- Células vazias corrigidas --}}
+                </tr>
+            </tfoot>
+        @endif
     </table>
 
-    <div class="footer">
-        {{-- NOVO: Div com a classe .km-box --}}
-        <div class="km-box">
-            <span>KM(s) Percorridos/mês: {{ number_format($totalKm, 0, ',', '.') }}</span>
-        </div>
+    {{-- ### INÍCIO - NOVA SEÇÃO DE ASSINATURA COM DIV ### --}}
+    <div
+        style="margin-top: 50px; /* Ajuste o espaço conforme necessário */
+                page-break-inside: avoid; /* Tenta manter a div numa página */
+                text-align: center;
+                width: 250px;
+                margin-left: auto;
+                margin-right: auto;">
 
-        <div class="signature">
-            <strong>Assinatura responsável:</strong> _________________________
+        <div
+            style="border-top: 1px solid #333;
+                    padding-top: 5px;
+                    font-size: 9px;">
+            @if (isset($porteiroName))
+                {{ $porteiroName }}<br>
+                <strong>Porteiro Responsável</strong>
+            @else
+                {{-- Linha em branco para espaço ou texto genérico --}}
+                <br>
+                <strong>Responsável pelo Relatório</strong>
+            @endif
         </div>
     </div>
+    {{-- ### FIM - NOVA SEÇÃO DE ASSINATURA COM DIV ### --}}
+
+
+    {{-- Rodapé da Página --}}
+    <div class="footer">
+        <span class="generation-date">Gerado em: {{ now()->format('d/m/Y H:i') }}</span>
+        <span class="page-number"></span>
+    </div>
+
 </body>
 
 </html>
