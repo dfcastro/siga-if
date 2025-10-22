@@ -10,6 +10,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB; // ### ADICIONAR IMPORT ###
 use Livewire\Attributes\Layout;
+use Illuminate\Support\Facades\Config;  // Manter
 
 #[Layout('layouts.app')]
 class ReportStatus extends Component
@@ -37,9 +38,22 @@ class ReportStatus extends Component
     {
         $user = Auth::user();
 
-        // ### INÍCIO - LÓGICA DO FILTRO DE ANO ###
-        // Busca o ano da primeira submissão registada
-        $firstYear = ReportSubmission::min(DB::raw('YEAR(start_date)'));
+        // ### INÍCIO - LÓGICA DO FILTRO DE ANO (COM CORREÇÃO) ###
+
+        // Determina a expressão SQL correta para extrair o ano
+        $databaseConnection = Config::get('database.default');
+        $driver = Config::get("database.connections.{$databaseConnection}.driver");
+
+        if ($driver === 'sqlite') {
+            // Usar strftime para SQLite
+            $minYearQuery = DB::raw("CAST(strftime('%Y', start_date) AS INTEGER)");
+        } else {
+            // Usar YEAR() para MySQL, PostgreSQL, etc.
+            $minYearQuery = DB::raw("YEAR(start_date)");
+        }
+
+        // Busca o ano da primeira submissão registada usando a query correta
+        $firstYear = ReportSubmission::min($minYearQuery);
         $currentYear = Carbon::now()->year;
 
         // Se não houver registos, usa o ano atual
@@ -54,17 +68,20 @@ class ReportStatus extends Component
         // ### FIM - LÓGICA DO FILTRO DE ANO ###
 
 
-        // (Lógica de aba padrão - mantida da versão anterior)
+        // (Lógica de aba padrão - mantida da tua versão anterior)
         if ($user->role === 'fiscal') {
             if ($user->fiscal_type === 'private') {
                 $this->reportType = 'private';
-            } else {
+            } elseif ($user->fiscal_type === 'official') { // Adicionei elseif para clareza
                 $this->reportType = 'official';
             }
+            // Se for 'both', mantém o padrão ('private' ou o que definiste)
         } elseif ($user->role === 'porteiro') {
-            $this->reportType = 'private';
+            // Mantém o padrão ('private' ou o que definiste)
         }
+        // Se for admin, também mantém o padrão
 
+        // Presumo que tenhas um método loadReportData() que usa $this->selectedYear e $this->reportType
         $this->loadReportData();
     }
 

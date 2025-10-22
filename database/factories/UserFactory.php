@@ -12,7 +12,7 @@ use Illuminate\Support\Str;
 class UserFactory extends Factory
 {
     /**
-     * The current password being used by the factory.
+     * A password de teste padrão.
      */
     protected static ?string $password;
 
@@ -29,7 +29,40 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
+            'role' => 'porteiro', // Define 'porteiro' como o padrão
+            'fiscal_type' => null,
         ];
+    }
+
+    /**
+     * Indica que o utilizador é um admin.
+     */
+    public function admin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'admin',
+        ]);
+    }
+
+    /**
+     * Indica que o utilizador é um porteiro.
+     */
+    public function porteiro(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'porteiro',
+        ]);
+    }
+
+    /**
+     * Indica que o utilizador é um fiscal.
+     */
+    public function fiscal(string $type = 'both'): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'fiscal',
+            'fiscal_type' => $type, // 'private', 'official', ou 'both'
+        ]);
     }
 
     /**

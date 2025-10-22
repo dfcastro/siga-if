@@ -44,16 +44,16 @@ Route::middleware('auth')->group(function () {
 
     // --- PÁGINAS DE OPERAÇÃO ---
     Route::get('/entries/private/create', CreatePrivateEntry::class)->name('entries.create');
-    Route::get('/fleet', OfficialFleetManagement::class)->name('fleet.index');
+    Route::get('/fleet', OfficialFleetManagement::class)->name('fleet.index')->middleware('role:porteiro,admin');
 
     // --- ROTAS DE GERAÇÃO DE PDF ---
     Route::get('/reports/official/pdf', [ReportController::class, 'officialVehiclesPDF'])->name('reports.official.pdf');
     Route::get('/reports/private/pdf', [ReportController::class, 'privateVehiclesPDF'])->name('reports.private.pdf');
     Route::get('/reports/official-vehicle-pdf', [ReportController::class, 'generateOfficialVehiclePDF'])->name('reports.officialVehicle.pdf');
 
-    Route::get('/meu-relatorio/pdf', [ReportController::class, 'generatePersonalPDF'])
-        ->name('reports.personal.pdf')
-        ->middleware('role:porteiro');
+    // Route::get('/meu-relatorio/pdf', [ReportController::class, 'generatePersonalPDF'])
+    //     ->name('reports.personal.pdf')
+    //     ->middleware('role:porteiro');
 
     Route::get('/meus-relatorios', GuardReport::class)->name('guard.report');
 
@@ -66,7 +66,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/reports/submit-guard-report', [ReportController::class, 'submitGuardReport'])->name('reports.submitGuardReport');
 
     Route::get('/relatorios/status', \App\Livewire\ReportStatus::class)
-    ->name('reports.status');
+        ->name('reports.status');
 
     // --- ROTAS DE PERFIL ---
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
