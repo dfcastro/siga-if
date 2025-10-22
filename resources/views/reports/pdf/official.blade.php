@@ -60,7 +60,7 @@
         .details td {
             border: 1px solid #ddd;
             padding: 5px;
-            font-size: 9px;
+            font-size: 12px;
             background-color: #f9f9f9;
         }
 
@@ -74,6 +74,7 @@
             page-break-before: auto;
             page-break-after: auto;
             page-break-inside: auto;
+
             /* Pode remover se causar problemas */
         }
 
@@ -81,8 +82,9 @@
         td {
             border: 1px solid #ccc;
             padding: 4px;
-            text-align: left;
-            vertical-align: top;
+            text-align: center;
+            font-size: 10px;
+            vertical-align: middle;
             word-wrap: break-word;
             /* ### NOVO: Tentar forçar a não quebra DENTRO das células ### */
             page-break-inside: avoid !important;
@@ -187,52 +189,72 @@
     {{-- Tabela Principal --}}
     <table class="main">
         <colgroup>
-            <col style="width: 15%;">
-            <col style="width: 15%;">
-            <col style="width: 15%;">
-            <col style="width: 15%;">
-            <col style="width: 14%;">
-            <col style="width: 8%;">
-            <col style="width: 9%;">
-            <col style="width: 9%;">
+            {{-- ### MODIFICADO: Coluna KM (8%) movida para o final ### --}}
+            <col style="width: 15%;"> {{-- Veículo --}}
+            <col style="width: 15%;"> {{-- Condutor --}}
+            <col style="width: 15%;"> {{-- Partida --}}
+            <col style="width: 15%;"> {{-- Chegada --}}
+            <col style="width: 14%;"> {{-- Destino --}}
+            <col style="width: 9%;"> {{-- Porteiro (Partida) --}}
+            <col style="width: 9%;"> {{-- Porteiro (Chegada) --}}
+            <col style="width: 8%;"> {{-- KM Rodado (NOVO LUGAR) --}}
         </colgroup>
         <thead>
             <tr>
+                {{-- ### MODIFICADO: Coluna KM Rodado movida para o final ### --}}
                 <th>Veículo (Placa)</th>
                 <th>Condutor</th>
                 <th>Partida (Data/Hora - KM)</th>
                 <th>Chegada (Data/Hora - KM)</th>
                 <th>Destino</th>
-                <th>KM Rodado</th>
                 <th>Porteiro (Partida)</th>
                 <th>Porteiro (Chegada)</th>
+                <th style="text-align: center;">KM Rodado</th> {{-- NOVO LUGAR e centralizado --}}
             </tr>
         </thead>
         <tbody>
             @forelse ($trips as $trip)
                 <tr>
+                    {{-- Veículo --}}
                     <td>{{ $trip->vehicle?->model ?? 'N/A' }}<br><small style="color: #555;"
                             class="no-break">({{ $trip->vehicle?->license_plate ?? 'N/A' }})</small></td>
-                    <td>{{ $trip->driver?->name ?? 'N/A' }}</td>
+
+                    {{-- ### MODIFICADO: Condutor agora inclui Passageiros ### --}}
+                    <td>
+                        {{ $trip->driver?->name ?? 'N/A' }}
+                        @if ($trip->passengers)
+                            <br><small style="color: #444; font-size: 7px;">
+                                <strong>Passag.:</strong> {{ $trip->passengers }}
+                            </small>
+                        @endif
+                    </td>
+
+                    {{-- Partida --}}
                     <td class="no-break">
                         {{ $trip->departure_datetime?->format('d/m H:i') }}<br><small>{{ number_format($trip->departure_odometer, 0, ',', '.') }}
                             km</small></td>
+
+                    {{-- Chegada --}}
                     <td class="no-break">
                         {{ $trip->arrival_datetime?->format('d/m H:i') ?? '-' }}<br><small>{{ $trip->arrival_odometer ? number_format($trip->arrival_odometer, 0, ',', '.') . ' km' : '-' }}</small>
                     </td>
+
+                    {{-- Destino --}}
                     <td>{{ $trip->destination }}</td>
-                    <td style="text-align: right;">{{ $trip->distance_traveled ?? 'N/A' }}</td>
+
+                    {{-- Porteiros --}}
                     <td>{{ $trip->guardDeparture?->name ?? 'N/A' }}</td>
                     <td>{{ $trip->guardArrival?->name ?? 'N/A' }}</td>
+
+                    {{-- ### MODIFICADO: KM Rodado movido para o final e centralizado ### --}}
+                    <td style="text-align: center;">{{ $trip->distance_traveled ?? 'N/A' }}</td>
                 </tr>
-                @if ($trip->return_observation || $trip->passengers)
+
+                {{-- ### MODIFICADO: Linha de observação agora SÓ para Obs. Retorno ### --}}
+                @if ($trip->return_observation)
                     <tr class="observation-row">
-                        <td colspan="8">
-                            @if ($trip->passengers)
-                                <strong>Passageiros:</strong> {{ $trip->passengers }}<br>
-                                @endif @if ($trip->return_observation)
-                                    <strong>Obs. Retorno:</strong> {{ $trip->return_observation }}
-                                @endif
+                        <td colspan="8"> {{-- Colspan 8 está correto --}}
+                            <strong>Obs. Retorno:</strong> {{ $trip->return_observation }}
                         </td>
                     </tr>
                 @endif
@@ -245,16 +267,16 @@
         @if ($trips->isNotEmpty())
             <tfoot class="total-row">
                 <tr>
-                    {{-- O texto ocupa as 5 primeiras colunas --}}
-                    <td colspan="5" style="text-align: right; border-right: none;"><strong>Distância Total Rodada no
+                    {{-- ### MODIFICADO: Colspan ajustado para 7 (para KM ficar na 8ª coluna) ### --}}
+
+                    {{-- O texto ocupa as 7 primeiras colunas --}}
+                    <td colspan="7" style="text-align: right; border-right: none;"><strong>Distância Total Rodada no
                             Período:</strong></td>
-                    {{-- O valor formatado + " km" ocupam a 6ª coluna (KM Rodado) --}}
-                    <td style="text-align: right; border-left: none;">
+
+                    {{-- O valor formatado + " km" ocupam a 8ª coluna (KM Rodado) --}}
+                    <td style="text-align: center; border-left: none;">
                         <strong>{{ number_format($totalKm, 0, ',', '.') }} km</strong>
                     </td>
-                    {{-- Células vazias para as colunas 7 e 8 (Porteiros) --}}
-                    <td></td>
-                    <td></td>
                 </tr>
             </tfoot>
         @endif

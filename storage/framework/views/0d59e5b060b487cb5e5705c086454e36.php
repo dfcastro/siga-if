@@ -60,7 +60,7 @@
         .details td {
             border: 1px solid #ddd;
             padding: 5px;
-            font-size: 9px;
+            font-size: 12px;
             background-color: #f9f9f9;
         }
 
@@ -74,6 +74,7 @@
             page-break-before: auto;
             page-break-after: auto;
             page-break-inside: auto;
+
             /* Pode remover se causar problemas */
         }
 
@@ -81,8 +82,9 @@
         td {
             border: 1px solid #ccc;
             padding: 4px;
-            text-align: left;
-            vertical-align: top;
+            text-align: center;
+            font-size: 10px;
+            vertical-align: middle;
             word-wrap: break-word;
             /* ### NOVO: Tentar forçar a não quebra DENTRO das células ### */
             page-break-inside: avoid !important;
@@ -187,54 +189,76 @@
     
     <table class="main">
         <colgroup>
-            <col style="width: 15%;">
-            <col style="width: 15%;">
-            <col style="width: 15%;">
-            <col style="width: 15%;">
-            <col style="width: 14%;">
-            <col style="width: 8%;">
-            <col style="width: 9%;">
-            <col style="width: 9%;">
+            
+            <col style="width: 15%;"> 
+            <col style="width: 15%;"> 
+            <col style="width: 15%;"> 
+            <col style="width: 15%;"> 
+            <col style="width: 14%;"> 
+            <col style="width: 9%;"> 
+            <col style="width: 9%;"> 
+            <col style="width: 8%;"> 
         </colgroup>
         <thead>
             <tr>
+                
                 <th>Veículo (Placa)</th>
                 <th>Condutor</th>
                 <th>Partida (Data/Hora - KM)</th>
                 <th>Chegada (Data/Hora - KM)</th>
                 <th>Destino</th>
-                <th>KM Rodado</th>
                 <th>Porteiro (Partida)</th>
                 <th>Porteiro (Chegada)</th>
+                <th style="text-align: center;">KM Rodado</th> 
             </tr>
         </thead>
         <tbody>
             <?php $__empty_1 = true; $__currentLoopData = $trips; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $trip): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                 <tr>
+                    
                     <td><?php echo e($trip->vehicle?->model ?? 'N/A'); ?><br><small style="color: #555;"
                             class="no-break">(<?php echo e($trip->vehicle?->license_plate ?? 'N/A'); ?>)</small></td>
-                    <td><?php echo e($trip->driver?->name ?? 'N/A'); ?></td>
+
+                    
+                    <td>
+                        <?php echo e($trip->driver?->name ?? 'N/A'); ?>
+
+                        <?php if($trip->passengers): ?>
+                            <br><small style="color: #444; font-size: 7px;">
+                                <strong>Passag.:</strong> <?php echo e($trip->passengers); ?>
+
+                            </small>
+                        <?php endif; ?>
+                    </td>
+
+                    
                     <td class="no-break">
                         <?php echo e($trip->departure_datetime?->format('d/m H:i')); ?><br><small><?php echo e(number_format($trip->departure_odometer, 0, ',', '.')); ?>
 
                             km</small></td>
+
+                    
                     <td class="no-break">
                         <?php echo e($trip->arrival_datetime?->format('d/m H:i') ?? '-'); ?><br><small><?php echo e($trip->arrival_odometer ? number_format($trip->arrival_odometer, 0, ',', '.') . ' km' : '-'); ?></small>
                     </td>
+
+                    
                     <td><?php echo e($trip->destination); ?></td>
-                    <td style="text-align: right;"><?php echo e($trip->distance_traveled ?? 'N/A'); ?></td>
+
+                    
                     <td><?php echo e($trip->guardDeparture?->name ?? 'N/A'); ?></td>
                     <td><?php echo e($trip->guardArrival?->name ?? 'N/A'); ?></td>
-                </tr>
-                <?php if($trip->return_observation || $trip->passengers): ?>
-                    <tr class="observation-row">
-                        <td colspan="8">
-                            <?php if($trip->passengers): ?>
-                                <strong>Passageiros:</strong> <?php echo e($trip->passengers); ?><br>
-                                <?php endif; ?> <?php if($trip->return_observation): ?>
-                                    <strong>Obs. Retorno:</strong> <?php echo e($trip->return_observation); ?>
 
-                                <?php endif; ?>
+                    
+                    <td style="text-align: center;"><?php echo e($trip->distance_traveled ?? 'N/A'); ?></td>
+                </tr>
+
+                
+                <?php if($trip->return_observation): ?>
+                    <tr class="observation-row">
+                        <td colspan="8"> 
+                            <strong>Obs. Retorno:</strong> <?php echo e($trip->return_observation); ?>
+
                         </td>
                     </tr>
                 <?php endif; ?>
@@ -248,15 +272,15 @@
             <tfoot class="total-row">
                 <tr>
                     
-                    <td colspan="5" style="text-align: right; border-right: none;"><strong>Distância Total Rodada no
-                            Período:</strong></td>
+
                     
-                    <td style="text-align: right; border-left: none;">
+                    <td colspan="7" style="text-align: right; border-right: none;"><strong>Distância Total Rodada no
+                            Período:</strong></td>
+
+                    
+                    <td style="text-align: center; border-left: none;">
                         <strong><?php echo e(number_format($totalKm, 0, ',', '.')); ?> km</strong>
                     </td>
-                    
-                    <td></td>
-                    <td></td>
                 </tr>
             </tfoot>
         <?php endif; ?>

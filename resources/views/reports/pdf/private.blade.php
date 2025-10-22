@@ -67,7 +67,7 @@
         .details td {
             border: 1px solid #ddd;
             padding: 5px;
-            font-size: 9px;
+            font-size: 12px;
             background-color: #f9f9f9;
         }
 
@@ -83,7 +83,8 @@
             border: 1px solid #ccc;
             padding: 4px;
             text-align: center;
-            vertical-align: top;
+            font-size: 10px;
+            vertical-align: middle;;
             word-wrap: break-word;
         }
 
