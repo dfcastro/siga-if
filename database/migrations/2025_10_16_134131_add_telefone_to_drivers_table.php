@@ -12,7 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('drivers', function (Blueprint $table) {
-            //
+            // Adiciona a coluna 'telefone', permitindo valor nulo, após a coluna 'document'
+            $table->string('telefone')->nullable()->after('document');
         });
     }
 
@@ -22,7 +23,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('drivers', function (Blueprint $table) {
-            //
+            $table->dropColumn('telefone');
         });
     }
 };

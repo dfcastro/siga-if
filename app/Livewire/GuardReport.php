@@ -165,6 +165,7 @@ class GuardReport extends Component
             'end_date' => $dates['end'],
             'type' => 'private',
             'status' => 'pending',
+            'submitted_at' => now(),
         ]);
 
         // Associa as entradas à submissão
@@ -221,6 +222,7 @@ class GuardReport extends Component
             'observation' => $this->observation,
             'type' => 'official',
             'status' => 'pending',
+            'submitted_at' => now(),
         ]);
 
         // Associa as viagens à submissão
