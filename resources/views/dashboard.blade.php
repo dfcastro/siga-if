@@ -1,34 +1,13 @@
 <x-app-layout>
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+    <div class="py-8"> {{-- Reduzi o padding vertical para aproveitar melhor o topo --}}
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6"> {{-- Adicionei space-y-6 para espaçamento uniforme --}}
 
-            {{-- Card de Boas-Vindas (Mantido no topo) --}}
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
-                <div class="p-6 text-gray-900 ">
-                    <h3 class="text-lg font-medium">Bem-vindo(a) ao SIGA-IF, {{ Auth::user()->name }}!</h3>
-                    <p class="mt-1 text-sm text-gray-600">Utilize os atalhos abaixo para agilizar suas
-                        tarefas diárias.</p>
-                </div>
-            </div>
-
-            {{-- SEÇÃO DE ALERTAS E AÇÕES PENDENTES --}}
-            <div class="flex flex-col space-y-6 mb-8">
-                {{-- Alerta para saídas pendentes (Veículos no Pátio) --}}
-                @livewire('pending-exits')
-
-                
-                
-            </div>
-
-            {{-- PAINEL PRINCIPAL DE ESTATÍSTICAS --}}
-            @livewire('dashboard-stats')
-
-            {{-- CARTÕES DE ATALHO (Links) --}}
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+            {{-- 1. CARTÕES DE ATALHO RÁPIDO (Movido para o topo para acesso imediato) --}}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {{-- Atalho para Registrar Entrada/Saída --}}
                 <a href="{{ route('entries.create') }}"
-                    class="bg-white  p-6 rounded-lg shadow-sm flex items-center space-x-4 hover:bg-gray-50  transition-colors">
-                    <div class="bg-blue-100 p-3 rounded-full">
+                    class="bg-white p-6 rounded-xl shadow-sm hover:shadow-md flex items-center space-x-4 border-l-4 border-blue-500 transition-all hover:bg-blue-50 group">
+                    <div class="bg-blue-100 p-4 rounded-full group-hover:bg-white transition-colors">
                         <svg class="w-8 h-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none"
                             viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round"
@@ -36,15 +15,21 @@
                         </svg>
                     </div>
                     <div>
-                        <p class="font-semibold text-gray-700 ">Registrar Entrada/Saída</p>
-                        <p class="text-sm text-gray-500 ">Veículos particulares</p>
+                        <h4 class="text-lg font-bold text-gray-800 group-hover:text-blue-700">Registrar Entrada/Saída</h4>
+                        <p class="text-sm text-gray-500 group-hover:text-blue-600">Controle de veículos particulares</p>
+                    </div>
+                    {{-- Ícone de seta para indicar ação --}}
+                    <div class="ml-auto text-gray-300 group-hover:text-blue-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                        </svg>
                     </div>
                 </a>
 
                 {{-- Atalho para Diário de Bordo --}}
                 <a href="{{ route('fleet.index') }}"
-                    class="bg-white  p-6 rounded-lg shadow-sm flex items-center space-x-4 hover:bg-gray-50  transition-colors">
-                    <div class="bg-green-100 p-3 rounded-full">
+                    class="bg-white p-6 rounded-xl shadow-sm hover:shadow-md flex items-center space-x-4 border-l-4 border-green-500 transition-all hover:bg-green-50 group">
+                    <div class="bg-green-100 p-4 rounded-full group-hover:bg-white transition-colors">
                         <svg class="w-8 h-8 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none"
                             viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round"
@@ -52,10 +37,40 @@
                         </svg>
                     </div>
                     <div>
-                        <p class="font-semibold text-gray-700 ">Diário de Bordo</p>
-                        <p class="text-sm text-gray-500 ">Frota oficial</p>
+                        <h4 class="text-lg font-bold text-gray-800 group-hover:text-green-700">Diário de Bordo</h4>
+                        <p class="text-sm text-gray-500 group-hover:text-green-600">Gestão da frota oficial</p>
+                    </div>
+                    {{-- Ícone de seta para indicar ação --}}
+                    <div class="ml-auto text-gray-300 group-hover:text-green-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                        </svg>
                     </div>
                 </a>
+            </div>
+
+            {{-- 2. MENSAGEM DE BOAS-VINDAS (Discreta, abaixo dos botões de ação) --}}
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg border border-gray-100">
+                <div class="p-4 sm:p-6 text-gray-900 flex justify-between items-center">
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-800">Olá, {{ Auth::user()->name }}!</h3>
+                        <p class="text-sm text-gray-500">Bem-vindo ao painel de controle do SIGA-IF.</p>
+                    </div>
+                    <span class="text-xs font-semibold px-2 py-1 bg-gray-100 text-gray-600 rounded">
+                        {{ now()->format('d/m/Y') }}
+                    </span>
+                </div>
+            </div>
+
+            {{-- 3. SEÇÃO DE ALERTAS E PENDÊNCIAS (Importante para operação) --}}
+            <div class="flex flex-col">
+                {{-- Alerta para saídas pendentes (Veículos no Pátio) --}}
+                @livewire('pending-exits')
+            </div>
+
+            {{-- 4. PAINEL DE ESTATÍSTICAS (Visão geral) --}}
+            <div>
+                @livewire('dashboard-stats')
             </div>
 
         </div>
