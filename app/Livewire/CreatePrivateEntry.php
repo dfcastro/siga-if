@@ -39,6 +39,7 @@ class CreatePrivateEntry extends Component
     public $selected_driver_id = null;
     public string $driver_search = '';
     public $drivers = [];
+    public $suggestedDrivers = [];
 
     // --- Estado do Formulário de Novo Visitante ---
     public bool $showNewVisitorForm = false;
@@ -58,7 +59,13 @@ class CreatePrivateEntry extends Component
             'other_reason' => 'required_if:entry_reason,Outro',
             'selected_driver_id' => 'required_without:new_visitor_name',
             'new_visitor_name' => 'required_if:showNewVisitorForm,true|string|max:100',
-            'new_visitor_document' => ['required_if:showNewVisitorForm,true', 'nullable', new Cpf, Rule::unique('drivers', 'document')],
+
+            // ANTES ESTAVA ASSIM:
+            // 'new_visitor_document' => ['required_if:showNewVisitorForm,true', 'nullable', new Cpf, Rule::unique('drivers', 'document')],
+
+            // DEIXE ASSIM (Sem o Rule::unique):
+            'new_visitor_document' => ['required_if:showNewVisitorForm,true', 'nullable', new Cpf],
+
             'new_visitor_phone' => 'nullable|string|max:20',
         ];
     }
@@ -84,7 +91,12 @@ class CreatePrivateEntry extends Component
         $this->showNewVisitorForm = false;
 
         if (strlen($value) >= 2) {
+            $cleanSearch = preg_replace('/\D/', '', $value); // Pega só os números para a busca por CPF
+
             $this->drivers = Driver::where('name', 'like', '%' . $value . '%')
+                ->when(strlen($cleanSearch) > 0, function ($query) use ($cleanSearch) {
+                    $query->orWhere('document', 'like', '%' . $cleanSearch . '%');
+                })
                 ->orderBy('name')
                 ->limit(5)
                 ->get();
@@ -92,7 +104,6 @@ class CreatePrivateEntry extends Component
             $this->drivers = [];
         }
     }
-
     /**
      * Seleciona um motorista existente da lista de resultados.
      */
@@ -128,18 +139,39 @@ class CreatePrivateEntry extends Component
      */
     public function selectVehicle($vehicleId)
     {
-        $vehicle = Vehicle::findOrFail($vehicleId);
+        // Carrega o veículo e a lista de motoristas vinculados
+        $vehicle = Vehicle::with('drivers')->findOrFail($vehicleId);
+
         $this->selectedVehicleId = $vehicle->id;
         $this->license_plate = $vehicle->license_plate;
         $this->vehicle_model = $vehicle->model;
 
-        if ($vehicle->driver) {
-            $this->selectDriver($vehicle->driver->id, $vehicle->driver->name);
+        // Guarda os motoristas na propriedade para exibir os botões na tela
+        $this->suggestedDrivers = $vehicle->drivers;
+
+        // Se o veículo tiver APENAS UM motorista, já seleciona ele automaticamente
+        if ($this->suggestedDrivers->count() === 1) {
+            $motoristaPadrao = $this->suggestedDrivers->first();
+            $this->selectDriver($motoristaPadrao->id, $motoristaPadrao->name);
+        } else {
+            // Se tiver mais de um (ou nenhum), deixa em branco pro porteiro escolher
+            $this->selected_driver_id = null;
+            $this->driver_search = '';
         }
 
         $this->search = '';
         $this->searchResults = [];
     }
+
+    /**
+     * Função chamada quando o porteiro clica na tag de sugestão rápida de motorista.
+     */
+    public function useSuggestedDriver($driverId, $driverName)
+    {
+        $this->selectDriver($driverId, $driverName);
+    }
+
+
 
     /**
      * Salva a entrada do veículo no banco de dados.
@@ -150,20 +182,43 @@ class CreatePrivateEntry extends Component
             abort(403, 'Você não tem permissão para executar esta ação.');
         }
 
+        // ### ADICIONE ESTE BLOCO AQUI ###
+        // Validação manual e amigável para CPF duplicado
+        if ($this->showNewVisitorForm && !empty($this->new_visitor_document)) {
+            $cleanDocument = preg_replace('/\D/', '', $this->new_visitor_document);
+            $existingDriver = Driver::where('document', $cleanDocument)->first();
+
+            if ($existingDriver) {
+                // Se já existe, avisa quem é o dono do CPF para o porteiro
+                $this->addError('new_visitor_document', "Este CPF já está cadastrado para: {$existingDriver->name}. Cancele este formulário e busque pelo nome dele.");
+                return; // Interrompe o processo aqui
+            }
+        }
+        // ### FIM DO BLOCO ADICIONADO ###
+
         $this->validate();
 
         $driverId = $this->selected_driver_id;
         $finalReason = $this->entry_reason === 'Outro' ? $this->other_reason : $this->entry_reason;
 
+        // Cria o visitante se for o caso
         if ($this->showNewVisitorForm) {
             $newDriver = Driver::create([
                 'name' => $this->new_visitor_name,
                 'document' => preg_replace('/\D/', '', $this->new_visitor_document),
                 'telefone' => $this->new_visitor_phone,
                 'type' => 'Visitante',
-                'is_authorized' => true,
+                'is_authorized' => false,
             ]);
             $driverId = $newDriver->id;
+        }
+
+        // Se temos um veículo e um motorista, vinculamos os dois.
+        if ($this->selectedVehicleId && $driverId) {
+            $vehicle = Vehicle::find($this->selectedVehicleId);
+            if ($vehicle) {
+                $vehicle->drivers()->syncWithoutDetaching([$driverId]);
+            }
         }
 
         PrivateEntry::create([
@@ -171,7 +226,7 @@ class CreatePrivateEntry extends Component
             'vehicle_model' => $this->vehicle_model,
             'entry_reason' => $finalReason,
             'entry_at' => now(),
-            'guard_on_entry_id' => auth()->id(), // <-- Alterado para ID
+            'guard_on_entry_id' => auth()->id(),
             'vehicle_id' => $this->selectedVehicleId,
             'driver_id' => $driverId,
         ]);
@@ -187,6 +242,7 @@ class CreatePrivateEntry extends Component
     public function resetForm()
     {
         $this->reset();
+        $this->suggestedDrivers = [];
     }
 
     /**
@@ -194,7 +250,7 @@ class CreatePrivateEntry extends Component
      */
     public function render()
     {
-        $currentVehicles = PrivateEntry::with(['vehicle.driver', 'driver'])
+        $currentVehicles = PrivateEntry::with(['vehicle.drivers', 'driver'])
             ->whereNull('exit_at')
             ->when($this->exitSearch, function ($query) {
                 $searchTerm = '%' . $this->exitSearch . '%';
@@ -213,17 +269,19 @@ class CreatePrivateEntry extends Component
         ]);
     }
 
+
     /**
      * Lógica para a busca rápida de veículos.
      */
     public function updatedSearch($value)
     {
         if (strlen($value) < 3) {
-            $this->searchResults = collect();
+            $this->searchResults = [];
             return;
         }
 
-        $vehiclesFound = Vehicle::with('driver')
+        // Busca os veículos (pela placa ou modelo) e já traz a lista de motoristas
+        $vehiclesFound = Vehicle::with('drivers')
             ->where('type', 'Particular')
             ->where(function ($query) use ($value) {
                 $query->where('license_plate', 'like', '%' . $value . '%')
@@ -231,31 +289,53 @@ class CreatePrivateEntry extends Component
             })
             ->get();
 
+        // Busca os motoristas pelo nome e traz os veículos vinculados a eles
+        $cleanSearch = preg_replace('/\D/', '', $value);
+
+        // Busca os motoristas pelo nome ou CPF e traz os veículos vinculados
         $driversFound = Driver::with(['vehicles' => function ($query) {
             $query->where('type', 'Particular');
         }])
             ->where('name', 'like', '%' . $value . '%')
+            ->when(strlen($cleanSearch) > 0, function ($query) use ($cleanSearch) {
+                $query->orWhere('document', 'like', '%' . $cleanSearch . '%');
+            })
             ->get();
-
         $formattedResults = collect();
 
+        // 1. Adiciona os resultados encontrados pela PLACA
         foreach ($vehiclesFound as $vehicle) {
+            // Pega o nome de TODOS os motoristas vinculados, separados por vírgula
+            $nomesProprietarios = $vehicle->drivers->count() > 0
+                ? $vehicle->drivers->pluck('name')->join(', ')
+                : 'Sem motorista vinculado';
+
             $formattedResults->push([
                 'id' => $vehicle->id,
-                'text' => "VEÍCULO: {$vehicle->license_plate} ({$vehicle->model}) - Prop.: " . ($vehicle->driver ? $vehicle->driver->name : 'Sem proprietário')
+                'text' => "VEÍCULO: {$vehicle->license_plate} ({$vehicle->model}) - Motoristas: {$nomesProprietarios}"
             ]);
         }
 
+        // 2. Adiciona os resultados encontrados pelo NOME do motorista
         foreach ($driversFound as $driver) {
+            // Formata o CPF para exibição bonita
+            $docFormated = strlen($driver->document) === 11
+                ? preg_replace('/(\d{3})(\d{3})(\d{3})(\d{2})/', '$1.$2.$3-$4', $driver->document)
+                : ($driver->document ?: 'Não informado');
+
             foreach ($driver->vehicles as $vehicle) {
                 $formattedResults->push([
                     'id' => $vehicle->id,
-                    'text' => "MOTORISTA: {$driver->name} - Veículo: {$vehicle->license_plate} ({$vehicle->model})"
+                    'text' => "MOTORISTA: {$driver->name} (CPF: {$docFormated}) - Veículo: {$vehicle->license_plate} ({$vehicle->model})"
                 ]);
             }
         }
 
-        $this->searchResults = $formattedResults->unique('id')->sortBy('text');
+        $this->searchResults = $formattedResults->unique('id')->sortBy('text')->values()->toArray();
+
+        // A MÁGICA ESTÁ AQUI NO FINAL: ->values()->toArray()
+        // Isso reseta os índices do array garantindo que o Livewire renderize todos os itens na tela!
+        $this->searchResults = $formattedResults->unique('id')->sortBy('text')->values()->toArray();
     }
 
     /**

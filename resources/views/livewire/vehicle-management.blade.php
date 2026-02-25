@@ -354,28 +354,61 @@
                             </div>
                             @if ($type === 'Particular')
                                 <div>
-                                    <x-input-label for="driver_search" value="Proprietário (Motorista)" />
+                                    <x-input-label for="driver_search" value="Proprietário(s) / Motorista(s)" />
+
+                                    {{-- ÁREA DE TAGS (MOTORISTAS SELECIONADOS) --}}
+                                    @if (count($selected_drivers) > 0)
+                                        <div class="flex flex-wrap gap-2 mb-3 mt-2">
+                                            @foreach ($selected_drivers as $driver)
+                                                <span
+                                                    class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800 border border-green-200 shadow-sm">
+                                                    👤 {{ $driver['name'] }}
+                                                    <button type="button"
+                                                        wire:click="removeDriver({{ $driver['id'] }})"
+                                                        class="flex-shrink-0 ml-2 inline-flex text-green-600 hover:text-red-600 focus:outline-none transition">
+                                                        <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fill-rule="evenodd"
+                                                                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                                                                clip-rule="evenodd" />
+                                                        </svg>
+                                                    </button>
+                                                </span>
+                                            @endforeach
+                                        </div>
+                                    @endif
+
+                                    {{-- BARRA DE PESQUISA PARA ADICIONAR MAIS --}}
                                     <div x-data="{ open: @entangle('show_driver_dropdown') }" @click.away="open = false" class="relative">
                                         <x-text-input type="text" id="driver_search"
                                             class="mt-1 block w-full text-sm"
                                             wire:model.live.debounce.300ms="driver_search" @focus="open = true"
-                                            autocomplete="off" placeholder="Digite para buscar..." />
+                                            autocomplete="off" placeholder="Digite o nome para adicionar..." />
+
                                         <div x-show="open"
                                             class="absolute z-10 w-full bg-white rounded-md shadow-lg mt-1 border max-h-48 overflow-y-auto">
                                             @if ($this->foundDrivers->isNotEmpty())
                                                 <ul>
                                                     @foreach ($this->foundDrivers as $driver)
-                                                        <li class="p-2 hover:bg-gray-100 cursor-pointer text-sm"
+                                                        <li class="p-3 hover:bg-green-50 cursor-pointer text-sm flex justify-between items-center transition"
                                                             wire:click="selectDriver({{ $driver->id }}, '{{ addslashes($driver->name) }}')">
-                                                            {{ $driver->name }}</li>
+                                                            <div>
+                                                                <span
+                                                                    class="block font-medium text-gray-800">{{ $driver->name }}</span>
+                                                                <span class="block text-xs text-gray-500">
+                                                                    CPF:
+                                                                    {{ strlen($driver->document) === 11 ? preg_replace('/(\d{3})(\d{3})(\d{3})(\d{2})/', '$1.$2.$3-$4', $driver->document) : ($driver->document ?: 'Não informado') }}
+                                                                </span>
+                                                            </div>
+                                                            <span class="text-xs text-ifnmg-green font-bold">+
+                                                                Adicionar</span>
+                                                        </li>
                                                     @endforeach
                                                 </ul>
                                             @elseif(strlen($driver_search) >= 2)
-                                                <p class="p-2 text-gray-500 text-sm">Nenhum motorista encontrado.</p>
+                                                <p class="p-3 text-gray-500 text-sm">Nenhum motorista encontrado.</p>
                                             @endif
                                         </div>
                                     </div>
-                                    <x-input-error for="driver_id" class="mt-2" />
                                 </div>
                             @endif
                         </div>

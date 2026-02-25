@@ -24,7 +24,8 @@ class VehicleManagement extends Component
     public string $color = '';
     public $vehicleId;
     public string $type = 'Particular';
-    public $driver_id = '';
+    // public $driver_id = '';
+    public array $selected_drivers = [];
     public string $driver_search = '';
     public bool $show_driver_dropdown = false;
     public bool $isModalOpen = false;
@@ -48,16 +49,44 @@ class VehicleManagement extends Component
     // --- LÓGICA DE BUSCA DE MOTORISTA ---
     public function getFoundDriversProperty()
     {
-        if (strlen(trim($this->driver_search)) < 2) {
+        $search = trim($this->driver_search);
+
+        if (strlen($search) < 2) {
             return collect();
         }
-        return Driver::where('name', 'like', '%' . $this->driver_search . '%')->take(5)->get();
+
+        $cleanSearch = preg_replace('/\D/', '', $search);
+
+        return Driver::where('name', 'like', '%' . $search . '%')
+            ->when(strlen($cleanSearch) > 0, function ($query) use ($cleanSearch) {
+                $query->orWhere('document', 'like', '%' . $cleanSearch . '%');
+            })
+            ->orderBy('name')
+            ->take(5)
+            ->get();
     }
+
     public function selectDriver($id, $name)
     {
-        $this->driver_id = $id;
-        $this->driver_search = $name;
+        // Verifica se o motorista já está na lista para não duplicar
+        $exists = collect($this->selected_drivers)->contains('id', $id);
+
+        if (!$exists) {
+            $this->selected_drivers[] = ['id' => $id, 'name' => $name];
+        }
+
+        // Limpa o campo de busca, mas mantém a dropdown fechada
+        $this->driver_search = '';
         $this->show_driver_dropdown = false;
+    }
+
+    // Adicione esta nova função para remover a tag do motorista
+    public function removeDriver($id)
+    {
+        $this->selected_drivers = collect($this->selected_drivers)
+            ->reject(fn($driver) => $driver['id'] === $id)
+            ->values()
+            ->toArray();
     }
 
     // --- MÉTODOS DE CICLO DE VIDA ---
@@ -110,7 +139,7 @@ class VehicleManagement extends Component
     // --- RENDERIZAÇÃO (COM FILTRO) ---
     public function render()
     {
-        $query = Vehicle::with('driver');
+        $query = Vehicle::with('drivers');
         $user = Auth::user();
 
         // Filtro principal baseado no perfil
@@ -145,7 +174,7 @@ class VehicleManagement extends Component
                 $subQuery->where('license_plate', 'like', $searchTerm)
                     ->orWhere('model', 'like', $searchTerm)
                     ->orWhere('color', 'like', $searchTerm)
-                    ->orWhereHas('driver', function ($driverQuery) use ($searchTerm) {
+                    ->$subQuery->orWhereHas('drivers', function ($driverQuery) use ($searchTerm) {
                         $driverQuery->where('name', 'like', $searchTerm);
                     });
             });
@@ -185,21 +214,29 @@ class VehicleManagement extends Component
             'model' => 'required|string|max:25',
             'color' => 'required|string|max:20',
             'type' => 'required|string|in:Oficial,Particular',
-            'driver_id' => $this->type === 'Particular' ? 'nullable|exists:drivers,id' : '',
+            // REMOVA a linha de validação do 'driver_id' daqui
         ], ['license_plate.regex' => 'O formato da placa é inválido.']);
 
-        Vehicle::updateOrCreate(['id' => $this->vehicleId], [
+        $vehicle = Vehicle::updateOrCreate(['id' => $this->vehicleId], [
             'license_plate' => strtoupper($validatedData['license_plate']),
             'model'         => Str::upper($validatedData['model']),
             'color'         => Str::upper($validatedData['color']),
             'type'          => $validatedData['type'],
-            'driver_id'     => $validatedData['type'] === 'Particular' ? ($validatedData['driver_id'] ?: null) : null,
         ]);
+
+        // --- NOVA LÓGICA DE VÍNCULO MULTIPLO ---
+        if ($validatedData['type'] === 'Particular' && count($this->selected_drivers) > 0) {
+            // Extrai apenas os IDs do array de selected_drivers
+            $driverIds = array_column($this->selected_drivers, 'id');
+            $vehicle->drivers()->sync($driverIds); // Vincula todos os motoristas
+        } else {
+            $vehicle->drivers()->detach(); // Limpa vínculos se for Oficial ou se não houver motoristas
+        }
+        // ---------------------------------------
 
         session()->flash('successMessage', $this->vehicleId ? 'Veículo atualizado!' : 'Veículo criado!');
         $this->closeModal();
     }
-
     public function create()
     {
         if (!in_array(Auth::user()->role, ['admin', 'porteiro', 'fiscal'])) {
@@ -211,25 +248,28 @@ class VehicleManagement extends Component
 
     public function edit($id)
     {
+        // Limpa qualquer mensagem de erro que tenha ficado presa de uma tentativa anterior
+        $this->resetValidation();
+
         $vehicle = Vehicle::withTrashed()->findOrFail($id);
+
         if (!$this->canManageVehicle($vehicle)) {
             session()->flash('error', 'Você não tem permissão para editar este veículo.');
             return;
         }
+
         $this->vehicleId = $id;
         $this->license_plate = $vehicle->license_plate;
         $this->model = $vehicle->model;
         $this->color = $vehicle->color;
         $this->type = $vehicle->type;
-        $this->driver_id = $vehicle->driver_id;
-        $this->driver_search = $vehicle->driver ? $vehicle->driver->name : '';
-        $this->isModalOpen = true;
-    }
 
-    public function closeModal()
-    {
-        $this->isModalOpen = false;
-        $this->resetInputFields();
+        $this->selected_drivers = $vehicle->drivers->map(function ($d) {
+            return ['id' => $d->id, 'name' => $d->name];
+        })->toArray();
+        $this->driver_search = '';
+
+        $this->isModalOpen = true;
     }
 
     private function resetInputFields()
@@ -239,10 +279,19 @@ class VehicleManagement extends Component
         if ($user->role === 'fiscal') {
             if ($user->fiscal_type === 'official') $defaultType = 'Oficial';
         }
-        $this->reset(['license_plate', 'model', 'color', 'vehicleId', 'driver_id', 'driver_search', 'show_driver_dropdown']);
+        // Atualize a lista de resets adicionando o 'selected_drivers'
+        $this->reset(['license_plate', 'model', 'color', 'vehicleId', 'driver_search', 'show_driver_dropdown', 'selected_drivers']);
         $this->type = $defaultType;
         $this->resetErrorBag();
     }
+
+    public function closeModal()
+    {
+        $this->isModalOpen = false;
+        $this->resetInputFields();
+    }
+
+
 
     // --- MÉTODOS DE EXCLUSÃO ---
     public function confirmDelete($id)

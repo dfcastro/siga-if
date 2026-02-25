@@ -20,9 +20,10 @@ class Driver extends Model
     protected $casts = [
         'is_authorized' => 'boolean',
     ];
-    public function vehicles(): HasMany
+    
+    public function vehicles(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {
-        return $this->hasMany(Vehicle::class);
+        return $this->belongsToMany(Vehicle::class);
     }
 
     /**

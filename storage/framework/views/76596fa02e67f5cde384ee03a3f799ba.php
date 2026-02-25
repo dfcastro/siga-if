@@ -562,14 +562,14 @@
                                 <div>
                                     <?php if (isset($component)) { $__componentOriginale3da9d84bb64e4bc2eeebaafabfb2581 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginale3da9d84bb64e4bc2eeebaafabfb2581 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.input-label','data' => ['for' => 'driver_search','value' => 'Proprietário (Motorista)']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.input-label','data' => ['for' => 'driver_search','value' => 'Proprietário(s) / Motorista(s)']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('input-label'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['for' => 'driver_search','value' => 'Proprietário (Motorista)']); ?>
+<?php $component->withAttributes(['for' => 'driver_search','value' => 'Proprietário(s) / Motorista(s)']); ?>
 <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginale3da9d84bb64e4bc2eeebaafabfb2581)): ?>
@@ -580,17 +580,41 @@
 <?php $component = $__componentOriginale3da9d84bb64e4bc2eeebaafabfb2581; ?>
 <?php unset($__componentOriginale3da9d84bb64e4bc2eeebaafabfb2581); ?>
 <?php endif; ?>
+
+                                    
+                                    <!--[if BLOCK]><![endif]--><?php if(count($selected_drivers) > 0): ?>
+                                        <div class="flex flex-wrap gap-2 mb-3 mt-2">
+                                            <!--[if BLOCK]><![endif]--><?php $__currentLoopData = $selected_drivers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $driver): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                <span
+                                                    class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800 border border-green-200 shadow-sm">
+                                                    👤 <?php echo e($driver['name']); ?>
+
+                                                    <button type="button"
+                                                        wire:click="removeDriver(<?php echo e($driver['id']); ?>)"
+                                                        class="flex-shrink-0 ml-2 inline-flex text-green-600 hover:text-red-600 focus:outline-none transition">
+                                                        <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fill-rule="evenodd"
+                                                                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                                                                clip-rule="evenodd" />
+                                                        </svg>
+                                                    </button>
+                                                </span>
+                                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><!--[if ENDBLOCK]><![endif]-->
+                                        </div>
+                                    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+
+                                    
                                     <div x-data="{ open: <?php if ((object) ('show_driver_dropdown') instanceof \Livewire\WireDirective) : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('show_driver_dropdown'->value()); ?>')<?php echo e('show_driver_dropdown'->hasModifier('live') ? '.live' : ''); ?><?php else : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('show_driver_dropdown'); ?>')<?php endif; ?> }" @click.away="open = false" class="relative">
                                         <?php if (isset($component)) { $__componentOriginal18c21970322f9e5c938bc954620c12bb = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal18c21970322f9e5c938bc954620c12bb = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.text-input','data' => ['type' => 'text','id' => 'driver_search','class' => 'mt-1 block w-full text-sm','wire:model.live.debounce.300ms' => 'driver_search','@focus' => 'open = true','autocomplete' => 'off','placeholder' => 'Digite para buscar...']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.text-input','data' => ['type' => 'text','id' => 'driver_search','class' => 'mt-1 block w-full text-sm','wire:model.live.debounce.300ms' => 'driver_search','@focus' => 'open = true','autocomplete' => 'off','placeholder' => 'Digite o nome para adicionar...']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('text-input'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['type' => 'text','id' => 'driver_search','class' => 'mt-1 block w-full text-sm','wire:model.live.debounce.300ms' => 'driver_search','@focus' => 'open = true','autocomplete' => 'off','placeholder' => 'Digite para buscar...']); ?>
+<?php $component->withAttributes(['type' => 'text','id' => 'driver_search','class' => 'mt-1 block w-full text-sm','wire:model.live.debounce.300ms' => 'driver_search','@focus' => 'open = true','autocomplete' => 'off','placeholder' => 'Digite o nome para adicionar...']); ?>
 <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginal18c21970322f9e5c938bc954620c12bb)): ?>
@@ -601,41 +625,33 @@
 <?php $component = $__componentOriginal18c21970322f9e5c938bc954620c12bb; ?>
 <?php unset($__componentOriginal18c21970322f9e5c938bc954620c12bb); ?>
 <?php endif; ?>
+
                                         <div x-show="open"
                                             class="absolute z-10 w-full bg-white rounded-md shadow-lg mt-1 border max-h-48 overflow-y-auto">
                                             <!--[if BLOCK]><![endif]--><?php if($this->foundDrivers->isNotEmpty()): ?>
                                                 <ul>
                                                     <!--[if BLOCK]><![endif]--><?php $__currentLoopData = $this->foundDrivers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $driver): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                                        <li class="p-2 hover:bg-gray-100 cursor-pointer text-sm"
+                                                        <li class="p-3 hover:bg-green-50 cursor-pointer text-sm flex justify-between items-center transition"
                                                             wire:click="selectDriver(<?php echo e($driver->id); ?>, '<?php echo e(addslashes($driver->name)); ?>')">
-                                                            <?php echo e($driver->name); ?></li>
+                                                            <div>
+                                                                <span
+                                                                    class="block font-medium text-gray-800"><?php echo e($driver->name); ?></span>
+                                                                <span class="block text-xs text-gray-500">
+                                                                    CPF:
+                                                                    <?php echo e(strlen($driver->document) === 11 ? preg_replace('/(\d{3})(\d{3})(\d{3})(\d{2})/', '$1.$2.$3-$4', $driver->document) : ($driver->document ?: 'Não informado')); ?>
+
+                                                                </span>
+                                                            </div>
+                                                            <span class="text-xs text-ifnmg-green font-bold">+
+                                                                Adicionar</span>
+                                                        </li>
                                                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><!--[if ENDBLOCK]><![endif]-->
                                                 </ul>
                                             <?php elseif(strlen($driver_search) >= 2): ?>
-                                                <p class="p-2 text-gray-500 text-sm">Nenhum motorista encontrado.</p>
+                                                <p class="p-3 text-gray-500 text-sm">Nenhum motorista encontrado.</p>
                                             <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
                                         </div>
                                     </div>
-                                    <?php if (isset($component)) { $__componentOriginalf94ed9c5393ef72725d159fe01139746 = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginalf94ed9c5393ef72725d159fe01139746 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.input-error','data' => ['for' => 'driver_id','class' => 'mt-2']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('input-error'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['for' => 'driver_id','class' => 'mt-2']); ?>
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginalf94ed9c5393ef72725d159fe01139746)): ?>
-<?php $attributes = $__attributesOriginalf94ed9c5393ef72725d159fe01139746; ?>
-<?php unset($__attributesOriginalf94ed9c5393ef72725d159fe01139746); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalf94ed9c5393ef72725d159fe01139746)): ?>
-<?php $component = $__componentOriginalf94ed9c5393ef72725d159fe01139746; ?>
-<?php unset($__componentOriginalf94ed9c5393ef72725d159fe01139746); ?>
-<?php endif; ?>
                                 </div>
                             <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
                         </div>

@@ -17,9 +17,9 @@ class Vehicle extends Model
 
     protected $guarded = [];
 
-    public function driver(): BelongsTo
+    public function drivers(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {
-        return $this->belongsTo(Driver::class);
+        return $this->belongsToMany(Driver::class);
     }
 
     /**
