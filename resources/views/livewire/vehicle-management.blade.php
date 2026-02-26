@@ -44,7 +44,7 @@
                 <p class="text-sm text-gray-500 mt-1">Adicione, edite e visualize todos os veículos cadastrados.</p>
             </div>
             {{-- Botão Novo Veículo com permissão --}}
-            @if ($this->canManageVehicle(requestedType: $type))
+            @if ($this->canCreateVehicle())
                 {{-- Ajuste da permissão para criar com base no tipo padrão --}}
                 <div class="mt-4 sm:mt-0">
                     <x-primary-button wire:click="create">

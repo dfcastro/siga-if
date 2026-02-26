@@ -127,7 +127,7 @@ class GuardReport extends Component
         }
         $dates = $this->getReportDates();
 
-        // Verificação de existência (Já estava correta, usando guard_id)
+        // Verificação de existência
         $existing = ReportSubmission::where('type', 'private')
             ->where('guard_id', Auth::id())
             ->whereYear('start_date', $dates['start']->year)
@@ -143,7 +143,7 @@ class GuardReport extends Component
         $entryIds = PrivateEntry::query()
             // ### CORREÇÃO 2 (Particulares - Feita ✅) ###
             // A responsabilidade é de quem registou a SAÍDA.
-            ->where('guard_on_exit_id', Auth::id()) // <-- Correto! Usa ID.
+            ->where('guard_on_exit_id', Auth::id()) 
             // Garante que o ciclo está finalizado.
             ->whereNotNull('exit_at')
             ->whereBetween('entry_at', [$dates['start'], $dates['end']])

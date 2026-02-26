@@ -45,7 +45,16 @@ class VehicleManagement extends Component
     {
         return ['header' => 'Gerenciamento de Veículos'];
     }
+    
+    public function mount()
+    {
+        $user = Auth::user();
 
+        // Se for um fiscal oficial, a tela já deve carregar com o tipo 'Oficial' selecionado internamente
+        if ($user->role === 'fiscal' && $user->fiscal_type === 'official') {
+            $this->type = 'Oficial';
+        }
+    }
     // --- LÓGICA DE BUSCA DE MOTORISTA ---
     public function getFoundDriversProperty()
     {
@@ -135,6 +144,27 @@ class VehicleManagement extends Component
         return false; // Nega por padrão
     }
     // ### FIM DA FUNÇÃO ADICIONADA ###
+
+    /**
+     * Verifica se o usuário tem permissão para visualizar o botão de "Novo Veículo".
+     */
+    public function canCreateVehicle(): bool
+    {
+        $user = Auth::user();
+
+        // Admin e Porteiro sempre podem criar
+        if (in_array($user->role, ['admin', 'porteiro'])) {
+            return true;
+        }
+
+        // Fiscal pode criar desde que tenha um tipo de fiscalização atribuído
+        if ($user->role === 'fiscal' && in_array($user->fiscal_type, ['official', 'private', 'both'])) {
+            return true;
+        }
+
+        return false;
+    }
+
 
     // --- RENDERIZAÇÃO (COM FILTRO) ---
     public function render()

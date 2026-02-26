@@ -519,13 +519,15 @@
 <?php $component = $__componentOriginale3da9d84bb64e4bc2eeebaafabfb2581; ?>
 <?php unset($__componentOriginale3da9d84bb64e4bc2eeebaafabfb2581); ?>
 <?php endif; ?>
-                            <select id="type"
-                                class="mt-1 block w-full border-gray-300 focus:border-ifnmg-green focus:ring-ifnmg-green rounded-md shadow-sm"
-                                wire:model.live="type">
+                            <select wire:model.live="type" id="type" x-model="driverType"
+                                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-ifnmg-green focus:border-ifnmg-green">
                                 <option value="Servidor">Servidor</option>
-                                <option value="Aluno">Aluno</option>
                                 <option value="Terceirizado">Terceirizado</option>
-                                <option value="Visitante">Visitante</option>
+
+                                <!--[if BLOCK]><![endif]--><?php if(auth()->user()->role !== 'fiscal' || auth()->user()->fiscal_type !== 'official'): ?>
+                                    <option value="Aluno">Aluno</option>
+                                    <option value="Visitante">Visitante</option>
+                                <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
                             </select>
                             <?php if (isset($component)) { $__componentOriginalf94ed9c5393ef72725d159fe01139746 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalf94ed9c5393ef72725d159fe01139746 = $attributes; } ?>
@@ -549,7 +551,14 @@
 <?php endif; ?>
                         </div>
                         
-                        <!--[if BLOCK]><![endif]--><?php if(auth()->user()->role === 'admin' || auth()->user()->role === 'fiscal'): ?>
+                        <?php
+                            // Apenas Admin ou Fiscais que cuidam de "ambas" as frotas podem ver este campo.
+                            $canChooseAuthorization =
+                                auth()->user()->role === 'admin' ||
+                                (auth()->user()->role === 'fiscal' && auth()->user()->fiscal_type === 'both');
+                        ?>
+
+                        <!--[if BLOCK]><![endif]--><?php if($canChooseAuthorization): ?>
                             <div class="flex items-center pt-2" x-data="{ isDisabled: driverType === 'Aluno' || driverType === 'Visitante' }" x-init="$watch('driverType', value => { isDisabled = (value === 'Aluno' || value === 'Visitante'); if (isDisabled) { $wire.set('is_authorized', false); } })">
                                 <input id="is_authorized" type="checkbox"
                                     class="h-4 w-4 text-ifnmg-green border-gray-300 rounded focus:ring-ifnmg-green disabled:opacity-50 disabled:cursor-not-allowed"
@@ -636,7 +645,8 @@
                                 stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round"
                                     d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-                            </svg></div>
+                            </svg>
+                        </div>
                         <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
                             <h3 class="text-lg font-semibold leading-6 text-gray-900">
                                 <?php echo e($filter === 'active' ? 'Mover para a Lixeira' : 'Confirmar Exclusão Permanente'); ?>
@@ -645,7 +655,8 @@
                             <div class="mt-2">
                                 <p class="text-sm text-gray-600">Você tem certeza que deseja
                                     <strong><?php echo e($filter === 'active' ? 'mover o motorista' : 'excluir PERMANENTEMENTE o motorista'); ?></strong>
-                                    <strong>"<?php echo e($driverNameToDelete); ?>"</strong>?</p>
+                                    <strong>"<?php echo e($driverNameToDelete); ?>"</strong>?
+                                </p>
                                 <!--[if BLOCK]><![endif]--><?php if($filter === 'trashed'): ?>
                                     <p class="mt-2 text-xs text-red-700 font-semibold">Esta ação não pode ser desfeita.
                                     </p>

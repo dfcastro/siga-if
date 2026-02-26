@@ -230,32 +230,83 @@ class DriverManagement extends Component
 
     public function store()
     {
-        // A validação agora inclui a regra customizada
-        $validatedData = $this->validate();
         $user = Auth::user();
 
-        // Restrição adicional para Fiscal Oficial (mantida)
-        if ($user->role === 'fiscal' && $user->fiscal_type === 'official' && !$validatedData['is_authorized']) {
-            $this->addError('is_authorized', 'Fiscais de frota oficial só podem gerenciar motoristas autorizados.');
+        // 1. FORÇA A REGRA DE NEGÓCIO (Blinda o backend)
+        if ($user->role === 'fiscal' && $user->fiscal_type === 'official') {
+            $this->is_authorized = true;
+        } elseif ($user->role === 'porteiro' || ($user->role === 'fiscal' && $user->fiscal_type === 'private')) {
+            $this->is_authorized = false;
+        }
+
+        // 2. PADRONIZA O CPF
+        $this->document = preg_replace('/\D/', '', $this->document);
+
+        // 3. PROMOÇÃO INTELIGENTE OU BARREIRA DE SEGURANÇA
+        if (!$this->driverId && !empty($this->document)) {
+            $existingDriver = Driver::withTrashed()->where('document', $this->document)->first();
+
+            if ($existingDriver) {
+                $isFiscalOficial = $user->role === 'fiscal' && $user->fiscal_type === 'official';
+
+                // Se for Fiscal Oficial e o motorista JÁ for Servidor/Terceirizado, permite "sequestrar" o ID para atualizar
+                if ($isFiscalOficial && in_array($existingDriver->type, ['Servidor', 'Terceirizado'])) {
+                    $this->driverId = $existingDriver->id;
+                }
+                // Se for Administrador, ele também pode sequestrar qualquer um para atualizar
+                elseif ($user->role === 'admin') {
+                    $this->driverId = $existingDriver->id;
+                }
+                // Caso contrário (ex: Fiscal tentando promover Visitante, ou Porteiro duplicando CPF), bloqueia!
+                else {
+                    $statusLixeira = $existingDriver->trashed() ? ' (na Lixeira)' : '';
+                    $this->addError('document', "Este CPF já pertence a: {$existingDriver->name} - {$existingDriver->type}{$statusLixeira}. Para transformar um Visitante/Aluno em condutor oficial, contate o Administrador.");
+                    return;
+                }
+            }
+        }
+
+        // 4. VALIDA OS DADOS
+        $validatedData = $this->validate();
+
+        // 5. VERIFICA PERMISSÕES (Para edição normal)
+        $driver = $this->driverId ? Driver::withTrashed()->find($this->driverId) : null;
+
+        // Libera a edição/promoção se o Fiscal Oficial estiver atualizando um Servidor
+        $isPromoting = false;
+        if ($user->role === 'fiscal' && $user->fiscal_type === 'official' && $driver && in_array($driver->type, ['Servidor', 'Terceirizado'])) {
+            $isPromoting = true;
+        }
+
+        if (!$isPromoting && !$this->canManageDriver($driver)) {
+            $this->addError('document', 'Você não tem permissão para gerenciar este motorista.');
             return;
         }
 
-        // Verifica permissão geral (mantida)
-        $driver = $this->driverId ? Driver::withTrashed()->find($this->driverId) : null;
-        if (!$this->canManageDriver($driver)) {
-            abort(403, 'Ação não autorizada.');
+        // 6. SALVA NO BANCO (Create ou Update)
+        if ($driver) {
+            $driver->update([
+                'name' => Str::title($validatedData['name']),
+                'document' => $validatedData['document'],
+                'telefone' => $validatedData['telefone'],
+                'type' => $validatedData['type'],
+                'is_authorized' => $validatedData['is_authorized'],
+            ]);
+
+            if ($driver->trashed()) {
+                $driver->restore();
+            }
+        } else {
+            Driver::create([
+                'name' => Str::title($validatedData['name']),
+                'document' => $validatedData['document'],
+                'telefone' => $validatedData['telefone'],
+                'type' => $validatedData['type'],
+                'is_authorized' => $validatedData['is_authorized'],
+            ]);
         }
 
-        // Usa os dados validados para criar/atualizar
-        Driver::updateOrCreate(['id' => $this->driverId], [
-            'name' => Str::title($validatedData['name']),
-            'document' => $validatedData['document'],
-            'telefone' => $validatedData['telefone'],
-            'type' => $validatedData['type'],
-            'is_authorized' => $validatedData['is_authorized'],
-        ]);
-
-        session()->flash('success', $this->driverId ? 'Motorista atualizado!' : 'Motorista cadastrado!');
+        session()->flash('success', $isPromoting ? 'Servidor atualizado e autorizado para a frota oficial!' : ($this->driverId ? 'Motorista atualizado!' : 'Motorista cadastrado!'));
         $this->closeModal();
     }
 
@@ -297,22 +348,16 @@ class DriverManagement extends Component
     private function resetInputFields()
     {
         $this->reset(['name', 'document', 'type', 'driverId', 'is_authorized', 'telefone']);
-        $this->type = 'Servidor'; // Padrão
+
         $user = Auth::user();
 
-
-        // Define is_authorized padrão com base no perfil:
-        // Apenas Admin e Fiscais podem *definir* a autorização.
-        // Para eles, começamos com 'true' como padrão seguro (especialmente Fiscal Oficial).
-        // Para o Porteiro, o padrão deve ser 'false', pois ele não controla essa flag.
-        if ($user->role === 'admin' || $user->role === 'fiscal') {
-            // Fiscal oficial DEVE ser true, os outros podem começar como true por segurança.
-            $this->is_authorized = ($user->role === 'fiscal' && $user->fiscal_type === 'official') ? true : true;
+        if ($user->role === 'fiscal' && $user->fiscal_type === 'official') {
+            $this->type = 'Servidor';
+            $this->is_authorized = true;
         } else {
-            // Porteiro e outros perfis (se houver) começam com false.
+            $this->type = 'Visitante';
             $this->is_authorized = false;
         }
-        // ### FIM DA CORREÇÃO ###
 
         $this->resetErrorBag();
     }

@@ -44,7 +44,7 @@
                 <p class="text-sm text-gray-500 mt-1">Adicione, edite e visualize todos os veículos cadastrados.</p>
             </div>
             
-            <!--[if BLOCK]><![endif]--><?php if($this->canManageVehicle(requestedType: $type)): ?>
+            <!--[if BLOCK]><![endif]--><?php if($this->canCreateVehicle()): ?>
                 
                 <div class="mt-4 sm:mt-0">
                     <?php if (isset($component)) { $__componentOriginald411d1792bd6cc877d687758b753742c = $component; } ?>
