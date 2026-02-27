@@ -159,7 +159,8 @@
                                         <span
                                             class="font-mono text-blue-600 font-bold"><?php echo e(number_format($trip->departure_odometer, 0, ',', '.')); ?>
 
-                                            km</span></p>
+                                            km</span>
+                                    </p>
                                 </div>
                             </div>
                             <div class="mt-4 pl-2">
@@ -482,8 +483,7 @@
                                             class="px-4 py-3 cursor-pointer hover:bg-blue-50 transition-colors">
                                             <div class="font-medium text-sm text-gray-800"><?php echo e($driver->name); ?></div>
                                             <div class="text-xs text-gray-500">
-                                                CPF:
-                                                <?php echo e(strlen($driver->document) === 11 ? preg_replace('/(\d{3})(\d{3})(\d{3})(\d{2})/', '$1.$2.$3-$4', $driver->document) : ($driver->document ?: 'Não informado')); ?>
+                                                CPF: <?php echo e($driver->formatted_document); ?>
 
                                             </div>
                                         </li>

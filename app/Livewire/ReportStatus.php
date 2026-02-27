@@ -38,52 +38,42 @@ class ReportStatus extends Component
     {
         $user = Auth::user();
 
-        // ### INÍCIO - LÓGICA DO FILTRO DE ANO (COM CORREÇÃO) ###
-
         // Determina a expressão SQL correta para extrair o ano
         $databaseConnection = Config::get('database.default');
         $driver = Config::get("database.connections.{$databaseConnection}.driver");
 
         if ($driver === 'sqlite') {
-            // Usar strftime para SQLite
             $minYearQuery = DB::raw("CAST(strftime('%Y', start_date) AS INTEGER)");
         } else {
-            // Usar YEAR() para MySQL, PostgreSQL, etc.
             $minYearQuery = DB::raw("YEAR(start_date)");
         }
 
-        // Busca o ano da primeira submissão registada usando a query correta
         $firstYear = ReportSubmission::min($minYearQuery);
         $currentYear = Carbon::now()->year;
 
-        // Se não houver registos, usa o ano atual
         if (!$firstYear) {
             $firstYear = $currentYear;
         }
 
-        // Cria um array de anos, do mais recente para o mais antigo
         $this->availableYears = range($currentYear, (int)$firstYear);
-        // Define o ano atual como padrão
         $this->selectedYear = $currentYear;
-        // ### FIM - LÓGICA DO FILTRO DE ANO ###
 
-
-        // (Lógica de aba padrão - mantida da tua versão anterior)
+        // Define a aba padrão respeitando o perfil
         if ($user->role === 'fiscal') {
             if ($user->fiscal_type === 'private') {
                 $this->reportType = 'private';
-            } elseif ($user->fiscal_type === 'official') { // Adicionei elseif para clareza
+            } else {
                 $this->reportType = 'official';
             }
-            // Se for 'both', mantém o padrão ('private' ou o que definiste)
-        } elseif ($user->role === 'porteiro') {
-            // Mantém o padrão ('private' ou o que definiste)
+        } else {
+            // Admin e Porteiro começam na aba Oficial por padrão
+            $this->reportType = 'official';
         }
-        // Se for admin, também mantém o padrão
 
-        // Presumo que tenhas um método loadReportData() que usa $this->selectedYear e $this->reportType
         $this->loadReportData();
     }
+
+
 
     /**
      * Recarrega os dados quando o utilizador troca de aba.
@@ -135,30 +125,28 @@ class ReportStatus extends Component
 
     private function handleOfficialReports($user, $query)
     {
-        // (Lógica interna mantida - o $query já está filtrado por ano)
+        // Se for fiscal particular, ele não vê a aba oficial
         if ($user->role === 'fiscal' && !in_array($user->fiscal_type, ['official', 'both'])) {
             $this->vehicles = collect();
             $this->submissions = collect();
             return;
         }
 
-        if ($user->role === 'porteiro') {
-            $this->vehicles = collect();
-            $this->submissions = collect();
-            return;
-        }
-
+        // Carrega todos os veículos oficiais para montar a grade
         $this->vehicles = Vehicle::where('type', 'Oficial')->orderBy('model')->get();
 
-        // Clona a query para não afetar a query original passada para handlePrivateReports
         $officialQuery = clone $query;
+
+        // SE FOR PORTEIRO: filtra apenas as submissões feitas por ELE!
+        if ($user->role === 'porteiro') {
+            $officialQuery->where('guard_id', $user->id);
+        }
 
         $this->submissions = $officialQuery->where('type', 'official')
             ->get()
             ->groupBy('vehicle_id')
             ->map(fn($group) => $group->keyBy(fn($item) => Carbon::parse($item->start_date)->format('Y-m')));
     }
-
     private function handlePrivateReports($user, $query)
     {
         // (Lógica interna mantida - o $query já está filtrado por ano)

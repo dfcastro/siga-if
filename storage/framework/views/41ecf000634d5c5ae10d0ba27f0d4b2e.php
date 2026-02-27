@@ -1,408 +1,426 @@
 <div>
-     <?php $__env->slot('header', null, []); ?> 
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            <?php echo e(__('Aprovação e Arquivo de Relatórios')); ?>
+    <div class="bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12l2 2 4-4V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2H7a2 2 0 01-2-2v-2">
+                    </path>
+                </svg>
+                Vistos em Relatórios da Portaria
+            </h1>
+            <p class="mt-1 text-sm text-gray-600">
+                Analise os relatórios mensais e registre sua ciência (visto) para arquivamento definitivo.
+            </p>
+        </div>
+    </div>
 
-        </h2>
-     <?php $__env->endSlot(); ?>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900">
-
-                    
-                    <!--[if BLOCK]><![endif]--><?php if(session()->has('message')): ?>
-                        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4" role="alert">
-                            <p><?php echo e(session('message')); ?></p>
-                        </div>
-                    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
-                    <?php if(session()->has('error')): ?>
-                        
-                        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
-                            <p><?php echo e(session('error')); ?></p>
-                        </div>
-                    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
-
-                    
-                    <div class="border-b border-gray-200 mb-4">
-                        <nav class="-mb-px flex space-x-8" aria-label="Tabs">
-                            <button wire:click.prevent="setFilter('pending')"
-                                class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm <?php echo e($filterStatus === 'pending' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'); ?>">
-                                Pendentes
-                            </button>
-                            <button wire:click.prevent="setFilter('approved')"
-                                class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm <?php echo e($filterStatus === 'approved' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'); ?>">
-                                Aprovados (Arquivo)
-                            </button>
-                            
-                        </nav>
-                    </div>
-
-                    
-                    <!--[if BLOCK]><![endif]--><?php if(auth()->user()->role === 'admin' || auth()->user()->fiscal_type === 'both'): ?>
-                        <div class="mb-4 flex space-x-4 text-sm"> 
-                            <button wire:click.prevent="setTypeFilter('')"
-                                class="<?php echo e($typeFilter === '' ? 'text-indigo-600 font-semibold' : 'text-gray-500 hover:text-indigo-600'); ?> transition duration-150 ease-in-out">Todos</button>
-                            <button wire:click.prevent="setTypeFilter('official')"
-                                class="<?php echo e($typeFilter === 'official' ? 'text-indigo-600 font-semibold' : 'text-gray-500 hover:text-indigo-600'); ?> transition duration-150 ease-in-out">Apenas
-                                Oficiais</button>
-                            <button wire:click.prevent="setTypeFilter('private')"
-                                class="<?php echo e($typeFilter === 'private' ? 'text-indigo-600 font-semibold' : 'text-gray-500 hover:text-indigo-600'); ?> transition duration-150 ease-in-out">Apenas
-                                Particulares</button>
-                        </div>
-                    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
-
-                    
-                    <div class="shadow-sm border border-gray-200 sm:rounded-lg overflow-hidden"> 
-                        <table class="w-full text-sm text-left text-gray-500">
-                            <thead class="text-xs text-gray-700 uppercase bg-gray-50 hidden sm:table-header-group">
-                                <tr>
-                                    <th class="px-6 py-3">Tipo</th>
-                                    <th class="px-6 py-3">Porteiro</th>
-                                    <th class="px-6 py-3">Período</th>
-                                    
-                                    <!--[if BLOCK]><![endif]--><?php if($filterStatus === 'pending'): ?>
-                                        <th class="px-6 py-3">Submetido em</th>
-                                    <?php else: ?>
-                                        
-                                        <th class="px-6 py-3">Aprovado Por</th>
-                                        <th class="px-6 py-3">Data Aprovação</th>
-                                    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
-                                    <th class="px-6 py-3 text-center">Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200 sm:divide-y-0"> 
-                                <!--[if BLOCK]><![endif]--><?php $__empty_1 = true; $__currentLoopData = $submissions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $submission): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-                                    <tr
-                                        class="bg-white block sm:table-row mb-4 sm:mb-0 border sm:border-0 rounded-lg sm:rounded-none shadow-sm sm:shadow-none">
-                                        
-
-                                        
-                                        <td
-                                            class="flex justify-between items-center px-4 py-2 sm:px-6 sm:py-4 sm:table-cell border-b sm:border-b-0">
-                                            <span class="font-bold text-gray-600 sm:hidden mr-2">Tipo:</span>
-                                            <span class="text-right">
-                                                <!--[if BLOCK]><![endif]--><?php if($submission->type === 'official'): ?>
-                                                    <span
-                                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Oficial</span>
-                                                    <div class="text-xs text-gray-500 sm:hidden mt-1">
-                                                        <?php echo e($submission->vehicle?->model); ?>
-
-                                                        (<?php echo e($submission->vehicle?->license_plate); ?>)</div>
-                                                    
-                                                <?php else: ?>
-                                                    <span
-                                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">Particular</span>
-                                                <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
-                                            </span>
-                                        </td>
-
-                                        
-                                        <td
-                                            class="flex justify-between items-center px-4 py-2 sm:px-6 sm:py-4 sm:table-cell border-b sm:border-b-0">
-                                            <span class="font-bold text-gray-600 sm:hidden mr-2">Porteiro:</span>
-                                            <span
-                                                class="text-right font-medium text-gray-900"><?php echo e($submission->guardUser?->name ?? 'Usuário Removido'); ?></span>
-                                        </td>
-
-                                        
-                                        <td
-                                            class="flex justify-between items-center px-4 py-2 sm:px-6 sm:py-4 sm:table-cell border-b sm:border-b-0">
-                                            <span class="font-bold text-gray-600 sm:hidden mr-2">Período:</span>
-                                            <span
-                                                class="text-right"><?php echo e($submission->start_date->format('M/Y')); ?></span>
-                                            
-                                        </td>
-
-                                        
-                                        <!--[if BLOCK]><![endif]--><?php if($filterStatus === 'pending'): ?>
-                                            <td
-                                                class="flex justify-between items-center px-4 py-2 sm:px-6 sm:py-4 sm:table-cell border-b sm:border-b-0">
-                                                <span class="font-bold text-gray-600 sm:hidden mr-2">Submetido:</span>
-                                                <span
-                                                    class="text-right text-xs"><?php echo e($submission->submitted_at->diffForHumans()); ?></span>
-                                                
-                                            </td>
-                                        <?php else: ?>
-                                            <td
-                                                class="flex justify-between items-center px-4 py-2 sm:px-6 sm:py-4 sm:table-cell border-b sm:border-b-0">
-                                                <span class="font-bold text-gray-600 sm:hidden mr-2">Aprovado
-                                                    Por:</span>
-                                                <span
-                                                    class="text-right"><?php echo e($submission->fiscal?->name ?? 'N/A'); ?></span>
-                                            </td>
-                                            <td
-                                                class="flex justify-between items-center px-4 py-2 sm:px-6 sm:py-4 sm:table-cell border-b sm:border-b-0">
-                                                <span class="font-bold text-gray-600 sm:hidden mr-2">Aprovação:</span>
-                                                <span
-                                                    class="text-right text-xs"><?php echo e($submission->approved_at?->diffForHumans() ?? 'N/A'); ?></span>
-                                                
-                                            </td>
-                                        <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
-
-                                        
-                                        <td class="px-4 py-3 sm:px-6 sm:py-4 sm:table-cell text-center sm:text-left">
-                                            
-                                            <?php if (isset($component)) { $__componentOriginal3b0e04e43cf890250cc4d85cff4d94af = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginal3b0e04e43cf890250cc4d85cff4d94af = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.secondary-button','data' => ['class' => 'w-full sm:w-auto','wire:click' => 'viewSubmission('.e($submission->id).')']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('secondary-button'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['class' => 'w-full sm:w-auto','wire:click' => 'viewSubmission('.e($submission->id).')']); ?>
-                                                Ver Detalhes
-                                             <?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginal3b0e04e43cf890250cc4d85cff4d94af)): ?>
-<?php $attributes = $__attributesOriginal3b0e04e43cf890250cc4d85cff4d94af; ?>
-<?php unset($__attributesOriginal3b0e04e43cf890250cc4d85cff4d94af); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginal3b0e04e43cf890250cc4d85cff4d94af)): ?>
-<?php $component = $__componentOriginal3b0e04e43cf890250cc4d85cff4d94af; ?>
-<?php unset($__componentOriginal3b0e04e43cf890250cc4d85cff4d94af); ?>
-<?php endif; ?>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
-                                    <tr class="bg-white">
-                                        <td colspan="<?php echo e($filterStatus === 'pending' ? '5' : '6'); ?>"
-                                            class="px-6 py-4 text-center text-gray-500"> 
-                                            Nenhum relatório
-                                            <?php echo e($filterStatus === 'pending' ? 'pendente' : 'aprovado'); ?> encontrado para
-                                            os filtros selecionados.
-                                        </td>
-                                    </tr>
-                                <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
-                            </tbody>
-                        </table>
-                    </div>
-
-                    
-                    <div class="mt-4"><?php echo e($submissions->links()); ?></div>
-
-                </div>
+        <!--[if BLOCK]><![endif]--><?php if(session()->has('success')): ?>
+            <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 4000)" x-transition
+                class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-lg relative mb-6 shadow-sm flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <span class="font-semibold text-sm"><?php echo e(session('success')); ?></span>
             </div>
+        <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+
+        <div class="bg-white rounded-t-xl shadow-sm border-b border-gray-200 px-2 sm:px-6 pt-2">
+            <nav class="-mb-px flex space-x-2 sm:space-x-8 overflow-x-auto" aria-label="Tabs">
+                <button wire:click="$set('activeTab', 'pending')"
+                    class="whitespace-nowrap py-4 px-3 border-b-2 font-bold text-sm sm:text-base transition-colors flex items-center gap-2 <?php echo e($activeTab === 'pending' ? 'border-yellow-500 text-yellow-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'); ?>">
+                    ⏳ Aguardando Visto
+                </button>
+                <button wire:click="$set('activeTab', 'approved')"
+                    class="whitespace-nowrap py-4 px-3 border-b-2 font-bold text-sm sm:text-base transition-colors flex items-center gap-2 <?php echo e($activeTab === 'approved' ? 'border-green-500 text-green-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'); ?>">
+                    ✅ Visto Registrado (Arquivados)
+                </button>
+            </nav>
+        </div>
+
+        <div class="bg-white rounded-b-xl shadow-sm border border-t-0 border-gray-200 min-h-[400px] p-0 sm:p-6"
+            wire:loading.class="opacity-50 pointer-events-none transition-opacity">
+
+            
+            <div class="hidden md:block overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Mês
+                                / Tipo</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                Submetido Por</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                Envio</th>
+                            <th class="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <!--[if BLOCK]><![endif]--><?php $__empty_1 = true; $__currentLoopData = $submissions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $sub): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="font-bold text-gray-900 uppercase tracking-wide">
+                                        <?php echo e(\Carbon\Carbon::parse($sub->start_date)->translatedFormat('F/Y')); ?></div>
+                                    <div class="mt-1">
+                                        <!--[if BLOCK]><![endif]--><?php if($sub->type === 'private'): ?>
+                                            <span
+                                                class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 border border-green-200">🛂
+                                                Particulares</span>
+                                        <?php else: ?>
+                                            <span
+                                                class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">🚗
+                                                Oficial (<?php echo e($sub->vehicle?->license_plate ?? 'N/D'); ?>)</span>
+                                        <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-semibold text-gray-800">
+                                        <?php echo e($sub->guardUser?->name ?? 'Usuário Removido'); ?></div>
+                                    <!--[if BLOCK]><![endif]--><?php if($activeTab !== 'pending'): ?>
+                                        <div class="text-xs text-gray-500 mt-0.5">Visto por:
+                                            <?php echo e($sub->assignedFiscal?->name ?? 'N/D'); ?></div>
+                                    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                    <?php echo e(\Carbon\Carbon::parse($sub->submitted_at)->format('d/m/Y H:i')); ?>
+
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium space-x-2">
+                                    <button wire:click="viewDetails(<?php echo e($sub->id); ?>)"
+                                        class="inline-flex items-center px-3 py-1.5 bg-white border border-gray-300 rounded text-gray-700 hover:bg-gray-50 transition shadow-sm">
+                                        👁 Detalhes
+                                    </button>
+                                    <!--[if BLOCK]><![endif]--><?php if($activeTab === 'pending'): ?>
+                                        <button wire:click="approve(<?php echo e($sub->id); ?>)"
+                                            class="inline-flex items-center px-3 py-1.5 bg-green-600 border border-transparent rounded text-white hover:bg-green-700 transition shadow-sm"
+                                            title="Confirmar ciência dos dados">
+                                            ✓ Dar Visto
+                                        </button>
+                                    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                                </td>
+                            </tr>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+                            <tr>
+                                <td colspan="4" class="px-6 py-12 text-center text-gray-500">Nenhum relatório
+                                    encontrado.</td>
+                            </tr>
+                        <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                    </tbody>
+                </table>
+            </div>
+
+            
+            <div class="md:hidden divide-y divide-gray-100">
+                <!--[if BLOCK]><![endif]--><?php $__empty_1 = true; $__currentLoopData = $submissions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $sub): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                    <div class="p-4 relative bg-white">
+                        <div
+                            class="absolute left-0 top-0 bottom-0 w-1 <?php echo e($activeTab === 'pending' ? 'bg-yellow-400' : 'bg-green-500'); ?>">
+                        </div>
+                        <div class="pl-2">
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="font-bold text-gray-900 uppercase">
+                                    <?php echo e(\Carbon\Carbon::parse($sub->start_date)->translatedFormat('F / Y')); ?></h3>
+                                <div class="text-right">
+                                    <!--[if BLOCK]><![endif]--><?php if($sub->type === 'private'): ?>
+                                        <span
+                                            class="inline-block bg-green-100 text-green-800 text-[10px] font-bold px-2 py-1 rounded border border-green-200">PARTICULARES</span>
+                                    <?php else: ?>
+                                        <span
+                                            class="inline-block bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-1 rounded border border-blue-200">OFICIAL
+                                            (<?php echo e($sub->vehicle?->license_plate ?? 'N/D'); ?>)</span>
+                                    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                                </div>
+                            </div>
+
+                            <div class="text-sm text-gray-700 mb-2 space-y-1">
+                                <p><span class="text-gray-400">👤 Porteiro:</span> <span
+                                        class="font-semibold"><?php echo e($sub->guardUser?->name ?? 'Usuário Removido'); ?></span>
+                                </p>
+                                <p><span class="text-gray-400">📅 Envio:</span>
+                                    <?php echo e(\Carbon\Carbon::parse($sub->submitted_at)->format('d/m/Y H:i')); ?></p>
+                            </div>
+
+                            <div class="mt-4 flex flex-col gap-2">
+                                <button wire:click="viewDetails(<?php echo e($sub->id); ?>)"
+                                    class="w-full flex justify-center items-center px-4 py-2 bg-gray-50 border border-gray-300 rounded-md text-sm font-bold text-gray-700 hover:bg-gray-100 transition shadow-sm">
+                                    👁 Ver Detalhes
+                                </button>
+
+                                <!--[if BLOCK]><![endif]--><?php if($activeTab === 'pending'): ?>
+                                    <button wire:click="approve(<?php echo e($sub->id); ?>)"
+                                        class="w-full flex justify-center items-center px-4 py-2 bg-green-600 border border-transparent rounded-md text-sm font-bold text-white hover:bg-green-700 transition shadow-sm">
+                                        ✓ Dar Visto e Arquivar
+                                    </button>
+                                <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                            </div>
+                        </div>
+                    </div>
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+                    <div class="p-8 text-center text-gray-500 bg-gray-50 rounded-b-xl border-dashed border-t">Nenhum
+                        relatório encontrado.</div>
+                <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+            </div>
+            <div class="mt-4 px-4 pb-4 sm:px-0 sm:pb-0"><?php echo e($submissions->links()); ?></div>
         </div>
     </div>
 
     
     <?php if (isset($component)) { $__componentOriginal9f64f32e90b9102968f2bc548315018c = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal9f64f32e90b9102968f2bc548315018c = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.modal','data' => ['wire:model.defer' => 'showDetailsModal','maxWidth' => '7xl']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.modal','data' => ['wire:model.live' => 'isDetailsModalOpen','maxWidth' => '5xl']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('modal'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['wire:model.defer' => 'showDetailsModal','maxWidth' => '7xl']); ?>
-        <!--[if BLOCK]><![endif]--><?php if($selectedSubmission): ?>
-            <div class="p-6">
-                <h2 class="text-lg font-medium text-gray-900 mb-4">Detalhes do Relatório</h2>
+<?php $component->withAttributes(['wire:model.live' => 'isDetailsModalOpen','maxWidth' => '5xl']); ?>
+        <div class="px-4 sm:px-6 py-4 border-b bg-gray-50 flex justify-between items-center">
+            <h3 class="text-lg font-bold text-gray-800">
+                Detalhes do Relatório
+                <!--[if BLOCK]><![endif]--><?php if($selectedSubmission): ?>
+                    <span class="text-sm font-normal text-gray-500 ml-2 block sm:inline">
+                        (<?php echo e(\Carbon\Carbon::parse($selectedSubmission->start_date)->translatedFormat('F/Y')); ?>)
+                    </span>
+                <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+            </h3>
+            <button wire:click="closeDetailsModal" class="text-gray-400 hover:text-gray-600 transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                    </path>
+                </svg>
+            </button>
+        </div>
+
+        <div class="p-0 sm:p-6 bg-white max-h-[70vh] overflow-y-auto">
+            <!--[if BLOCK]><![endif]--><?php if($selectedSubmission): ?>
 
                 
-                <div class="mb-6 pb-4 border-b border-gray-200 space-y-2 text-sm">
-                    <div class="flex justify-between"><span><strong>Tipo:</strong></span>
-                        <!--[if BLOCK]><![endif]--><?php if($selectedSubmission->type === 'official'): ?>
-                            <span
-                                class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Oficial</span>
-                        <?php else: ?>
-                            <span
-                                class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">Particular</span>
+                <div
+                    class="p-4 sm:mb-6 bg-gray-50 border-b sm:border border-gray-200 sm:rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div class="text-sm flex flex-col sm:flex-row gap-4 sm:gap-8">
+                        <div><span class="font-bold text-gray-500 uppercase text-xs block">Porteiro</span>
+                            <?php echo e($selectedSubmission->guardUser?->name ?? 'Usuário Removido'); ?></div>
+                        <div><span class="font-bold text-gray-500 uppercase text-xs block">Data de Envio</span>
+                            <?php echo e(\Carbon\Carbon::parse($selectedSubmission->submitted_at)->format('d/m/Y H:i')); ?></div>
+                        <!--[if BLOCK]><![endif]--><?php if($selectedSubmission->observation): ?>
+                            <div class="sm:col-span-2"><span
+                                    class="font-bold text-gray-500 uppercase text-xs block">Observação do
+                                    Porteiro</span> <?php echo e($selectedSubmission->observation); ?></div>
                         <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
                     </div>
-                    <!--[if BLOCK]><![endif]--><?php if($selectedSubmission->type === 'official' && $selectedSubmission->vehicle): ?>
-                        <div class="flex justify-between"><span><strong>Veículo:</strong></span>
-                            <span><?php echo e($selectedSubmission->vehicle->model); ?>
 
-                                (<?php echo e($selectedSubmission->vehicle->license_plate); ?>)</span></div>
-                    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
-                    <div class="flex justify-between"><span><strong>Porteiro:</strong></span>
-                        <span><?php echo e($selectedSubmission->guardUser?->name ?? 'Usuário Removido'); ?></span></div>
-                    <div class="flex justify-between"><span><strong>Período:</strong></span>
-                        <span><?php echo e($selectedSubmission->start_date->format('d/m/Y')); ?> a
-                            <?php echo e($selectedSubmission->end_date->format('d/m/Y')); ?></span></div>
-                    <div class="flex justify-between"><span><strong>Submetido em:</strong></span>
-                        <span><?php echo e($selectedSubmission->submitted_at->format('d/m/Y H:i')); ?></span></div>
-                    <!--[if BLOCK]><![endif]--><?php if($selectedSubmission->status === 'approved'): ?>
-                        <div class="flex justify-between text-green-700"><span><strong>Aprovado por:</strong></span>
-                            <span><?php echo e($selectedSubmission->fiscal?->name ?? 'N/A'); ?> em
-                                <?php echo e($selectedSubmission->approved_at?->format('d/m/Y H:i')); ?></span></div>
-                    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
-                    <!--[if BLOCK]><![endif]--><?php if($selectedSubmission->type === 'official' && $selectedSubmission->observation): ?>
-                        <div class="pt-2"><strong>Observação do Porteiro:</strong>
-                            <p class="text-gray-600 italic bg-gray-50 p-2 rounded border mt-1">
-                                <?php echo e($selectedSubmission->observation); ?></p>
-                        </div>
-                    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
-                </div>
-
-                
-                <?php $privateEntries = $submissionEntries->whereInstanceOf(\App\Models\PrivateEntry::class); ?>
-                <!--[if BLOCK]><![endif]--><?php if($privateEntries->isNotEmpty()): ?>
-                    <div class="mt-6">
-                        <h3 class="text-md font-medium text-gray-800 mb-2 p-2 bg-blue-50 rounded-t-lg border-b">Registos
-                            de Veículos Particulares:</h3>
-                        <div class="relative overflow-x-auto sm:rounded-b-lg max-h-[60vh] overflow-y-auto border">
-                            
-                            <table class="w-full text-sm text-left text-gray-500">
-                                <thead class="text-xs text-gray-700 uppercase bg-gray-100 sticky top-0 z-10">
-                                    
-                                    <tr>
-                                        <th class="px-4 py-2">Veículo (Placa)</th>
-                                        <th class="px-4 py-2">Condutor</th>
-                                        <th class="px-4 py-2">Entrada</th>
-                                        <th class="px-4 py-2">Saída</th>
-                                        <th class="px-4 py-2">Motivo</th>
-                                        <th class="px-4 py-2">Porteiro (Saída)</th> 
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
-                                    <!--[if BLOCK]><![endif]--><?php $__currentLoopData = $privateEntries; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $entry): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                        <tr class="hover:bg-gray-50"> 
-                                            <td class="px-4 py-2 font-medium">
-                                                <?php echo e($entry->vehicle_model ?? 'N/A'); ?> <span
-                                                    class="font-mono">(<?php echo e($entry->license_plate ?? ''); ?>)</span>
-                                            </td>
-                                            <td class="px-4 py-2"><?php echo e($entry->driver?->name ?? 'N/A'); ?></td>
-                                            <td class="px-4 py-2 whitespace-nowrap">
-                                                <?php echo e($entry->entry_at?->format('d/m H:i')); ?></td>
-                                            <td class="px-4 py-2 whitespace-nowrap">
-                                                <?php echo e($entry->exit_at?->format('d/m H:i') ?? '-'); ?></td>
-                                            <td class="px-4 py-2"><?php echo e($entry->entry_reason); ?></td>
-                                            
-                                            <td class="px-4 py-2"><?php echo e($entry->guardExit?->name ?? 'N/A'); ?></td>
-                                        </tr>
-                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><!--[if ENDBLOCK]><![endif]-->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
-
-                
-                <?php $officialTrips = $submissionEntries->whereInstanceOf(\App\Models\OfficialTrip::class); ?>
-                <!--[if BLOCK]><![endif]--><?php if($officialTrips->isNotEmpty()): ?>
-                    <div class="mt-6">
-                        <h3 class="text-md font-medium text-gray-800 mb-2 p-2 bg-green-50 rounded-t-lg border-b">
-                            Registos de Viagens Oficiais:</h3>
-                        <div class="relative overflow-x-auto sm:rounded-b-lg max-h-[60vh] overflow-y-auto border">
-                            
-                            <table class="w-full text-sm text-left text-gray-500" style="table-layout: fixed;">
-                                
-                                <thead class="text-xs text-gray-700 uppercase bg-gray-100 sticky top-0 z-10">
-                                    
-                                    <tr>
-                                        
-                                        <th class="px-4 py-2 w-[18%]">Condutor</th>
-                                        <th class="px-4 py-2 w-[22%]">Passageiros</th>
-                                        <th class="px-4 py-2 w-[18%]">Saída</th>
-                                        <th class="px-4 py-2 w-[18%]">Chegada</th>
-                                        <th class="px-4 py-2 w-[10%] text-right">KM Rodado</th>
-                                        <th class="px-4 py-2 w-[14%]">Destino</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
-                                    <!--[if BLOCK]><![endif]--><?php $__currentLoopData = $officialTrips; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $trip): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                        <tr class="hover:bg-gray-50"> 
-                                            <td class="px-4 py-2 whitespace-nowrap">
-                                                <?php echo e($trip->driver?->name ?? 'N/A'); ?></td>
-                                            <td class="px-4 py-2 break-words"><?php echo e($trip->passengers ?: '-'); ?></td>
-                                            <td class="px-4 py-2 whitespace-nowrap">
-                                                <?php echo e($trip->departure_datetime?->format('d/m H:i')); ?>
-
-                                                (<?php echo e($trip->departure_odometer); ?> km)</td>
-                                            <td class="px-4 py-2 whitespace-nowrap">
-                                                <?php echo e($trip->arrival_datetime?->format('d/m H:i')); ?>
-
-                                                (<?php echo e($trip->arrival_odometer); ?> km)</td>
-                                            <td class="px-4 py-2 text-right font-medium">
-                                                <?php echo e($trip->distance_traveled ?? 'N/A'); ?></td>
-                                            <td class="px-4 py-2 break-words"><?php echo e($trip->destination); ?></td>
-                                            
-                                            
-                                            
-                                        </tr>
-                                        
-                                        <!--[if BLOCK]><![endif]--><?php if($trip->return_observation): ?>
-                                            <tr class="bg-gray-50/50">
-                                                <td colspan="6" class="px-4 py-1 text-xs italic text-gray-600">
-                                                    <strong>Obs. Retorno:</strong> <?php echo e($trip->return_observation); ?>
-
-                                                </td>
-                                            </tr>
-                                        <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
-                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><!--[if ENDBLOCK]><![endif]-->
-                                </tbody>
-                                <tfoot class="bg-gray-100 font-bold sticky bottom-0"> 
-                                    <tr>
-                                        <td colspan="4" class="px-4 py-3 text-right text-gray-800 uppercase">
-                                            Distância Total Rodada:</td>
-                                        <td class="px-4 py-3 text-right font-mono text-gray-900">
-                                            <?php echo e(number_format($totalDistance, 0, ',', '.')); ?></td>
-                                        <td class="px-4 py-3">km</td>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
-                    </div>
-                <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
-
-                
-                <div class="mt-6 flex justify-end space-x-4">
-                    <?php if (isset($component)) { $__componentOriginal3b0e04e43cf890250cc4d85cff4d94af = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginal3b0e04e43cf890250cc4d85cff4d94af = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.secondary-button','data' => ['wire:click' => 'cancelView']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('secondary-button'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['wire:click' => 'cancelView']); ?>Fechar <?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginal3b0e04e43cf890250cc4d85cff4d94af)): ?>
-<?php $attributes = $__attributesOriginal3b0e04e43cf890250cc4d85cff4d94af; ?>
-<?php unset($__attributesOriginal3b0e04e43cf890250cc4d85cff4d94af); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginal3b0e04e43cf890250cc4d85cff4d94af)): ?>
-<?php $component = $__componentOriginal3b0e04e43cf890250cc4d85cff4d94af; ?>
-<?php unset($__componentOriginal3b0e04e43cf890250cc4d85cff4d94af); ?>
-<?php endif; ?>
-                    <!--[if BLOCK]><![endif]--><?php if($selectedSubmission?->status === 'pending'): ?>
-                        <?php if (isset($component)) { $__componentOriginald411d1792bd6cc877d687758b753742c = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginald411d1792bd6cc877d687758b753742c = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.primary-button','data' => ['wire:click' => 'approveSubmission','wire:confirm' => 'Tem a certeza que deseja aprovar este relatório?','wire:loading.attr' => 'disabled','wire:target' => 'approveSubmission']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('primary-button'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['wire:click' => 'approveSubmission','wire:confirm' => 'Tem a certeza que deseja aprovar este relatório?','wire:loading.attr' => 'disabled','wire:target' => 'approveSubmission']); ?>
-                            <span wire:loading wire:target="approveSubmission">Aprovando...</span>
-                            
-                            <span wire:loading.remove wire:target="approveSubmission">Dar Visto e Arquivar</span>
-                            
-                         <?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginald411d1792bd6cc877d687758b753742c)): ?>
-<?php $attributes = $__attributesOriginald411d1792bd6cc877d687758b753742c; ?>
-<?php unset($__attributesOriginald411d1792bd6cc877d687758b753742c); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginald411d1792bd6cc877d687758b753742c)): ?>
-<?php $component = $__componentOriginald411d1792bd6cc877d687758b753742c; ?>
-<?php unset($__componentOriginald411d1792bd6cc877d687758b753742c); ?>
-<?php endif; ?>
-                    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
                     
+                    <div class="w-full md:w-64 relative">
+                        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                            <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
+                        <input wire:model.live.debounce.300ms="detailSearch" type="text"
+                            placeholder="Buscar placa, motorista..."
+                            class="block w-full border-gray-300 rounded-lg pl-9 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white">
+                    </div>
                 </div>
-            </div>
-        <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+
+                
+                <div
+                    class="hidden md:block overflow-x-auto border border-gray-200 rounded-lg shadow-sm relative min-h-[100px]">
+                    <div wire:loading wire:target="detailSearch"
+                        class="absolute inset-0 bg-white bg-opacity-70 flex items-center justify-center z-10">
+                        <svg class="animate-spin h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                            </path>
+                        </svg>
+                    </div>
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-100">
+                            <!--[if BLOCK]><![endif]--><?php if($selectedSubmission->type === 'private'): ?>
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Veículo
+                                    </th>
+                                    <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Condutor
+                                    </th>
+                                    <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">
+                                        Entrada/Saída</th>
+                                    <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Motivo
+                                    </th>
+                                </tr>
+                            <?php else: ?>
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Veículo
+                                    </th>
+                                    <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Condutor
+                                    </th>
+                                    <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Período /
+                                        Destino</th>
+                                    <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Distância
+                                    </th>
+                                </tr>
+                            <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <!--[if BLOCK]><![endif]--><?php $__empty_1 = true; $__currentLoopData = $details; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $detail): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                                <tr class="hover:bg-gray-50">
+                                    <!--[if BLOCK]><![endif]--><?php if($selectedSubmission->type === 'private'): ?>
+                                        <td class="px-4 py-3 text-sm">
+                                            <div class="font-bold text-gray-900">
+                                                <?php echo e($detail->vehicle?->model ?? 'N/D'); ?></div>
+                                            <div class="font-mono text-gray-500 text-xs">
+                                                <?php echo e($detail->vehicle?->license_plate ?? 'N/D'); ?></div>
+                                        </td>
+                                        <td class="px-4 py-3 text-sm text-gray-800">
+                                            <?php echo e($detail->driver?->name ?? 'N/D'); ?></td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">
+                                            <div class="flex items-center gap-1"><span
+                                                    class="w-8 inline-block text-green-500 font-bold text-xs">IN</span>
+                                                <?php echo e($detail->entry_at ? $detail->entry_at->format('d/m/y H:i') : '-'); ?>
+
+                                            </div>
+                                            <div class="flex items-center gap-1 mt-0.5"><span
+                                                    class="w-8 inline-block text-red-500 font-bold text-xs">OUT</span>
+                                                <?php echo e($detail->exit_at ? $detail->exit_at->format('d/m/y H:i') : '-'); ?>
+
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-3 text-sm text-gray-600"><?php echo e($detail->entry_reason); ?></td>
+                                    <?php else: ?>
+                                        <td class="px-4 py-3 text-sm">
+                                            <div class="font-bold text-gray-900">
+                                                <?php echo e($detail->vehicle?->model ?? 'N/D'); ?></div>
+                                            <div class="font-mono text-gray-500 text-xs">
+                                                <?php echo e($detail->vehicle?->license_plate ?? 'N/D'); ?></div>
+                                        </td>
+                                        <td class="px-4 py-3 text-sm text-gray-800">
+                                            <?php echo e($detail->driver?->name ?? 'N/D'); ?></td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">
+                                            <div class="font-medium text-gray-800 mb-1"><?php echo e($detail->destination); ?>
+
+                                            </div>
+                                            <div class="flex items-center gap-1 text-xs"><span
+                                                    class="w-8 inline-block text-blue-500 font-bold">OUT</span>
+                                                <?php echo e($detail->departure_datetime ? \Carbon\Carbon::parse($detail->departure_datetime)->format('d/m H:i') : '-'); ?>
+
+                                            </div>
+                                            <div class="flex items-center gap-1 mt-0.5 text-xs"><span
+                                                    class="w-8 inline-block text-green-500 font-bold">IN</span>
+                                                <?php echo e($detail->arrival_datetime ? \Carbon\Carbon::parse($detail->arrival_datetime)->format('d/m H:i') : '-'); ?>
+
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-3 text-sm">
+                                            <span
+                                                class="bg-gray-100 font-bold text-gray-700 px-2 py-1 rounded text-xs"><?php echo e(number_format(($detail->arrival_odometer ?? 0) - ($detail->departure_odometer ?? 0), 0, ',', '.')); ?>
+
+                                                km</span>
+                                        </td>
+                                    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                                </tr>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+                                <tr>
+                                    <td colspan="4" class="p-6 text-center text-gray-500">Nenhum registo encontrado
+                                        com a sua pesquisa.</td>
+                                </tr>
+                            <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                        </tbody>
+                    </table>
+                </div>
+
+                
+                <div class="md:hidden divide-y divide-gray-100 relative min-h-[100px]">
+                    <div wire:loading wire:target="detailSearch"
+                        class="absolute inset-0 bg-white bg-opacity-70 flex items-center justify-center z-10">
+                        <svg class="animate-spin h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                            </path>
+                        </svg>
+                    </div>
+                    <!--[if BLOCK]><![endif]--><?php $__empty_1 = true; $__currentLoopData = $details; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $detail): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                        <div class="p-4 bg-white">
+                            <!--[if BLOCK]><![endif]--><?php if($selectedSubmission->type === 'private'): ?>
+                                <div class="flex justify-between items-start mb-2">
+                                    <div>
+                                        <h4 class="font-bold text-gray-900 leading-none">
+                                            <?php echo e($detail->vehicle?->model ?? 'N/D'); ?></h4>
+                                        <p class="text-xs font-mono text-gray-500 mt-1">
+                                            <?php echo e($detail->vehicle?->license_plate ?? 'N/D'); ?></p>
+                                    </div>
+                                </div>
+                                <div class="text-sm text-gray-700 mb-2 border-l-2 border-green-400 pl-2 ml-1">
+                                    <span class="text-gray-400 text-xs">Motorista:</span> <span
+                                        class="font-medium"><?php echo e($detail->driver?->name ?? 'N/D'); ?></span>
+                                    <br><span class="text-gray-400 text-xs">Motivo:</span>
+                                    <?php echo e(Str::limit($detail->entry_reason, 35)); ?>
+
+                                </div>
+                                <div
+                                    class="bg-gray-50 rounded p-2 flex justify-between text-xs font-medium text-gray-600">
+                                    <span><span class="text-green-500 mr-1">IN:</span>
+                                        <?php echo e($detail->entry_at ? $detail->entry_at->format('d/m H:i') : '-'); ?></span>
+                                    <span><span class="text-red-500 mr-1">OUT:</span>
+                                        <?php echo e($detail->exit_at ? $detail->exit_at->format('d/m H:i') : '-'); ?></span>
+                                </div>
+                            <?php else: ?>
+                                <div class="flex justify-between items-start mb-2">
+                                    <div>
+                                        <h4 class="font-bold text-gray-900 leading-none">
+                                            <?php echo e($detail->vehicle?->model ?? 'N/D'); ?></h4>
+                                        <p class="text-xs font-mono text-gray-500 mt-1">
+                                            <?php echo e($detail->vehicle?->license_plate ?? 'N/D'); ?></p>
+                                    </div>
+                                    <span
+                                        class="bg-gray-100 font-bold text-gray-700 px-2 py-1 rounded text-[10px] border border-gray-200">
+                                        <?php echo e(number_format(($detail->arrival_odometer ?? 0) - ($detail->departure_odometer ?? 0), 0, ',', '.')); ?>
+
+                                        km
+                                    </span>
+                                </div>
+                                <div class="text-sm text-gray-700 mb-2 border-l-2 border-blue-400 pl-2 ml-1">
+                                    <span class="font-medium block mb-0.5"><?php echo e($detail->destination); ?></span>
+                                    <span class="text-gray-500 text-xs">Condutor:</span> <span
+                                        class="font-medium text-xs"><?php echo e($detail->driver?->name ?? 'N/D'); ?></span>
+                                </div>
+                                <div
+                                    class="bg-gray-50 rounded p-2 flex justify-between text-xs font-medium text-gray-600">
+                                    <span><span class="text-red-500 mr-1">OUT:</span>
+                                        <?php echo e($detail->departure_datetime ? \Carbon\Carbon::parse($detail->departure_datetime)->format('d/m H:i') : '-'); ?></span>
+                                    <span><span class="text-green-500 mr-1">IN:</span>
+                                        <?php echo e($detail->arrival_datetime ? \Carbon\Carbon::parse($detail->arrival_datetime)->format('d/m H:i') : '-'); ?></span>
+                                </div>
+                            <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                        </div>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+                        <div class="p-6 text-center text-gray-500">Nenhum registo encontrado com a sua pesquisa.</div>
+                    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                </div>
+
+            <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+        </div>
+
+        <div
+            class="px-4 sm:px-6 py-4 bg-gray-50 border-t flex flex-col sm:flex-row justify-end items-center gap-3 rounded-b-lg">
+            <button wire:click="closeDetailsModal"
+                class="w-full sm:w-auto px-6 py-2.5 bg-white border border-gray-300 rounded-md text-sm font-bold text-gray-700 hover:bg-gray-50 shadow-sm transition">
+                Fechar
+            </button>
+            <!--[if BLOCK]><![endif]--><?php if($selectedSubmission && $selectedSubmission->status === 'pending'): ?>
+                <button wire:click="approve(<?php echo e($selectedSubmission->id); ?>)"
+                    class="w-full sm:w-auto px-6 py-2.5 bg-green-600 border border-transparent rounded-md text-sm font-bold text-white hover:bg-green-700 shadow-sm transition">
+                    ✓ Dar Visto e Arquivar
+                </button>
+            <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+        </div>
      <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginal9f64f32e90b9102968f2bc548315018c)): ?>

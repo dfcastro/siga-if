@@ -54,4 +54,9 @@ class ReportSubmission extends Model
     {
         return $this->belongsTo(Vehicle::class);
     }
+    
+    public function assignedFiscal(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_fiscal_id');
+    }
 }

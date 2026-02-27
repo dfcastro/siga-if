@@ -7,9 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\ReportSubmission;
 use App\Models\PrivateEntry;
 use App\Models\OfficialTrip;
-use Carbon\Carbon;
 use Livewire\WithPagination;
-use Illuminate\Support\Collection;
 use Livewire\Attributes\Layout;
 
 #[Layout('layouts.app')]
@@ -17,34 +15,35 @@ class FiscalApproval extends Component
 {
     use WithPagination;
 
+    public string $activeTab = 'pending';
     public ?ReportSubmission $selectedSubmission = null;
-    public Collection $submissionEntries;
-    public bool $showDetailsModal = false;
-    public string $filterStatus = 'pending';
-    public int $totalDistance = 0;
-    public string $typeFilter = '';
+    public $details = [];
+
+    // Nova variável para a pesquisa interna do modal
+    public string $detailSearch = '';
+
+    public bool $isDetailsModalOpen = false;
 
     public function layoutData()
     {
-        return ['header' => 'Aprovação e Arquivo de Relatórios'];
+        return ['header' => 'Vistos em Relatórios Mensais'];
     }
 
-    public function setFilter(string $status)
+    public function updatingActiveTab()
     {
-        $this->filterStatus = $status;
-        $this->resetPage(); // Reseta a paginação ao mudar de aba
-    }
-
-    public function setTypeFilter(string $type)
-    {
-        $this->typeFilter = $type;
         $this->resetPage();
+    }
+
+    // Função engatilhada automaticamente quando o fiscal digita na pesquisa do modal
+    public function updatedDetailSearch()
+    {
+        $this->loadDetails();
     }
 
     public function render()
     {
-        $query = ReportSubmission::with(['guardUser', 'fiscal', 'vehicle' => fn($q) => $q->withTrashed()]) // Adiciona o 'vehicle' para a tabela principal
-            ->where('status', $this->filterStatus);
+        $query = ReportSubmission::with(['guardUser', 'fiscal', 'vehicle' => fn($q) => $q->withTrashed(), 'assignedFiscal'])
+            ->where('status', $this->activeTab);
 
         $user = auth()->user();
 
@@ -56,16 +55,10 @@ class FiscalApproval extends Component
             }
         }
 
-        // Aplica o filtro de tipo da interface, se um for selecionado
-        if ($this->typeFilter) {
-            $query->where('type', $this->typeFilter);
-        }
-        // A sua lógica de ordenação permanece a mesma
-        if ($this->filterStatus === 'approved') {
+        if ($this->activeTab === 'approved') {
             $query->orderBy('approved_at', 'desc');
         } else {
-            // Ordena os pendentes pelos mais antigos primeiro
-            $query->orderBy('created_at', 'asc');
+            $query->orderBy('submitted_at', 'asc');
         }
 
         $submissions = $query->paginate(10);
@@ -75,52 +68,75 @@ class FiscalApproval extends Component
         ]);
     }
 
-    public function viewSubmission(int $submissionId)
+    public function viewDetails(int $id)
     {
-        $this->selectedSubmission = ReportSubmission::with(['guardUser', 'fiscal'])->findOrFail($submissionId);
+        $this->selectedSubmission = ReportSubmission::with(['guardUser', 'fiscal'])->findOrFail($id);
+        $this->detailSearch = ''; // Limpa a pesquisa ao abrir um novo relatório
+        $this->loadDetails();
 
-        if ($this->selectedSubmission->type === 'private') {
-            $this->submissionEntries = PrivateEntry::with(['vehicle' => fn($q) => $q->withTrashed(), 'driver' => fn($q) => $q->withTrashed()])
-                ->where('report_submission_id', $submissionId)
-                ->get();
-        } else {
-            $this->submissionEntries = OfficialTrip::with(['vehicle' => fn($q) => $q->withTrashed(), 'driver' => fn($q) => $q->withTrashed()])
-                ->where('report_submission_id', $submissionId)
-                ->get();
-            $this->totalDistance = $this->submissionEntries->sum('distance_traveled');
-        }
-
-        $this->showDetailsModal = true;
+        $this->isDetailsModalOpen = true;
     }
 
-    public function approveSubmission()
+    // Isolamos o carregamento de detalhes para que a pesquisa possa reutilizá-lo
+    public function loadDetails()
     {
         if (!$this->selectedSubmission) {
-            session()->flash('error', 'Nenhum relatório selecionado para aprovação.');
+            $this->details = [];
             return;
         }
 
-        $this->selectedSubmission->update([
-            'fiscal_id'   => Auth::id(), // Registra quem aprovou
-            'approved_at' => now(),
-            'status'      => 'approved',
-        ]);
+        $id = $this->selectedSubmission->id;
+        $search = trim($this->detailSearch);
 
-        // Atribui o fiscal que aprovou ao relatório, caso não tenha sido atribuído antes
-        if (is_null($this->selectedSubmission->assigned_fiscal_id)) {
-            $this->selectedSubmission->assigned_fiscal_id = Auth::id();
-            $this->selectedSubmission->save();
+        if ($this->selectedSubmission->type === 'private') {
+            $query = PrivateEntry::with(['vehicle' => fn($q) => $q->withTrashed(), 'driver' => fn($q) => $q->withTrashed()])
+                ->where('report_submission_id', $id);
+
+            // Filtro de pesquisa de Particulares
+            if ($search !== '') {
+                $query->where(function ($q) use ($search) {
+                    $q->whereHas('vehicle', fn($v) => $v->where('license_plate', 'like', "%{$search}%")->orWhere('model', 'like', "%{$search}%"))
+                        ->orWhereHas('driver', fn($d) => $d->where('name', 'like', "%{$search}%"))
+                        ->orWhere('entry_reason', 'like', "%{$search}%");
+                });
+            }
+
+            $this->details = $query->orderBy('entry_at', 'asc')->get();
+        } else {
+            $query = OfficialTrip::with(['vehicle' => fn($q) => $q->withTrashed(), 'driver' => fn($q) => $q->withTrashed()])
+                ->where('report_submission_id', $id);
+
+            // Filtro de pesquisa de Oficiais
+            if ($search !== '') {
+                $query->where(function ($q) use ($search) {
+                    $q->whereHas('vehicle', fn($v) => $v->where('license_plate', 'like', "%{$search}%")->orWhere('model', 'like', "%{$search}%"))
+                        ->orWhereHas('driver', fn($d) => $d->where('name', 'like', "%{$search}%"))
+                        ->orWhere('destination', 'like', "%{$search}%");
+                });
+            }
+
+            $this->details = $query->orderBy('departure_datetime', 'asc')->get();
         }
-
-        session()->flash('message', 'Relatório do porteiro ' . $this->selectedSubmission->guardUser?->name . ' foi aprovado com sucesso.');
-
-        $this->showDetailsModal = false;
-        $this->reset('selectedSubmission');
     }
 
-    public function cancelView()
+    public function closeDetailsModal()
     {
-        $this->showDetailsModal = false;
-        $this->reset('selectedSubmission', 'totalDistance');
+        $this->isDetailsModalOpen = false;
+        $this->reset(['selectedSubmission', 'details', 'detailSearch']);
+    }
+
+    public function approve(int $id)
+    {
+        $submission = ReportSubmission::findOrFail($id);
+
+        $submission->update([
+            'fiscal_id'          => Auth::id(),
+            'assigned_fiscal_id' => Auth::id(),
+            'approved_at'        => now(),
+            'status'             => 'approved',
+        ]);
+
+        session()->flash('success', 'Visto registrado com sucesso! O relatório foi arquivado.');
+        $this->isDetailsModalOpen = false;
     }
 }

@@ -115,7 +115,7 @@
                                     title="{{ $driver->name }}">
                                     {{ $driver->name }}
                                 </td>
-                                <td class="px-6 py-4 align-middle text-sm text-gray-600 font-mono">
+                                <td class="px-6 py-4 align-middle text-sm text-gray-600">
                                     {{ $driver->formatted_document }}
                                 </td>
                                 <td class="px-6 py-4 align-middle text-sm text-gray-600">{{ $driver->telefone ?? '-' }}

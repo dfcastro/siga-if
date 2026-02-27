@@ -444,8 +444,7 @@ unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
                                                             <div class="font-medium text-sm text-gray-800">
                                                                 <?php echo e($driver->name); ?></div>
                                                             <div class="text-xs text-gray-500">
-                                                                CPF:
-                                                                <?php echo e(strlen($driver->document) === 11 ? preg_replace('/(\d{3})(\d{3})(\d{3})(\d{2})/', '$1.$2.$3-$4', $driver->document) : ($driver->document ?: 'Não informado')); ?>
+                                                                CPF: <?php echo e($driver->formatted_document); ?>
 
                                                             </div>
                                                         </li>

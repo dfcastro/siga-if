@@ -134,7 +134,7 @@
                                     <?php echo e($driver->name); ?>
 
                                 </td>
-                                <td class="px-6 py-4 align-middle text-sm text-gray-600 font-mono">
+                                <td class="px-6 py-4 align-middle text-sm text-gray-600">
                                     <?php echo e($driver->formatted_document); ?>
 
                                 </td>

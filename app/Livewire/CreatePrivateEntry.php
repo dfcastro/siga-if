@@ -316,17 +316,13 @@ class CreatePrivateEntry extends Component
             ]);
         }
 
-        // 2. Adiciona os resultados encontrados pelo NOME do motorista
+        // 2. Adiciona os resultados encontrados pelo NOME ou CPF do motorista
         foreach ($driversFound as $driver) {
-            // Formata o CPF para exibição bonita
-            $docFormated = strlen($driver->document) === 11
-                ? preg_replace('/(\d{3})(\d{3})(\d{3})(\d{2})/', '$1.$2.$3-$4', $driver->document)
-                : ($driver->document ?: 'Não informado');
-
             foreach ($driver->vehicles as $vehicle) {
                 $formattedResults->push([
                     'id' => $vehicle->id,
-                    'text' => "MOTORISTA: {$driver->name} (CPF: {$docFormated}) - Veículo: {$vehicle->license_plate} ({$vehicle->model})"
+                    // Olha como fica limpo chamando o formatted_document direto aqui:
+                    'text' => "MOTORISTA: {$driver->name} (CPF: {$driver->formatted_document}) - Veículo: {$vehicle->license_plate} ({$vehicle->model})"
                 ]);
             }
         }
