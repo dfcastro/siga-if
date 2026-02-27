@@ -20,7 +20,7 @@ class Driver extends Model
     protected $casts = [
         'is_authorized' => 'boolean',
     ];
-    
+
     public function vehicles(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {
         return $this->belongsToMany(Vehicle::class);
@@ -50,5 +50,16 @@ class Driver extends Model
     public function officialTrips()
     {
         return $this->hasMany(OfficialTrip::class);
+    }
+
+    public function getFormattedDocumentAttribute()
+    {
+        $doc = preg_replace('/\D/', '', $this->document); // Garante que só temos números
+
+        if (strlen($doc) === 11) {
+            return preg_replace('/(\d{3})(\d{3})(\d{3})(\d{2})/', '$1.$2.$3-$4', $doc);
+        }
+
+        return $this->document ?: 'Não informado'; // Retorna o original se não for 11 dígitos
     }
 }

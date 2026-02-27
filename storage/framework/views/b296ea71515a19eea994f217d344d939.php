@@ -135,7 +135,9 @@
 
                                 </td>
                                 <td class="px-6 py-4 align-middle text-sm text-gray-600 font-mono">
-                                    <?php echo e($driver->document); ?></td>
+                                    <?php echo e($driver->formatted_document); ?>
+
+                                </td>
                                 <td class="px-6 py-4 align-middle text-sm text-gray-600"><?php echo e($driver->telefone ?? '-'); ?>
 
                                 </td>
@@ -261,8 +263,8 @@
 
                                 </span>
                             </div>
-                            <p class="text-sm text-gray-600 font-mono"><strong>Doc:</strong> <?php echo e($driver->document); ?>
-
+                            <p class="text-sm text-gray-600 font-mono"><strong>Doc:</strong>
+                                <?php echo e($driver->formatted_document); ?></p>
                             </p>
                             <p class="text-sm text-gray-600"><strong>Tel:</strong> <?php echo e($driver->telefone ?? '-'); ?></p>
                             <p class="text-sm text-gray-600"><strong>Tipo:</strong> <?php echo e($driver->type); ?></p>

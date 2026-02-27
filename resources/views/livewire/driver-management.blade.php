@@ -116,7 +116,8 @@
                                     {{ $driver->name }}
                                 </td>
                                 <td class="px-6 py-4 align-middle text-sm text-gray-600 font-mono">
-                                    {{ $driver->document }}</td>
+                                    {{ $driver->formatted_document }}
+                                </td>
                                 <td class="px-6 py-4 align-middle text-sm text-gray-600">{{ $driver->telefone ?? '-' }}
                                 </td>
                                 <td class="px-6 py-4 align-middle text-sm text-gray-600 capitalize">
@@ -237,7 +238,8 @@
                                     {{ $driver->is_authorized ? 'Autorizado' : 'Não Autor.' }}
                                 </span>
                             </div>
-                            <p class="text-sm text-gray-600 font-mono"><strong>Doc:</strong> {{ $driver->document }}
+                            <p class="text-sm text-gray-600 font-mono"><strong>Doc:</strong>
+                                {{ $driver->formatted_document }}</p>
                             </p>
                             <p class="text-sm text-gray-600"><strong>Tel:</strong> {{ $driver->telefone ?? '-' }}</p>
                             <p class="text-sm text-gray-600"><strong>Tipo:</strong> {{ $driver->type }}</p>
