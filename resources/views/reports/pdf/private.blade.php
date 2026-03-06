@@ -3,20 +3,19 @@
 
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Relatório de Veículos Particulares</title>
-    {{-- ### ESTILOS AJUSTADOS PARA SIMILARIDADE ### --}}
+    <title>Extrato de Entradas Particulares</title>
     <style>
         body {
             font-family: 'Helvetica', sans-serif;
-            font-size: 10px;
-            margin: 25px;
-            color: #333;
+            font-size: 8px;
+            margin: 10px;
+            color: #222;
         }
 
         .header-table {
             width: 100%;
-            border-bottom: 1px solid #333;
-            padding-bottom: 8px;
+            border-bottom: 2px solid #38a169;
+            padding-bottom: 10px;
             margin-bottom: 15px;
         }
 
@@ -37,226 +36,231 @@
             text-align: center;
         }
 
-        .header-text h4,
-        .header-text h5 {
-            margin: 0;
-            font-weight: normal;
-        }
-
         .header-text h4 {
-            font-size: 10px;
+            font-size: 11px;
             font-weight: bold;
+            margin: 0;
+            text-transform: uppercase;
+            color: #1a202c;
         }
 
         .header-text h5 {
-            font-size: 8px;
+            font-size: 9px;
+            margin: 3px 0 0 0;
+            font-weight: normal;
+            color: #4a5568;
         }
 
-        hr {
-            border: none;
-            border-top: 0.5px solid #333;
-            margin: 2px 0;
-        }
-
-        .details {
+        .details-box {
+            background-color: #f0fff4;
+            border: 1px solid #c6f6d5;
+            border-radius: 4px;
+            padding: 8px 12px;
             margin-bottom: 15px;
-            border-collapse: collapse;
             width: 100%;
+            box-sizing: border-box;
         }
 
-        .details td {
-            border: 1px solid #ddd;
-            padding: 5px;
-            font-size: 12px;
-            background-color: #f9f9f9;
+        .details-box table {
+            width: 100%;
+            border: none;
+        }
+
+        .details-box td {
+            font-size: 9px;
+            border: none;
+            padding: 2px 0;
+            color: #276749;
         }
 
         table.main {
             width: 100%;
             border-collapse: collapse;
             table-layout: fixed;
-            margin-bottom: 40px;
+            margin-bottom: 30px;
         }
 
         th,
         td {
-            border: 1px solid #ccc;
-            padding: 4px;
+            border: 1px solid #cbd5e1;
+            padding: 5px 4px;
             text-align: center;
-            font-size: 10px;
-            vertical-align: middle;;
+            font-size: 9px;
+            vertical-align: middle;
             word-wrap: break-word;
         }
 
         th {
-            background-color: #f2f2f2;
+            background-color: #edf2f7;
             font-weight: bold;
-            font-size: 10px;
-            text-transform: uppercase;
-            white-space: nowrap;
-        }
-
-        .footer {
-            position: fixed;
-            bottom: -20px;
-            left: 0;
-            right: 0;
-            height: 40px;
             font-size: 8px;
-            border-top: 0.5px solid #ccc;
-            padding-top: 5px;
-            margin: 0 25px;
+            text-transform: uppercase;
+            color: #4a5568;
         }
 
-        .footer .page-number {
-            float: right;
-        }
-
-        .footer .generation-date {
-            float: left;
-        }
-
-        tr {
-            page-break-inside: avoid !important;
-        }
-
-        td {
-            page-break-inside: avoid !important;
+        tr:nth-child(even) {
+            background-color: #fbfbfc;
         }
 
         thead {
             display: table-header-group;
         }
 
-        tfoot {
-            display: table-row-group;
+        tr {
+            page-break-inside: avoid;
+        }
+
+        .total-row td {
+            font-weight: bold;
+            background-color: #e2e8f0;
+            font-size: 10px;
+            color: #1a202c;
+            padding: 6px;
         }
 
         .no-break {
             white-space: nowrap;
         }
 
-        .signature-section {
+        .signature-wrapper {
+            width: 100%;
             margin-top: 50px;
-            /* Ou o espaço que preferir */
             page-break-inside: avoid;
-            /* Manter a tentativa */
+        }
+
+        .signature-box {
+            width: 250px;
+            margin: 0 auto;
             text-align: center;
-            width: 280px;
-            /* Largura ajustada */
-            margin-left: auto;
-            margin-right: auto;
         }
 
         .signature-line {
-            border-top: 1px solid #333;
-            height: 1px;
+            border-top: 1px solid #000;
             margin-bottom: 5px;
         }
 
         .signature-text {
             font-size: 9px;
-            text-align: center;
-            /* Garantir centralização do texto */
+            color: #333;
+        }
+
+        .footer {
+            position: fixed;
+            bottom: -10px;
+            left: 0;
+            right: 0;
+            height: 20px;
+            font-size: 7px;
+            border-top: 1px solid #cbd5e1;
+            padding-top: 4px;
+            color: #718096;
         }
     </style>
 </head>
 
 <body>
-    {{-- Script PHP para rodapé --}}
-    <script type="text/php"> /* ... (script mantido) ... */ </script>
+    <script type="text/php">
+        if (isset($pdf)) { 
+            $text = "Página {PAGE_NUM} de {PAGE_COUNT}";
+            $size = 7;
+            $font = $fontMetrics->getFont("Helvetica");
+            $width = $fontMetrics->get_text_width($text, $font, $size) / 2;
+            $x = ($pdf->get_width() - $width) - 20;
+            $y = $pdf->get_height() - 20;
+            $pdf->page_text($x, $y, $text, $font, $size, array(0.44, 0.50, 0.58));
+        }
+    </script>
 
-    {{-- Cabeçalho --}}
-    @include('reports.pdf._header', ['title' => 'RELATÓRIO DE ENTRADA E SAÍDA DE VEÍCULOS PARTICULARES'])
+    @include('reports.pdf._header', ['title' => 'EXTRATO DE AUDITORIA - VEÍCULOS PARTICULARES'])
 
-    {{-- Detalhes do Filtro --}}
-    <table class="details">
-        <tr>
-            <td><strong>Período:</strong> {{ $startDate }} a {{ $endDate }}</td>
-            @if ($vehicle)
-                <td><strong>Veículo Filtrado:</strong> {{ $vehicle->model }} ({{ $vehicle->license_plate }})</td>
-            @endif
-            @if ($driver)
-                <td><strong>Motorista Filtrado:</strong> {{ $driver->name }}</td>
-            @endif
-        </tr>
-    </table>
+    <div class="details-box">
+        <table>
+            <tr>
+                <td style="width: 33%;"><strong>Período Base:</strong> {{ $startDate }} a {{ $endDate }}</td>
+                <td style="width: 33%;"><strong>Veículo Filtrado:</strong>
+                    {{ $vehicle ? $vehicle->license_plate . ' - ' . $vehicle->model : 'Todos os veículos' }}</td>
+                <td style="width: 34%;"><strong>Condutor Filtrado:</strong>
+                    {{ $driver ? $driver->name : 'Todos os condutores/visitantes' }}</td>
+            </tr>
+        </table>
+    </div>
 
-    {{-- Tabela Principal --}}
     <table class="main">
-        {{-- Colgroup ajustado --}}
         <colgroup>
-            <col style="width: 20%;">
-            <col style="width: 20%;">
-            <col style="width: 15%;">
-            <col style="width: 15%;">
-            <col style="width: 20%;">
-            <col style="width: 10%;">
+            <col style="width: 15%;"> {{-- Veículo --}}
+            <col style="width: 16%;"> {{-- Condutor --}}
+            <col style="width: 12%;"> {{-- Entrada --}}
+            <col style="width: 12%;"> {{-- Saída --}}
+            <col style="width: 23%;"> {{-- Motivo --}}
+            <col style="width: 11%;"> {{-- Porteiro Entrada --}}
+            <col style="width: 11%;"> {{-- Porteiro Saída --}}
         </colgroup>
         <thead>
             <tr>
                 <th>Veículo (Placa)</th>
-                <th>Condutor</th>
-                <th>Entrada (Data/Hora)</th>
-                <th>Saída (Data/Hora)</th>
-                <th>Motivo</th>
-                <th>Porteiro (Saída)</th>
+                <th>Condutor Responsável</th>
+                <th>Acesso Liberado <br>(Data/Hora)</th>
+                <th>Saída Registrada <br>(Data/Hora)</th>
+                <th>Motivo / Destino Declarado</th>
+                <th>Porteiro<br>(Entrada)</th>
+                <th>Porteiro<br>(Saída)</th>
             </tr>
         </thead>
         <tbody>
             @forelse ($entries as $entry)
                 <tr>
-                    <td>{{ $entry->vehicle_model ?? ($entry->vehicle?->model ?? 'N/A') }}<br><small style="color: #555;"
-                            class="no-break">({{ $entry->license_plate ?? ($entry->vehicle?->license_plate ?? 'N/A') }})</small>
+                    <td>
+                        <strong>{{ $entry->vehicle_model ?? ($entry->vehicle?->model ?? 'N/A') }}</strong><br>
+                        <span
+                            style="color: #4a5568; font-family: monospace;">{{ $entry->license_plate ?? ($entry->vehicle?->license_plate ?? 'N/A') }}</span>
                     </td>
                     <td>{{ $entry->driver?->name ?? 'Não informado' }}</td>
-                    <td class="no-break">{{ $entry->entry_at?->format('d/m H:i') }}</td>
-                    <td class="no-break">{{ $entry->exit_at?->format('d/m H:i') ?? '-' }}</td>
+                    <td class="no-break">{{ $entry->entry_at?->format('d/m/y H:i') }}</td>
+                    <td class="no-break">{{ $entry->exit_at?->format('d/m/y H:i') ?? 'No campus' }}</td>
                     <td>{{ $entry->entry_reason }}</td>
+                    <td>{{ $entry->guardEntry?->name ?? 'N/A' }}</td>
                     <td>{{ $entry->guardExit?->name ?? 'N/A' }}</td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="6" style="text-align: center; padding: 20px;">Nenhuma entrada encontrada.</td>
+                    <td colspan="7" style="text-align: center; padding: 30px; color: #718096;">Nenhuma entrada de
+                        particulares encontrada para os filtros selecionados.</td>
                 </tr>
             @endforelse
         </tbody>
-        {{-- Não há tfoot aqui --}}
+        @if ($entries->isNotEmpty())
+            <tfoot class="total-row">
+                <tr>
+                    <td colspan="6" style="text-align: right; border-right: none;"><strong>Total de acessos
+                            registrados no período:</strong></td>
+                    <td style="text-align: center; border-left: none;">{{ $entries->count() }}</td>
+                </tr>
+            </tfoot>
+        @endif
     </table>
 
-    {{-- ### INÍCIO - SEÇÃO DE ASSINATURA CORRIGIDA (Alinhamento) ### --}}
-    <div
-        style="margin-top: 50px;
-                page-break-inside: avoid;
-                width: 280px;
-                margin-left: auto;
-                margin-right: auto;
-                text-align: center;">
-        {{-- Centraliza a linha --}}
-
-        {{-- ### INÍCIO - SEÇÃO DE ASSINATURA COM CLASSES CSS ### --}}
-        <div class="signature-section">
-            {{-- Linha --}}
+    <div class="signature-wrapper">
+        <div class="signature-box">
             <div class="signature-line"></div>
-
-            {{-- Texto --}}
             <div class="signature-text">
-                @if (isset($porteiroName))
-                    {{ $porteiroName ?? Auth::user()->name }}<br>
-                    <strong>Porteiro Responsável</strong>
-                @else
-                    {{ $generatorName ?? 'Usuário Desconhecido' }}<br> {{-- Usa a variável passada pelo Controller --}}
-                    <strong>Responsável pela Emissão</strong>
-                @endif
+                <strong>{{ $generatorName ?? 'Sistema' }}</strong><br>
+                Responsável pela Geração do Documento<br>
+                <span style="color: #718096; font-size: 7px;">Perfil:
+                    {{ Str::upper($generatorRole ?? 'Usuário') }}</span>
             </div>
         </div>
-        {{-- ### FIM - SEÇÃO DE ASSINATURA COM CLASSES CSS ### --}}
+    </div>
 
-        {{-- Rodapé da Página --}}
-        <div class="footer">
-            <span class="generation-date">Gerado em: {{ now()->format('d/m/Y H:i') }}</span>
-            <span class="page-number"></span>
-        </div>
+    <div class="footer">
+        <table style="width: 100%; border: none; font-size: 7px; color: #718096;">
+            <tr>
+                <td style="text-align: left; border: none;">SIGA-IF | Sistema de Gestão de Frotas e Portaria</td>
+                <td style="text-align: center; border: none;">Documento de Auditoria - Gerado em
+                    {{ now()->format('d/m/Y \à\s H:i:s') }}</td>
+                <td style="text-align: right; border: none;"></td>
+            </tr>
+        </table>
+    </div>
 </body>
 
 </html>

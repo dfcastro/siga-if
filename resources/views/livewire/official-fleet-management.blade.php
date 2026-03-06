@@ -98,6 +98,12 @@
                                     </td>
                                     <td class="px-6 py-4 align-middle text-sm text-gray-600">
                                         {{ $trip->destination }}
+                                        @if ($trip->return_observation)
+                                            <div class="text-xs text-yellow-600 mt-1 truncate max-w-xs"
+                                                title="{{ $trip->return_observation }}">
+                                                <span class="font-bold">Obs:</span> {{ $trip->return_observation }}
+                                            </div>
+                                        @endif
                                     </td>
                                     <td class="px-6 py-4 align-middle text-sm text-gray-600">
                                         <div class="font-medium">
@@ -151,6 +157,10 @@
                                         {{ $trip->driver ? $trip->driver->name : 'N/D' }}</p>
                                     <p><span class="font-semibold text-gray-500 text-xs uppercase">Destino:</span><br>
                                         {{ $trip->destination }}</p>
+                                    @if ($trip->return_observation)
+                                        <p class="text-yellow-700 bg-yellow-50 p-1.5 rounded text-xs"><span
+                                                class="font-bold">Obs:</span> {{ $trip->return_observation }}</p>
+                                    @endif
                                     <p><span class="font-semibold text-gray-500 text-xs uppercase">KM Saída:</span><br>
                                         <span
                                             class="font-mono text-blue-600 font-bold">{{ number_format($trip->departure_odometer, 0, ',', '.') }}
@@ -259,7 +269,7 @@
                     </table>
                 </div>
 
-                {{-- O NOVO CARD MOBILE PARA VIAGENS CONCLUÍDAS --}}
+                {{-- Cards Mobile --}}
                 <div class="grid grid-cols-1 gap-4 md:hidden">
                     @forelse ($completedTrips as $trip)
                         <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 relative overflow-hidden">
@@ -328,61 +338,30 @@
             }">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
 
-                    {{-- Veículo --}}
-                    <div x-data="{ open: @entangle('show_vehicle_dropdown') }" @click.away="open = false" class="relative">
-                        <x-input-label for="vehicle_search" :value="__('Veículo')" />
-                        <x-text-input type="text" id="vehicle_search"
-                            class="mt-1 block w-full text-sm sm:text-base"
-                            wire:model.live.debounce.300ms="vehicle_search" @focus="open = true"
-                            placeholder="Placa ou modelo..." autocomplete="off" />
-
-                        <div x-show="open" x-transition
-                            class="absolute z-30 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                            <ul>
-                                @if (is_iterable($vehicle_results) && count($vehicle_results) > 0)
-                                    @foreach ($vehicle_results as $vehicle)
-                                        <li wire:click="selectVehicle({{ $vehicle->id }}, '{{ $vehicle->model }} ({{ $vehicle->license_plate }})')"
-                                            class="px-4 py-3 cursor-pointer hover:bg-blue-50 text-sm border-b border-gray-50 last:border-0 transition-colors">
-                                            <span class="font-bold text-gray-800">{{ $vehicle->model }}</span>
-                                            <span
-                                                class="font-mono text-xs text-gray-500 ml-1">{{ $vehicle->license_plate }}</span>
-                                        </li>
-                                    @endforeach
-                                @elseif (strlen($vehicle_search) >= 2)
-                                    <li class="px-4 py-3 text-sm text-gray-500">Nenhum veículo oficial encontrado.</li>
-                                @endif
-                            </ul>
-                        </div>
+                    {{-- Viatura Oficial (Select Direto) --}}
+                    <div>
+                        <x-input-label for="vehicle_id" :value="__('Viatura Oficial')" />
+                        <select id="vehicle_id" wire:model.live="vehicle_id"
+                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base">
+                            <option value="">Selecione o veículo...</option>
+                            @foreach ($officialVehicles as $vehicle)
+                                <option value="{{ $vehicle->id }}">{{ $vehicle->model }}
+                                    ({{ $vehicle->license_plate }})</option>
+                            @endforeach
+                        </select>
                         <x-input-error :messages="$errors->get('vehicle_id')" class="mt-1" />
                     </div>
 
-                    {{-- Motorista com Exibição de CPF --}}
-                    <div x-data="{ open: @entangle('show_driver_dropdown') }" @click.away="open = false" class="relative">
-                        <x-input-label for="driver_search" :value="__('Motorista / Condutor')" />
-                        <x-text-input type="text" id="driver_search"
-                            class="mt-1 block w-full text-sm sm:text-base"
-                            wire:model.live.debounce.300ms="driver_search" @focus="open = true"
-                            placeholder="Nome ou CPF..." autocomplete="off" />
-
-                        <div x-show="open" x-transition
-                            class="absolute z-30 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                            <ul class="divide-y divide-gray-100">
-                                @if (is_iterable($driver_results) && count($driver_results) > 0)
-                                    @foreach ($driver_results as $driver)
-                                        <li wire:click="selectDriver({{ $driver->id }}, '{{ addslashes($driver->name) }}')"
-                                            class="px-4 py-3 cursor-pointer hover:bg-blue-50 transition-colors">
-                                            <div class="font-medium text-sm text-gray-800">{{ $driver->name }}</div>
-                                            <div class="text-xs text-gray-500">
-                                                CPF: {{ $driver->formatted_document }}
-                                            </div>
-                                        </li>
-                                    @endforeach
-                                @elseif (strlen($driver_search) >= 2)
-                                    <li class="px-4 py-3 text-sm text-gray-500 text-center">Nenhum motorista
-                                        encontrado.</li>
-                                @endif
-                            </ul>
-                        </div>
+                    {{-- Condutor (Select Direto) --}}
+                    <div>
+                        <x-input-label for="driver_id" :value="__('Motorista / Condutor Autorizado')" />
+                        <select id="driver_id" wire:model="driver_id"
+                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base">
+                            <option value="">Selecione o condutor...</option>
+                            @foreach ($authorizedDrivers as $driver)
+                                <option value="{{ $driver->id }}">{{ $driver->name }}</option>
+                            @endforeach
+                        </select>
                         <x-input-error :messages="$errors->get('driver_id')" class="mt-1" />
                     </div>
 
@@ -398,7 +377,7 @@
                     {{-- Odômetro --}}
                     <div>
                         <x-input-label for="departure_odometer" :value="__('Quilometragem de Saída (km)')" />
-                        <x-text-input type="text" id="departure_odometer"
+                        <x-text-input type="tel" id="departure_odometer"
                             class="mt-1 block w-full font-mono text-sm sm:text-base"
                             x-on:input="$event.target.value = formatNumber($event.target.value)"
                             wire:model="departure_odometer" placeholder="Ex: 45.120" />
@@ -425,15 +404,15 @@
                         placeholder="Nome dos servidores/alunos transportados..."></textarea>
                 </div>
                 <div class="mt-4">
-                    <x-input-label for="return_observation" :value="__('Previsão de Retorno / Observação (Opcional)')" />
+                    <x-input-label for="return_observation" :value="__('Previsão de Retorno / Observação Inicial (Opcional)')" />
                     <textarea id="return_observation"
                         class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
                         wire:model="return_observation" rows="2" maxlength="1000"
-                        placeholder="Ex: Previsão de retorno na quinta-feira à tarde."></textarea>
+                        placeholder="Ex: Carro com arranhão na porta; Previsão de retorno amanhã."></textarea>
                 </div>
             </div>
 
-            {{-- Botões do Modal Mobile Friendly --}}
+            {{-- Botões do Modal --}}
             <div
                 class="px-4 sm:px-6 py-4 bg-gray-50 flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3 border-t">
                 <button type="button" wire:click="closeDepartureModal"
@@ -447,7 +426,6 @@
             </div>
         </form>
     </x-modal>
-
     {{-- ================================================================= --}}
     {{-- MODAL DE REGISTRO DE CHEGADA --}}
     {{-- ================================================================= --}}
@@ -496,6 +474,18 @@
                             x-on:input="$event.target.value = formatNumber($event.target.value)"
                             wire:model="arrival_odometer" placeholder="Ex: 45.200" autofocus />
                         <x-input-error :messages="$errors->get('arrival_odometer')" class="mt-2" />
+                    </div>
+
+                    {{-- CAIXA DE OBSERVAÇÃO ADICIONADA AQUI NA CHEGADA --}}
+                    <div class="mt-4 pt-4 border-t border-gray-100">
+                        <x-input-label for="arrival_observation"
+                            value="Observações do Retorno (Ocorrências, atrasos, etc.)"
+                            class="font-bold text-gray-700" />
+                        <textarea id="arrival_observation"
+                            class="mt-2 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 text-sm"
+                            wire:model="return_observation" rows="3" maxlength="1000"
+                            placeholder="Ex: Carro retornou com pneu esquerdo furado..."></textarea>
+                        <x-input-error :messages="$errors->get('return_observation')" class="mt-1" />
                     </div>
                 </div>
 

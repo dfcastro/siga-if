@@ -1,5 +1,5 @@
 <div>
-    {{-- Alertas (mantidos como estão) --}}
+    {{-- Alertas --}}
     @if (session('success'))
         <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)" x-transition
             class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-lg relative mb-6 shadow-md"
@@ -35,7 +35,7 @@
         </div>
     @endif
 
-    {{-- Card Principal (mantido) --}}
+    {{-- Card Principal --}}
     <div class="bg-white overflow-hidden shadow-md sm:rounded-lg">
         <div class="p-6 border-b border-gray-200 sm:flex sm:items-center sm:justify-between">
             <div>
@@ -54,10 +54,9 @@
         </div>
 
         <div class="p-6">
-            {{-- Controles de Busca e Filtro (mantidos) --}}
+            {{-- Controles de Busca e Filtro --}}
             <div class="md:flex justify-between items-center mb-6">
                 <div class="relative w-full md:w-1/3">
-                    {{-- Ícone de busca --}}
                     <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3"><svg
                             class="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd"
@@ -80,12 +79,11 @@
                 </div>
             </div>
 
-            {{-- Tabela Desktop com Melhorias Visuais --}}
+            {{-- Tabela Desktop --}}
             <div class="hidden lg:block overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
                 <table class="min-w-full bg-white divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            {{-- Cabeçalhos com mais padding e texto menor --}}
                             <th
                                 class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                                 Nome</th>
@@ -110,7 +108,6 @@
                         @forelse ($drivers as $driver)
                             <tr
                                 class="{{ $driver->trashed() ? 'bg-red-50/50' : 'odd:bg-white even:bg-gray-50/50' }} hover:bg-blue-50/60 transition duration-150 ease-in-out">
-                                {{-- Células com alinhamento vertical e padding --}}
                                 <td class="px-6 py-4 align-middle text-sm font-medium text-gray-900 truncate max-w-sm"
                                     title="{{ $driver->name }}">
                                     {{ $driver->name }}
@@ -121,37 +118,34 @@
                                 <td class="px-6 py-4 align-middle text-sm text-gray-600">{{ $driver->telefone ?? '-' }}
                                 </td>
                                 <td class="px-6 py-4 align-middle text-sm text-gray-600 capitalize">
-                                    {{-- Badge Tipo --}}
                                     <span
                                         class="px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800 border border-gray-200">
                                         {{ $driver->type }}
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 align-middle text-center">
-                                    {{-- Badge Autorizado --}}
                                     <span
                                         class="px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full {{ $driver->is_authorized ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-red-100 text-red-800 border border-red-200' }}">
                                         {{ $driver->is_authorized ? 'Sim' : 'Não' }}
                                     </span>
                                 </td>
-                                {{-- Célula de Ações com Grupo de Botões --}}
                                 <td class="px-6 py-4 align-middle text-center whitespace-nowrap text-sm">
                                     <div class="inline-flex rounded-md shadow-sm" role="group">
                                         @if ($driver->trashed())
                                             @if ($this->canManageDriver($driver))
                                                 <button wire:click="restore({{ $driver->id }})" type="button"
                                                     title="Restaurar"
-                                                    class="relative inline-flex items-center px-3 py-1.5 rounded-l-md border border-gray-300 bg-white text-xs font-medium text-green-600 hover:bg-gray-50 focus:z-10 focus:outline-none focus:ring-1 focus:ring-ifnmg-green focus:border-ifnmg-green transition ease-in-out duration-150">
+                                                    class="relative inline-flex items-center px-3 py-1.5 rounded-l-md border border-gray-300 bg-white text-xs font-medium text-green-600 hover:bg-gray-50 focus:z-10 focus:outline-none focus:ring-1 focus:ring-ifnmg-green transition">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor"
                                                         viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round"
                                                             stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                                    </svg> {{-- Ícone de restaurar (seta p/ baixo como exemplo) --}}
+                                                    </svg>
                                                     <span class="ml-1 hidden sm:inline">Restaurar</span>
                                                 </button>
                                                 <button wire:click="confirmForceDelete({{ $driver->id }})"
                                                     type="button" title="Excluir Permanentemente"
-                                                    class="relative inline-flex items-center px-3 py-1.5 rounded-r-md border border-gray-300 bg-white text-xs font-medium text-red-600 hover:bg-gray-50 focus:z-10 focus:outline-none focus:ring-1 focus:ring-ifnmg-green focus:border-ifnmg-green transition ease-in-out duration-150 -ml-px">
+                                                    class="relative inline-flex items-center px-3 py-1.5 rounded-r-md border border-gray-300 bg-white text-xs font-medium text-red-600 hover:bg-gray-50 focus:z-10 focus:outline-none focus:ring-1 focus:ring-ifnmg-green transition -ml-px">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor"
                                                         viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -169,7 +163,7 @@
                                         @else
                                             <button wire:click="showHistory({{ $driver->id }})" type="button"
                                                 title="Histórico"
-                                                class="relative inline-flex items-center px-3 py-1.5 rounded-l-md border border-gray-300 bg-white text-xs font-medium text-blue-600 hover:bg-gray-50 focus:z-10 focus:outline-none focus:ring-1 focus:ring-ifnmg-green focus:border-ifnmg-green transition ease-in-out duration-150">
+                                                class="relative inline-flex items-center px-3 py-1.5 rounded-l-md border border-gray-300 bg-white text-xs font-medium text-blue-600 hover:bg-gray-50 focus:z-10 focus:outline-none focus:ring-1 focus:ring-ifnmg-green transition">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor"
                                                     viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -182,7 +176,7 @@
                                             @if ($this->canManageDriver($driver))
                                                 <button wire:click="edit({{ $driver->id }})" type="button"
                                                     title="Editar"
-                                                    class="relative inline-flex items-center px-3 py-1.5 border border-gray-300 bg-white text-xs font-medium text-gray-700 hover:bg-gray-50 focus:z-10 focus:outline-none focus:ring-1 focus:ring-ifnmg-green focus:border-ifnmg-green transition ease-in-out duration-150 -ml-px">
+                                                    class="relative inline-flex items-center px-3 py-1.5 border border-gray-300 bg-white text-xs font-medium text-gray-700 hover:bg-gray-50 focus:z-10 focus:outline-none focus:ring-1 focus:ring-ifnmg-green transition -ml-px">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor"
                                                         viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -194,7 +188,7 @@
                                                 </button>
                                                 <button wire:click="confirmDelete({{ $driver->id }})"
                                                     type="button" title="Mover para Lixeira"
-                                                    class="relative inline-flex items-center px-3 py-1.5 rounded-r-md border border-gray-300 bg-white text-xs font-medium text-red-600 hover:bg-gray-50 focus:z-10 focus:outline-none focus:ring-1 focus:ring-ifnmg-green focus:border-ifnmg-green transition ease-in-out duration-150 -ml-px">
+                                                    class="relative inline-flex items-center px-3 py-1.5 rounded-r-md border border-gray-300 bg-white text-xs font-medium text-red-600 hover:bg-gray-50 focus:z-10 focus:outline-none focus:ring-1 focus:ring-ifnmg-green transition -ml-px">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor"
                                                         viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -223,7 +217,7 @@
                 </table>
             </div>
 
-            {{-- Cards Mobile/Tablet com Melhorias Visuais --}}
+            {{-- Cards Mobile/Tablet --}}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 lg:hidden">
                 @forelse ($drivers as $driver)
                     <div
@@ -240,11 +234,9 @@
                             </div>
                             <p class="text-sm text-gray-600 font-mono"><strong>Doc:</strong>
                                 {{ $driver->formatted_document }}</p>
-                            </p>
                             <p class="text-sm text-gray-600"><strong>Tel:</strong> {{ $driver->telefone ?? '-' }}</p>
                             <p class="text-sm text-gray-600"><strong>Tipo:</strong> {{ $driver->type }}</p>
                         </div>
-                        {{-- Botões Mobile com estilo de grupo --}}
                         <div class="mt-4 pt-4 border-t border-gray-100 flex flex-wrap gap-2 justify-end">
                             @if ($driver->trashed())
                                 @if ($this->canManageDriver($driver))
@@ -265,9 +257,7 @@
                                     <button wire:click="confirmDelete({{ $driver->id }})" type="button"
                                         class="flex-1 inline-flex items-center justify-center px-3 py-1.5 border border-transparent shadow-sm text-xs font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition">Excluir</button>
                                 @else
-                                    <span class="text-xs text-gray-400 italic w-full text-right"
-                                        title="Apenas Admin/Fiscais podem gerenciar motoristas autorizados.">Não
-                                        editável</span>
+                                    <span class="text-xs text-gray-400 italic w-full text-right">Não editável</span>
                                 @endif
                             @endif
                         </div>
@@ -283,39 +273,33 @@
         </div>
     </div>
 
-    {{-- Modais (mantidos como estão) --}}
+    {{-- Modais de Criação e Confirmação --}}
     @if ($isModalOpen)
         <div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
             x-data="{ open: @entangle('isModalOpen') }" x-show="open" @keydown.escape.window="$wire.closeModal()"
             style="display: none;">
             <div class="bg-white rounded-lg shadow-xl w-full max-w-lg" @click.away="$wire.closeModal()">
-                {{-- Conteúdo do Modal de Edição/Criação (com a lógica Alpine já adicionada) --}}
                 <div class="px-6 py-4 border-b">
                     <h3 class="text-lg font-semibold">
                         {{ $driverId ? 'Editar Motorista' : 'Cadastrar Novo Motorista' }}</h3>
                 </div>
                 <form wire:submit="store">
                     <div class="p-6 space-y-4" x-data="{ driverType: @entangle('type').live }">
-                        {{-- Nome --}}
                         <div><x-input-label for="name" value="Nome Completo" /><x-text-input type="text"
                                 id="name" class="mt-1 block w-full capitalize" wire:model="name"
                                 maxlength="100" /><x-input-error for="name" class="mt-1" /></div>
-                        {{-- Documento --}}
                         <div><x-input-label for="document" value="Documento (CPF)" /><x-text-input type="text"
                                 id="document" class="mt-1 block w-full" wire:model="document" x-data
                                 x-mask="999.999.999-99" /><x-input-error for="document" class="mt-1" /></div>
-                        {{-- Telefone --}}
                         <div><x-input-label for="telefone" value="Telefone (Opcional)" /><x-text-input type="text"
                                 id="telefone" class="mt-1 block w-full" wire:model="telefone" x-data
                                 x-mask="(99) 99999-9999" /><x-input-error for="telefone" class="mt-1" /></div>
-                        {{-- Tipo --}}
                         <div>
                             <x-input-label for="type" value="Tipo" />
                             <select wire:model.live="type" id="type" x-model="driverType"
                                 class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-ifnmg-green focus:border-ifnmg-green">
                                 <option value="Servidor">Servidor</option>
                                 <option value="Terceirizado">Terceirizado</option>
-
                                 @if (auth()->user()->role !== 'fiscal' || auth()->user()->fiscal_type !== 'official')
                                     <option value="Aluno">Aluno</option>
                                     <option value="Visitante">Visitante</option>
@@ -323,14 +307,11 @@
                             </select>
                             <x-input-error for="type" class="mt-1" />
                         </div>
-                        {{-- Autorizado --}}
                         @php
-                            // Apenas Admin ou Fiscais que cuidam de "ambas" as frotas podem ver este campo.
                             $canChooseAuthorization =
                                 auth()->user()->role === 'admin' ||
                                 (auth()->user()->role === 'fiscal' && auth()->user()->fiscal_type === 'both');
                         @endphp
-
                         @if ($canChooseAuthorization)
                             <div class="flex items-center pt-2" x-data="{ isDisabled: driverType === 'Aluno' || driverType === 'Visitante' }" x-init="$watch('driverType', value => { isDisabled = (value === 'Aluno' || value === 'Visitante'); if (isDisabled) { $wire.set('is_authorized', false); } })">
                                 <input id="is_authorized" type="checkbox"
@@ -354,7 +335,6 @@
         <div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
             <div class="bg-white rounded-lg shadow-xl w-full max-w-md"
                 @click.away="$wire.set('isConfirmModalOpen', false)">
-                {{-- Conteúdo do Modal de Confirmação --}}
                 <div class="p-6">
                     <div class="sm:flex sm:items-start">
                         <div
@@ -372,8 +352,7 @@
                             <div class="mt-2">
                                 <p class="text-sm text-gray-600">Você tem certeza que deseja
                                     <strong>{{ $filter === 'active' ? 'mover o motorista' : 'excluir PERMANENTEMENTE o motorista' }}</strong>
-                                    <strong>"{{ $driverNameToDelete }}"</strong>?
-                                </p>
+                                    <strong>"{{ $driverNameToDelete }}"</strong>?</p>
                                 @if ($filter === 'trashed')
                                     <p class="mt-2 text-xs text-red-700 font-semibold">Esta ação não pode ser desfeita.
                                     </p>
@@ -390,81 +369,234 @@
             </div>
         </div>
     @endif
+
+    {{-- ======================================================== --}}
+    {{-- MODAL DE HISTÓRICO APRIMORADO (Cores e Sintaxe Corrigida) --}}
+    {{-- ======================================================== --}}
     @if ($isHistoryModalOpen && $driverForHistory)
         <div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-            <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
-                {{-- Conteúdo do Modal de Histórico --}}
-                <div class="px-6 py-4 border-b">
-                    <h3 class="text-lg font-semibold text-gray-900">Histórico de Movimentação</h3>
-                    <p class="text-sm text-gray-600">{{ $driverForHistory->name }}</p>
-                    <div class="relative mt-4">
-                        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3"><svg
-                                class="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd"
-                                    d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z"
-                                    clip-rule="evenodd" />
-                            </svg></div>
+            <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col"
+                @click.away="closeHistoryModal">
+
+                {{-- Cabeçalho do Modal --}}
+                <div
+                    class="px-6 py-4 border-b bg-gray-50 rounded-t-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                            <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Histórico do Motorista
+                        </h3>
+                        <p class="text-sm text-gray-600 mt-1 font-medium">
+                            <span class="text-lg text-gray-800">{{ $driverForHistory->name }}</span>
+                            <span
+                                class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold {{ $driverForHistory->is_authorized ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-800' }}">
+                                {{ $driverForHistory->type }}
+                            </span>
+                        </p>
+                    </div>
+                    <div class="relative w-full sm:w-64">
+                        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                            <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
                         <input wire:model.live.debounce.300ms="historySearch" type="text"
-                            placeholder="Buscar por veículo, destino, motivo ou data..."
+                            placeholder="Buscar veículo, destino..."
                             class="block w-full border-gray-300 rounded-md shadow-sm pl-10 focus:border-ifnmg-green focus:ring-ifnmg-green text-sm">
                     </div>
                 </div>
-                <div class="p-6 overflow-y-auto bg-gray-50">
-                    {{-- Conteúdo da timeline --}}
-                    @if ($driverHistory->isNotEmpty())
+
+                {{-- Corpo do Modal (Timeline) --}}
+                <div class="p-6 overflow-y-auto bg-gray-50/50 flex-1">
+                    @if ($driverHistory && $driverHistory->isNotEmpty())
                         <div class="relative pl-6">
+                            {{-- Linha da Timeline --}}
                             <div class="absolute left-9 top-0 h-full w-0.5 bg-gray-200"></div>
+
                             @foreach ($driverHistory as $entry)
                                 <div class="relative mb-8">
+                                    {{-- Ícone da Timeline --}}
                                     <div class="absolute left-0 top-1.5 -translate-x-1/2 transform">
                                         <div
-                                            class="flex h-8 w-8 items-center justify-center rounded-full {{ $entry['type'] === 'Oficial' ? 'bg-blue-500' : 'bg-green-500' }}">
-                                            @if ($entry['type'] === 'Oficial')
-                                                <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24"
-                                                    stroke-width="1.5" stroke="currentColor">
+                                            class="flex h-8 w-8 items-center justify-center rounded-full shadow-sm border-2 border-white {{ $entry->end_time ? ($entry->type === 'Oficial' ? 'bg-blue-500' : 'bg-green-500') : 'bg-yellow-400 animate-pulse' }}">
+                                            @if ($entry->type === 'Oficial')
+                                                <svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"
+                                                    stroke-width="2" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round"
                                                         d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.125-.504 1.125-1.125V14.25m-17.25 4.5v-1.875a3.375 3.375 0 003.375-3.375h1.5a1.125 1.125 0 011.125 1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375m15.75 0c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125-1.125h-1.5a3.375 3.375 0 00-3.375 3.375v1.875" />
-                                            </svg>@else<svg class="h-5 w-5 text-white" fill="none"
-                                                    viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                </svg>
+                                            @else
+                                                <svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"
+                                                    stroke-width="2" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round"
                                                         d="M8.25 9.75h7.5a.75.75 0 01.75.75v3.75a.75.75 0 01-.75.75h-7.5a.75.75 0 01-.75-.75v-3.75a.75.75 0 01.75-.75z" />
                                                 </svg>
                                             @endif
                                         </div>
                                     </div>
-                                    <div class="ml-12 p-4 bg-white border rounded-lg shadow-sm">
-                                        <div class="flex justify-between items-center">
-                                            <p class="font-semibold text-gray-800">Viagem {{ $entry['type'] }}</p>
-                                            <span
-                                                class="text-xs text-gray-500">{{ \Carbon\Carbon::parse($entry['start_time'])->format('d/m/Y') }}</span>
+
+                                    {{-- Card de Detalhes (Borda muda de cor dependendo do tipo) --}}
+                                    <div
+                                        class="ml-12 p-5 bg-white border-2 {{ $entry->type === 'Oficial' ? 'border-blue-100' : 'border-green-100' }} rounded-xl shadow-sm hover:shadow-md transition-all">
+
+                                        <div
+                                            class="flex flex-col sm:flex-row justify-between sm:items-start mb-4 gap-2">
+                                            <div>
+                                                <div class="flex items-center gap-2 mb-1">
+                                                    <span
+                                                        class="text-sm font-bold text-gray-800">{{ \Carbon\Carbon::parse($entry->start_time)->format('d/m/Y') }}</span>
+                                                    <span
+                                                        class="px-2 py-0.5 text-[10px] uppercase font-bold rounded-full {{ $entry->type === 'Oficial' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800' }}">
+                                                        {{ $entry->type === 'Oficial' ? 'Viagem Oficial' : 'Acesso Particular' }}
+                                                    </span>
+                                                    @if (!$entry->end_time)
+                                                        <span
+                                                            class="px-2 py-0.5 text-[10px] uppercase font-bold bg-yellow-100 text-yellow-800 rounded-full animate-pulse">Em
+                                                            Andamento</span>
+                                                    @endif
+                                                </div>
+                                                <div class="text-xs text-gray-500 font-medium">
+                                                    Horário: <span
+                                                        class="text-gray-900">{{ \Carbon\Carbon::parse($entry->start_time)->format('H:i') }}</span>
+                                                    @if ($entry->end_time)
+                                                        até <span
+                                                            class="text-gray-900">{{ \Carbon\Carbon::parse($entry->end_time)->format('H:i') }}</span>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                            <div
+                                                class="text-left sm:text-right bg-gray-50 px-3 py-2 rounded-md border border-gray-100">
+                                                <p
+                                                    class="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-0.5">
+                                                    Veículo Utilizado</p>
+                                                <p class="text-sm font-bold text-gray-800">{{ $entry->vehicle_info }}
+                                                </p>
+                                            </div>
                                         </div>
-                                        <div class="mt-2 text-sm text-gray-700 space-y-1">
-                                            <p><strong>Veículo:</strong> {{ $entry['vehicle_info'] }}</p>
-                                            <p><strong>Período:</strong>
-                                                {{ \Carbon\Carbon::parse($entry['start_time'])->format('H:i') }}
-                                                @if ($entry['end_time'])
-                                                    até {{ \Carbon\Carbon::parse($entry['end_time'])->format('H:i') }}
-                                                @else
-                                                    (em trânsito)
+
+                                        <div
+                                            class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-gray-100 pt-4">
+                                            {{-- Bloco Esquerdo: Motivo/Destino e Passageiros --}}
+                                            <div class="space-y-3">
+                                                <div>
+                                                    <span
+                                                        class="text-xs text-gray-500 font-semibold uppercase">{{ $entry->type === 'Oficial' ? 'Destino' : 'Motivo' }}</span>
+                                                    <p class="text-sm text-gray-800 mt-0.5">{{ $entry->detail }}</p>
+                                                </div>
+                                                @if ($entry->type === 'Oficial' && !empty($entry->passengers))
+                                                    <div>
+                                                        <span
+                                                            class="text-xs text-gray-500 font-semibold uppercase flex items-center gap-1">
+                                                            <svg class="w-3.5 h-3.5" fill="none"
+                                                                stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    stroke-width="2"
+                                                                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
+                                                                </path>
+                                                            </svg>
+                                                            Passageiros
+                                                        </span>
+                                                        <p class="text-sm text-gray-800 mt-0.5">
+                                                            {{ $entry->passengers }}</p>
+                                                    </div>
                                                 @endif
-                                            </p>
-                                            <p><strong>{{ $entry['type'] === 'Oficial' ? 'Destino:' : 'Motivo:' }}</strong>
-                                                {{ $entry['detail'] }}</p>
+                                            </div>
+
+                                            {{-- Bloco Direito: Auditoria e Odômetro --}}
+                                            <div class="bg-gray-50 rounded-lg p-3 border border-gray-100 space-y-2">
+                                                @if ($entry->type === 'Oficial')
+                                                    <div
+                                                        class="flex justify-between items-center text-xs pb-2 border-b border-gray-200">
+                                                        <div class="flex gap-4">
+                                                            <div><span class="text-gray-500 block">KM Saída</span>
+                                                                <span
+                                                                    class="font-bold text-gray-800">{{ number_format($entry->departure_odometer, 0, ',', '.') }}</span>
+                                                            </div>
+                                                            @if ($entry->arrival_odometer)
+                                                                <div><span class="text-gray-500 block">KM
+                                                                        Chegada</span> <span
+                                                                        class="font-bold text-gray-800">{{ number_format($entry->arrival_odometer, 0, ',', '.') }}</span>
+                                                                </div>
+                                                            @endif
+                                                        </div>
+                                                        @if ($entry->distance_traveled)
+                                                            <div class="text-right">
+                                                                <span
+                                                                    class="text-blue-600 font-bold block bg-blue-50 px-2 py-0.5 rounded">{{ $entry->distance_traveled }}
+                                                                    km</span>
+                                                            </div>
+                                                        @endif
+                                                    </div>
+                                                @endif
+
+                                                <div class="text-xs space-y-1 pt-1">
+                                                    <div class="flex justify-between">
+                                                        <span class="text-gray-500">Porteiro (Saída):</span>
+                                                        <span
+                                                            class="font-medium text-gray-800">{{ $entry->guard_start ?? 'Não registrado' }}</span>
+                                                    </div>
+                                                    @if ($entry->end_time)
+                                                        <div class="flex justify-between">
+                                                            <span class="text-gray-500">Porteiro (Retorno):</span>
+                                                            <span
+                                                                class="font-medium text-gray-800">{{ $entry->guard_end ?? 'Não registrado' }}</span>
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            </div>
                                         </div>
+
+                                        {{-- Observações de Retorno (Se houver) --}}
+                                        @if ($entry->type === 'Oficial' && !empty($entry->return_observation))
+                                            <div class="mt-3 pt-3 border-t border-dashed border-gray-200">
+                                                <div
+                                                    class="bg-yellow-50 text-yellow-800 text-xs p-3 rounded border border-yellow-200 flex gap-2">
+                                                    <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-yellow-600"
+                                                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+                                                        </path>
+                                                    </svg>
+                                                    <div>
+                                                        <span class="font-bold block text-yellow-900 mb-0.5">Observação
+                                                            Registrada no Retorno:</span>
+                                                        {{ $entry->return_observation }}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endif
+
                                     </div>
                                 </div>
                             @endforeach
                         </div>
                     @else
-                        <p class="text-center text-gray-500 py-8">Nenhum histórico de movimentação
-                            encontrado{{ !empty($this->historySearch) ? ' para a busca realizada' : '' }}.</p>
+                        <div class="flex flex-col items-center justify-center py-12 text-gray-400">
+                            <svg class="w-12 h-12 mb-3 text-gray-300" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <p>Nenhum histórico de movimentação
+                                encontrado{{ !empty($this->historySearch) ? ' para a busca realizada' : '' }}.</p>
+                        </div>
                     @endif
-                    @if ($driverHistory)
-                        <div class="mt-4">{{ $driverHistory->links() }}</div>
+
+                    @if ($driverHistory instanceof \Illuminate\Pagination\LengthAwarePaginator)
+                        <div class="mt-4">{{ $driverHistory->links('livewire::simple-tailwind') }}</div>
                     @endif
                 </div>
-                <div class="px-6 py-4 bg-white text-right mt-auto border-t">
-                    <x-secondary-button wire:click="closeHistoryModal">Fechar</x-secondary-button>
+
+                {{-- Rodapé do Modal --}}
+                <div class="px-6 py-4 bg-white text-right border-t rounded-b-lg">
+                    <x-secondary-button wire:click="closeHistoryModal">Fechar Histórico</x-secondary-button>
                 </div>
             </div>
         </div>

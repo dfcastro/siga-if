@@ -75,7 +75,6 @@
             
             <div class="md:flex justify-between items-center mb-6">
                 <div class="relative w-full md:w-1/3">
-                    
                     <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3"><svg
                             class="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd"
@@ -103,7 +102,6 @@
                 <table class="min-w-full bg-white divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            
                             <th
                                 class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                                 Nome</th>
@@ -128,7 +126,6 @@
                         <!--[if BLOCK]><![endif]--><?php $__empty_1 = true; $__currentLoopData = $drivers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $driver): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                             <tr
                                 class="<?php echo e($driver->trashed() ? 'bg-red-50/50' : 'odd:bg-white even:bg-gray-50/50'); ?> hover:bg-blue-50/60 transition duration-150 ease-in-out">
-                                
                                 <td class="px-6 py-4 align-middle text-sm font-medium text-gray-900 truncate max-w-sm"
                                     title="<?php echo e($driver->name); ?>">
                                     <?php echo e($driver->name); ?>
@@ -142,7 +139,6 @@
 
                                 </td>
                                 <td class="px-6 py-4 align-middle text-sm text-gray-600 capitalize">
-                                    
                                     <span
                                         class="px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800 border border-gray-200">
                                         <?php echo e($driver->type); ?>
@@ -150,31 +146,29 @@
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 align-middle text-center">
-                                    
                                     <span
                                         class="px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full <?php echo e($driver->is_authorized ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-red-100 text-red-800 border border-red-200'); ?>">
                                         <?php echo e($driver->is_authorized ? 'Sim' : 'Não'); ?>
 
                                     </span>
                                 </td>
-                                
                                 <td class="px-6 py-4 align-middle text-center whitespace-nowrap text-sm">
                                     <div class="inline-flex rounded-md shadow-sm" role="group">
                                         <!--[if BLOCK]><![endif]--><?php if($driver->trashed()): ?>
                                             <!--[if BLOCK]><![endif]--><?php if($this->canManageDriver($driver)): ?>
                                                 <button wire:click="restore(<?php echo e($driver->id); ?>)" type="button"
                                                     title="Restaurar"
-                                                    class="relative inline-flex items-center px-3 py-1.5 rounded-l-md border border-gray-300 bg-white text-xs font-medium text-green-600 hover:bg-gray-50 focus:z-10 focus:outline-none focus:ring-1 focus:ring-ifnmg-green focus:border-ifnmg-green transition ease-in-out duration-150">
+                                                    class="relative inline-flex items-center px-3 py-1.5 rounded-l-md border border-gray-300 bg-white text-xs font-medium text-green-600 hover:bg-gray-50 focus:z-10 focus:outline-none focus:ring-1 focus:ring-ifnmg-green transition">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor"
                                                         viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round"
                                                             stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                                    </svg> 
+                                                    </svg>
                                                     <span class="ml-1 hidden sm:inline">Restaurar</span>
                                                 </button>
                                                 <button wire:click="confirmForceDelete(<?php echo e($driver->id); ?>)"
                                                     type="button" title="Excluir Permanentemente"
-                                                    class="relative inline-flex items-center px-3 py-1.5 rounded-r-md border border-gray-300 bg-white text-xs font-medium text-red-600 hover:bg-gray-50 focus:z-10 focus:outline-none focus:ring-1 focus:ring-ifnmg-green focus:border-ifnmg-green transition ease-in-out duration-150 -ml-px">
+                                                    class="relative inline-flex items-center px-3 py-1.5 rounded-r-md border border-gray-300 bg-white text-xs font-medium text-red-600 hover:bg-gray-50 focus:z-10 focus:outline-none focus:ring-1 focus:ring-ifnmg-green transition -ml-px">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor"
                                                         viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -192,7 +186,7 @@
                                         <?php else: ?>
                                             <button wire:click="showHistory(<?php echo e($driver->id); ?>)" type="button"
                                                 title="Histórico"
-                                                class="relative inline-flex items-center px-3 py-1.5 rounded-l-md border border-gray-300 bg-white text-xs font-medium text-blue-600 hover:bg-gray-50 focus:z-10 focus:outline-none focus:ring-1 focus:ring-ifnmg-green focus:border-ifnmg-green transition ease-in-out duration-150">
+                                                class="relative inline-flex items-center px-3 py-1.5 rounded-l-md border border-gray-300 bg-white text-xs font-medium text-blue-600 hover:bg-gray-50 focus:z-10 focus:outline-none focus:ring-1 focus:ring-ifnmg-green transition">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor"
                                                     viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -205,7 +199,7 @@
                                             <!--[if BLOCK]><![endif]--><?php if($this->canManageDriver($driver)): ?>
                                                 <button wire:click="edit(<?php echo e($driver->id); ?>)" type="button"
                                                     title="Editar"
-                                                    class="relative inline-flex items-center px-3 py-1.5 border border-gray-300 bg-white text-xs font-medium text-gray-700 hover:bg-gray-50 focus:z-10 focus:outline-none focus:ring-1 focus:ring-ifnmg-green focus:border-ifnmg-green transition ease-in-out duration-150 -ml-px">
+                                                    class="relative inline-flex items-center px-3 py-1.5 border border-gray-300 bg-white text-xs font-medium text-gray-700 hover:bg-gray-50 focus:z-10 focus:outline-none focus:ring-1 focus:ring-ifnmg-green transition -ml-px">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor"
                                                         viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -217,7 +211,7 @@
                                                 </button>
                                                 <button wire:click="confirmDelete(<?php echo e($driver->id); ?>)"
                                                     type="button" title="Mover para Lixeira"
-                                                    class="relative inline-flex items-center px-3 py-1.5 rounded-r-md border border-gray-300 bg-white text-xs font-medium text-red-600 hover:bg-gray-50 focus:z-10 focus:outline-none focus:ring-1 focus:ring-ifnmg-green focus:border-ifnmg-green transition ease-in-out duration-150 -ml-px">
+                                                    class="relative inline-flex items-center px-3 py-1.5 rounded-r-md border border-gray-300 bg-white text-xs font-medium text-red-600 hover:bg-gray-50 focus:z-10 focus:outline-none focus:ring-1 focus:ring-ifnmg-green transition -ml-px">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor"
                                                         viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -265,11 +259,9 @@
                             </div>
                             <p class="text-sm text-gray-600 font-mono"><strong>Doc:</strong>
                                 <?php echo e($driver->formatted_document); ?></p>
-                            </p>
                             <p class="text-sm text-gray-600"><strong>Tel:</strong> <?php echo e($driver->telefone ?? '-'); ?></p>
                             <p class="text-sm text-gray-600"><strong>Tipo:</strong> <?php echo e($driver->type); ?></p>
                         </div>
-                        
                         <div class="mt-4 pt-4 border-t border-gray-100 flex flex-wrap gap-2 justify-end">
                             <!--[if BLOCK]><![endif]--><?php if($driver->trashed()): ?>
                                 <!--[if BLOCK]><![endif]--><?php if($this->canManageDriver($driver)): ?>
@@ -290,9 +282,7 @@
                                     <button wire:click="confirmDelete(<?php echo e($driver->id); ?>)" type="button"
                                         class="flex-1 inline-flex items-center justify-center px-3 py-1.5 border border-transparent shadow-sm text-xs font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition">Excluir</button>
                                 <?php else: ?>
-                                    <span class="text-xs text-gray-400 italic w-full text-right"
-                                        title="Apenas Admin/Fiscais podem gerenciar motoristas autorizados.">Não
-                                        editável</span>
+                                    <span class="text-xs text-gray-400 italic w-full text-right">Não editável</span>
                                 <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
                             <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
                         </div>
@@ -315,14 +305,12 @@
             x-data="{ open: <?php if ((object) ('isModalOpen') instanceof \Livewire\WireDirective) : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('isModalOpen'->value()); ?>')<?php echo e('isModalOpen'->hasModifier('live') ? '.live' : ''); ?><?php else : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('isModalOpen'); ?>')<?php endif; ?> }" x-show="open" @keydown.escape.window="$wire.closeModal()"
             style="display: none;">
             <div class="bg-white rounded-lg shadow-xl w-full max-w-lg" @click.away="$wire.closeModal()">
-                
                 <div class="px-6 py-4 border-b">
                     <h3 class="text-lg font-semibold">
                         <?php echo e($driverId ? 'Editar Motorista' : 'Cadastrar Novo Motorista'); ?></h3>
                 </div>
                 <form wire:submit="store">
                     <div class="p-6 space-y-4" x-data="{ driverType: <?php if ((object) ('type') instanceof \Livewire\WireDirective) : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('type'->value()); ?>')<?php echo e('type'->hasModifier('live') ? '.live' : ''); ?><?php else : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('type'); ?>')<?php endif; ?>.live }">
-                        
                         <div><?php if (isset($component)) { $__componentOriginale3da9d84bb64e4bc2eeebaafabfb2581 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginale3da9d84bb64e4bc2eeebaafabfb2581 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.input-label','data' => ['for' => 'name','value' => 'Nome Completo']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
@@ -381,7 +369,6 @@
 <?php $component = $__componentOriginalf94ed9c5393ef72725d159fe01139746; ?>
 <?php unset($__componentOriginalf94ed9c5393ef72725d159fe01139746); ?>
 <?php endif; ?></div>
-                        
                         <div><?php if (isset($component)) { $__componentOriginale3da9d84bb64e4bc2eeebaafabfb2581 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginale3da9d84bb64e4bc2eeebaafabfb2581 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.input-label','data' => ['for' => 'document','value' => 'Documento (CPF)']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
@@ -440,7 +427,6 @@
 <?php $component = $__componentOriginalf94ed9c5393ef72725d159fe01139746; ?>
 <?php unset($__componentOriginalf94ed9c5393ef72725d159fe01139746); ?>
 <?php endif; ?></div>
-                        
                         <div><?php if (isset($component)) { $__componentOriginale3da9d84bb64e4bc2eeebaafabfb2581 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginale3da9d84bb64e4bc2eeebaafabfb2581 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.input-label','data' => ['for' => 'telefone','value' => 'Telefone (Opcional)']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
@@ -499,7 +485,6 @@
 <?php $component = $__componentOriginalf94ed9c5393ef72725d159fe01139746; ?>
 <?php unset($__componentOriginalf94ed9c5393ef72725d159fe01139746); ?>
 <?php endif; ?></div>
-                        
                         <div>
                             <?php if (isset($component)) { $__componentOriginale3da9d84bb64e4bc2eeebaafabfb2581 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginale3da9d84bb64e4bc2eeebaafabfb2581 = $attributes; } ?>
@@ -525,7 +510,6 @@
                                 class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-ifnmg-green focus:border-ifnmg-green">
                                 <option value="Servidor">Servidor</option>
                                 <option value="Terceirizado">Terceirizado</option>
-
                                 <!--[if BLOCK]><![endif]--><?php if(auth()->user()->role !== 'fiscal' || auth()->user()->fiscal_type !== 'official'): ?>
                                     <option value="Aluno">Aluno</option>
                                     <option value="Visitante">Visitante</option>
@@ -552,14 +536,11 @@
 <?php unset($__componentOriginalf94ed9c5393ef72725d159fe01139746); ?>
 <?php endif; ?>
                         </div>
-                        
                         <?php
-                            // Apenas Admin ou Fiscais que cuidam de "ambas" as frotas podem ver este campo.
                             $canChooseAuthorization =
                                 auth()->user()->role === 'admin' ||
                                 (auth()->user()->role === 'fiscal' && auth()->user()->fiscal_type === 'both');
                         ?>
-
                         <!--[if BLOCK]><![endif]--><?php if($canChooseAuthorization): ?>
                             <div class="flex items-center pt-2" x-data="{ isDisabled: driverType === 'Aluno' || driverType === 'Visitante' }" x-init="$watch('driverType', value => { isDisabled = (value === 'Aluno' || value === 'Visitante'); if (isDisabled) { $wire.set('is_authorized', false); } })">
                                 <input id="is_authorized" type="checkbox"
@@ -638,7 +619,6 @@
         <div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
             <div class="bg-white rounded-lg shadow-xl w-full max-w-md"
                 @click.away="$wire.set('isConfirmModalOpen', false)">
-                
                 <div class="p-6">
                     <div class="sm:flex sm:items-start">
                         <div
@@ -657,8 +637,7 @@
                             <div class="mt-2">
                                 <p class="text-sm text-gray-600">Você tem certeza que deseja
                                     <strong><?php echo e($filter === 'active' ? 'mover o motorista' : 'excluir PERMANENTEMENTE o motorista'); ?></strong>
-                                    <strong>"<?php echo e($driverNameToDelete); ?>"</strong>?
-                                </p>
+                                    <strong>"<?php echo e($driverNameToDelete); ?>"</strong>?</p>
                                 <!--[if BLOCK]><![endif]--><?php if($filter === 'trashed'): ?>
                                     <p class="mt-2 text-xs text-red-700 font-semibold">Esta ação não pode ser desfeita.
                                     </p>
@@ -710,82 +689,238 @@
             </div>
         </div>
     <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+
+    
+    
+    
     <!--[if BLOCK]><![endif]--><?php if($isHistoryModalOpen && $driverForHistory): ?>
         <div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-            <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+            <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col"
+                @click.away="closeHistoryModal">
+
                 
-                <div class="px-6 py-4 border-b">
-                    <h3 class="text-lg font-semibold text-gray-900">Histórico de Movimentação</h3>
-                    <p class="text-sm text-gray-600"><?php echo e($driverForHistory->name); ?></p>
-                    <div class="relative mt-4">
-                        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3"><svg
-                                class="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd"
-                                    d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z"
-                                    clip-rule="evenodd" />
-                            </svg></div>
+                <div
+                    class="px-6 py-4 border-b bg-gray-50 rounded-t-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                            <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Histórico do Motorista
+                        </h3>
+                        <p class="text-sm text-gray-600 mt-1 font-medium">
+                            <span class="text-lg text-gray-800"><?php echo e($driverForHistory->name); ?></span>
+                            <span
+                                class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold <?php echo e($driverForHistory->is_authorized ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-800'); ?>">
+                                <?php echo e($driverForHistory->type); ?>
+
+                            </span>
+                        </p>
+                    </div>
+                    <div class="relative w-full sm:w-64">
+                        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                            <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
                         <input wire:model.live.debounce.300ms="historySearch" type="text"
-                            placeholder="Buscar por veículo, destino, motivo ou data..."
+                            placeholder="Buscar veículo, destino..."
                             class="block w-full border-gray-300 rounded-md shadow-sm pl-10 focus:border-ifnmg-green focus:ring-ifnmg-green text-sm">
                     </div>
                 </div>
-                <div class="p-6 overflow-y-auto bg-gray-50">
-                    
-                    <!--[if BLOCK]><![endif]--><?php if($driverHistory->isNotEmpty()): ?>
+
+                
+                <div class="p-6 overflow-y-auto bg-gray-50/50 flex-1">
+                    <!--[if BLOCK]><![endif]--><?php if($driverHistory && $driverHistory->isNotEmpty()): ?>
                         <div class="relative pl-6">
+                            
                             <div class="absolute left-9 top-0 h-full w-0.5 bg-gray-200"></div>
+
                             <!--[if BLOCK]><![endif]--><?php $__currentLoopData = $driverHistory; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $entry): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                 <div class="relative mb-8">
+                                    
                                     <div class="absolute left-0 top-1.5 -translate-x-1/2 transform">
                                         <div
-                                            class="flex h-8 w-8 items-center justify-center rounded-full <?php echo e($entry['type'] === 'Oficial' ? 'bg-blue-500' : 'bg-green-500'); ?>">
-                                            <!--[if BLOCK]><![endif]--><?php if($entry['type'] === 'Oficial'): ?>
-                                                <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24"
-                                                    stroke-width="1.5" stroke="currentColor">
+                                            class="flex h-8 w-8 items-center justify-center rounded-full shadow-sm border-2 border-white <?php echo e($entry->end_time ? ($entry->type === 'Oficial' ? 'bg-blue-500' : 'bg-green-500') : 'bg-yellow-400 animate-pulse'); ?>">
+                                            <!--[if BLOCK]><![endif]--><?php if($entry->type === 'Oficial'): ?>
+                                                <svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"
+                                                    stroke-width="2" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round"
                                                         d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.125-.504 1.125-1.125V14.25m-17.25 4.5v-1.875a3.375 3.375 0 003.375-3.375h1.5a1.125 1.125 0 011.125 1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375m15.75 0c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125-1.125h-1.5a3.375 3.375 0 00-3.375 3.375v1.875" />
-                                            </svg><?php else: ?><svg class="h-5 w-5 text-white" fill="none"
-                                                    viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                </svg>
+                                            <?php else: ?>
+                                                <svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"
+                                                    stroke-width="2" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round"
                                                         d="M8.25 9.75h7.5a.75.75 0 01.75.75v3.75a.75.75 0 01-.75.75h-7.5a.75.75 0 01-.75-.75v-3.75a.75.75 0 01.75-.75z" />
                                                 </svg>
                                             <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
                                         </div>
                                     </div>
-                                    <div class="ml-12 p-4 bg-white border rounded-lg shadow-sm">
-                                        <div class="flex justify-between items-center">
-                                            <p class="font-semibold text-gray-800">Viagem <?php echo e($entry['type']); ?></p>
-                                            <span
-                                                class="text-xs text-gray-500"><?php echo e(\Carbon\Carbon::parse($entry['start_time'])->format('d/m/Y')); ?></span>
+
+                                    
+                                    <div
+                                        class="ml-12 p-5 bg-white border-2 <?php echo e($entry->type === 'Oficial' ? 'border-blue-100' : 'border-green-100'); ?> rounded-xl shadow-sm hover:shadow-md transition-all">
+
+                                        <div
+                                            class="flex flex-col sm:flex-row justify-between sm:items-start mb-4 gap-2">
+                                            <div>
+                                                <div class="flex items-center gap-2 mb-1">
+                                                    <span
+                                                        class="text-sm font-bold text-gray-800"><?php echo e(\Carbon\Carbon::parse($entry->start_time)->format('d/m/Y')); ?></span>
+                                                    <span
+                                                        class="px-2 py-0.5 text-[10px] uppercase font-bold rounded-full <?php echo e($entry->type === 'Oficial' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'); ?>">
+                                                        <?php echo e($entry->type === 'Oficial' ? 'Viagem Oficial' : 'Acesso Particular'); ?>
+
+                                                    </span>
+                                                    <!--[if BLOCK]><![endif]--><?php if(!$entry->end_time): ?>
+                                                        <span
+                                                            class="px-2 py-0.5 text-[10px] uppercase font-bold bg-yellow-100 text-yellow-800 rounded-full animate-pulse">Em
+                                                            Andamento</span>
+                                                    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                                                </div>
+                                                <div class="text-xs text-gray-500 font-medium">
+                                                    Horário: <span
+                                                        class="text-gray-900"><?php echo e(\Carbon\Carbon::parse($entry->start_time)->format('H:i')); ?></span>
+                                                    <!--[if BLOCK]><![endif]--><?php if($entry->end_time): ?>
+                                                        até <span
+                                                            class="text-gray-900"><?php echo e(\Carbon\Carbon::parse($entry->end_time)->format('H:i')); ?></span>
+                                                    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                                                </div>
+                                            </div>
+                                            <div
+                                                class="text-left sm:text-right bg-gray-50 px-3 py-2 rounded-md border border-gray-100">
+                                                <p
+                                                    class="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-0.5">
+                                                    Veículo Utilizado</p>
+                                                <p class="text-sm font-bold text-gray-800"><?php echo e($entry->vehicle_info); ?>
+
+                                                </p>
+                                            </div>
                                         </div>
-                                        <div class="mt-2 text-sm text-gray-700 space-y-1">
-                                            <p><strong>Veículo:</strong> <?php echo e($entry['vehicle_info']); ?></p>
-                                            <p><strong>Período:</strong>
-                                                <?php echo e(\Carbon\Carbon::parse($entry['start_time'])->format('H:i')); ?>
 
-                                                <!--[if BLOCK]><![endif]--><?php if($entry['end_time']): ?>
-                                                    até <?php echo e(\Carbon\Carbon::parse($entry['end_time'])->format('H:i')); ?>
-
-                                                <?php else: ?>
-                                                    (em trânsito)
+                                        <div
+                                            class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-gray-100 pt-4">
+                                            
+                                            <div class="space-y-3">
+                                                <div>
+                                                    <span
+                                                        class="text-xs text-gray-500 font-semibold uppercase"><?php echo e($entry->type === 'Oficial' ? 'Destino' : 'Motivo'); ?></span>
+                                                    <p class="text-sm text-gray-800 mt-0.5"><?php echo e($entry->detail); ?></p>
+                                                </div>
+                                                <!--[if BLOCK]><![endif]--><?php if($entry->type === 'Oficial' && !empty($entry->passengers)): ?>
+                                                    <div>
+                                                        <span
+                                                            class="text-xs text-gray-500 font-semibold uppercase flex items-center gap-1">
+                                                            <svg class="w-3.5 h-3.5" fill="none"
+                                                                stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    stroke-width="2"
+                                                                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
+                                                                </path>
+                                                            </svg>
+                                                            Passageiros
+                                                        </span>
+                                                        <p class="text-sm text-gray-800 mt-0.5">
+                                                            <?php echo e($entry->passengers); ?></p>
+                                                    </div>
                                                 <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
-                                            </p>
-                                            <p><strong><?php echo e($entry['type'] === 'Oficial' ? 'Destino:' : 'Motivo:'); ?></strong>
-                                                <?php echo e($entry['detail']); ?></p>
+                                            </div>
+
+                                            
+                                            <div class="bg-gray-50 rounded-lg p-3 border border-gray-100 space-y-2">
+                                                <!--[if BLOCK]><![endif]--><?php if($entry->type === 'Oficial'): ?>
+                                                    <div
+                                                        class="flex justify-between items-center text-xs pb-2 border-b border-gray-200">
+                                                        <div class="flex gap-4">
+                                                            <div><span class="text-gray-500 block">KM Saída</span>
+                                                                <span
+                                                                    class="font-bold text-gray-800"><?php echo e(number_format($entry->departure_odometer, 0, ',', '.')); ?></span>
+                                                            </div>
+                                                            <!--[if BLOCK]><![endif]--><?php if($entry->arrival_odometer): ?>
+                                                                <div><span class="text-gray-500 block">KM
+                                                                        Chegada</span> <span
+                                                                        class="font-bold text-gray-800"><?php echo e(number_format($entry->arrival_odometer, 0, ',', '.')); ?></span>
+                                                                </div>
+                                                            <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                                                        </div>
+                                                        <!--[if BLOCK]><![endif]--><?php if($entry->distance_traveled): ?>
+                                                            <div class="text-right">
+                                                                <span
+                                                                    class="text-blue-600 font-bold block bg-blue-50 px-2 py-0.5 rounded"><?php echo e($entry->distance_traveled); ?>
+
+                                                                    km</span>
+                                                            </div>
+                                                        <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                                                    </div>
+                                                <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+
+                                                <div class="text-xs space-y-1 pt-1">
+                                                    <div class="flex justify-between">
+                                                        <span class="text-gray-500">Porteiro (Saída):</span>
+                                                        <span
+                                                            class="font-medium text-gray-800"><?php echo e($entry->guard_start ?? 'Não registrado'); ?></span>
+                                                    </div>
+                                                    <!--[if BLOCK]><![endif]--><?php if($entry->end_time): ?>
+                                                        <div class="flex justify-between">
+                                                            <span class="text-gray-500">Porteiro (Retorno):</span>
+                                                            <span
+                                                                class="font-medium text-gray-800"><?php echo e($entry->guard_end ?? 'Não registrado'); ?></span>
+                                                        </div>
+                                                    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                                                </div>
+                                            </div>
                                         </div>
+
+                                        
+                                        <!--[if BLOCK]><![endif]--><?php if($entry->type === 'Oficial' && !empty($entry->return_observation)): ?>
+                                            <div class="mt-3 pt-3 border-t border-dashed border-gray-200">
+                                                <div
+                                                    class="bg-yellow-50 text-yellow-800 text-xs p-3 rounded border border-yellow-200 flex gap-2">
+                                                    <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-yellow-600"
+                                                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+                                                        </path>
+                                                    </svg>
+                                                    <div>
+                                                        <span class="font-bold block text-yellow-900 mb-0.5">Observação
+                                                            Registrada no Retorno:</span>
+                                                        <?php echo e($entry->return_observation); ?>
+
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+
                                     </div>
                                 </div>
                             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><!--[if ENDBLOCK]><![endif]-->
                         </div>
                     <?php else: ?>
-                        <p class="text-center text-gray-500 py-8">Nenhum histórico de movimentação
-                            encontrado<?php echo e(!empty($this->historySearch) ? ' para a busca realizada' : ''); ?>.</p>
+                        <div class="flex flex-col items-center justify-center py-12 text-gray-400">
+                            <svg class="w-12 h-12 mb-3 text-gray-300" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <p>Nenhum histórico de movimentação
+                                encontrado<?php echo e(!empty($this->historySearch) ? ' para a busca realizada' : ''); ?>.</p>
+                        </div>
                     <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
-                    <!--[if BLOCK]><![endif]--><?php if($driverHistory): ?>
-                        <div class="mt-4"><?php echo e($driverHistory->links()); ?></div>
+
+                    <!--[if BLOCK]><![endif]--><?php if($driverHistory instanceof \Illuminate\Pagination\LengthAwarePaginator): ?>
+                        <div class="mt-4"><?php echo e($driverHistory->links('livewire::simple-tailwind')); ?></div>
                     <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
                 </div>
-                <div class="px-6 py-4 bg-white text-right mt-auto border-t">
+
+                
+                <div class="px-6 py-4 bg-white text-right border-t rounded-b-lg">
                     <?php if (isset($component)) { $__componentOriginal3b0e04e43cf890250cc4d85cff4d94af = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal3b0e04e43cf890250cc4d85cff4d94af = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.secondary-button','data' => ['wire:click' => 'closeHistoryModal']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
@@ -795,7 +930,7 @@
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['wire:click' => 'closeHistoryModal']); ?>Fechar <?php echo $__env->renderComponent(); ?>
+<?php $component->withAttributes(['wire:click' => 'closeHistoryModal']); ?>Fechar Histórico <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginal3b0e04e43cf890250cc4d85cff4d94af)): ?>
 <?php $attributes = $__attributesOriginal3b0e04e43cf890250cc4d85cff4d94af; ?>

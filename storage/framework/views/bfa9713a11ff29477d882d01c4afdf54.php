@@ -101,6 +101,13 @@
                                     <td class="px-6 py-4 align-middle text-sm text-gray-600">
                                         <?php echo e($trip->destination); ?>
 
+                                        <!--[if BLOCK]><![endif]--><?php if($trip->return_observation): ?>
+                                            <div class="text-xs text-yellow-600 mt-1 truncate max-w-xs"
+                                                title="<?php echo e($trip->return_observation); ?>">
+                                                <span class="font-bold">Obs:</span> <?php echo e($trip->return_observation); ?>
+
+                                            </div>
+                                        <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
                                     </td>
                                     <td class="px-6 py-4 align-middle text-sm text-gray-600">
                                         <div class="font-medium">
@@ -155,6 +162,10 @@
                                         <?php echo e($trip->driver ? $trip->driver->name : 'N/D'); ?></p>
                                     <p><span class="font-semibold text-gray-500 text-xs uppercase">Destino:</span><br>
                                         <?php echo e($trip->destination); ?></p>
+                                    <!--[if BLOCK]><![endif]--><?php if($trip->return_observation): ?>
+                                        <p class="text-yellow-700 bg-yellow-50 p-1.5 rounded text-xs"><span
+                                                class="font-bold">Obs:</span> <?php echo e($trip->return_observation); ?></p>
+                                    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
                                     <p><span class="font-semibold text-gray-500 text-xs uppercase">KM Saída:</span><br>
                                         <span
                                             class="font-mono text-blue-600 font-bold"><?php echo e(number_format($trip->departure_odometer, 0, ',', '.')); ?>
@@ -350,17 +361,17 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
 
                     
-                    <div x-data="{ open: <?php if ((object) ('show_vehicle_dropdown') instanceof \Livewire\WireDirective) : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('show_vehicle_dropdown'->value()); ?>')<?php echo e('show_vehicle_dropdown'->hasModifier('live') ? '.live' : ''); ?><?php else : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('show_vehicle_dropdown'); ?>')<?php endif; ?> }" @click.away="open = false" class="relative">
+                    <div>
                         <?php if (isset($component)) { $__componentOriginale3da9d84bb64e4bc2eeebaafabfb2581 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginale3da9d84bb64e4bc2eeebaafabfb2581 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.input-label','data' => ['for' => 'vehicle_search','value' => __('Veículo')]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.input-label','data' => ['for' => 'vehicle_id','value' => __('Viatura Oficial')]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('input-label'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['for' => 'vehicle_search','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(__('Veículo'))]); ?>
+<?php $component->withAttributes(['for' => 'vehicle_id','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(__('Viatura Oficial'))]); ?>
 <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginale3da9d84bb64e4bc2eeebaafabfb2581)): ?>
@@ -371,44 +382,15 @@
 <?php $component = $__componentOriginale3da9d84bb64e4bc2eeebaafabfb2581; ?>
 <?php unset($__componentOriginale3da9d84bb64e4bc2eeebaafabfb2581); ?>
 <?php endif; ?>
-                        <?php if (isset($component)) { $__componentOriginal18c21970322f9e5c938bc954620c12bb = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginal18c21970322f9e5c938bc954620c12bb = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.text-input','data' => ['type' => 'text','id' => 'vehicle_search','class' => 'mt-1 block w-full text-sm sm:text-base','wire:model.live.debounce.300ms' => 'vehicle_search','@focus' => 'open = true','placeholder' => 'Placa ou modelo...','autocomplete' => 'off']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('text-input'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['type' => 'text','id' => 'vehicle_search','class' => 'mt-1 block w-full text-sm sm:text-base','wire:model.live.debounce.300ms' => 'vehicle_search','@focus' => 'open = true','placeholder' => 'Placa ou modelo...','autocomplete' => 'off']); ?>
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginal18c21970322f9e5c938bc954620c12bb)): ?>
-<?php $attributes = $__attributesOriginal18c21970322f9e5c938bc954620c12bb; ?>
-<?php unset($__attributesOriginal18c21970322f9e5c938bc954620c12bb); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginal18c21970322f9e5c938bc954620c12bb)): ?>
-<?php $component = $__componentOriginal18c21970322f9e5c938bc954620c12bb; ?>
-<?php unset($__componentOriginal18c21970322f9e5c938bc954620c12bb); ?>
-<?php endif; ?>
+                        <select id="vehicle_id" wire:model.live="vehicle_id"
+                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base">
+                            <option value="">Selecione o veículo...</option>
+                            <!--[if BLOCK]><![endif]--><?php $__currentLoopData = $officialVehicles; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $vehicle): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <option value="<?php echo e($vehicle->id); ?>"><?php echo e($vehicle->model); ?>
 
-                        <div x-show="open" x-transition
-                            class="absolute z-30 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                            <ul>
-                                <!--[if BLOCK]><![endif]--><?php if(is_iterable($vehicle_results) && count($vehicle_results) > 0): ?>
-                                    <!--[if BLOCK]><![endif]--><?php $__currentLoopData = $vehicle_results; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $vehicle): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                        <li wire:click="selectVehicle(<?php echo e($vehicle->id); ?>, '<?php echo e($vehicle->model); ?> (<?php echo e($vehicle->license_plate); ?>)')"
-                                            class="px-4 py-3 cursor-pointer hover:bg-blue-50 text-sm border-b border-gray-50 last:border-0 transition-colors">
-                                            <span class="font-bold text-gray-800"><?php echo e($vehicle->model); ?></span>
-                                            <span
-                                                class="font-mono text-xs text-gray-500 ml-1"><?php echo e($vehicle->license_plate); ?></span>
-                                        </li>
-                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                                <?php elseif(strlen($vehicle_search) >= 2): ?>
-                                    <li class="px-4 py-3 text-sm text-gray-500">Nenhum veículo oficial encontrado.</li>
-                                <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
-                            </ul>
-                        </div>
+                                    (<?php echo e($vehicle->license_plate); ?>)</option>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><!--[if ENDBLOCK]><![endif]-->
+                        </select>
                         <?php if (isset($component)) { $__componentOriginalf94ed9c5393ef72725d159fe01139746 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalf94ed9c5393ef72725d159fe01139746 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.input-error','data' => ['messages' => $errors->get('vehicle_id'),'class' => 'mt-1']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
@@ -432,17 +414,17 @@
                     </div>
 
                     
-                    <div x-data="{ open: <?php if ((object) ('show_driver_dropdown') instanceof \Livewire\WireDirective) : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('show_driver_dropdown'->value()); ?>')<?php echo e('show_driver_dropdown'->hasModifier('live') ? '.live' : ''); ?><?php else : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('show_driver_dropdown'); ?>')<?php endif; ?> }" @click.away="open = false" class="relative">
+                    <div>
                         <?php if (isset($component)) { $__componentOriginale3da9d84bb64e4bc2eeebaafabfb2581 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginale3da9d84bb64e4bc2eeebaafabfb2581 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.input-label','data' => ['for' => 'driver_search','value' => __('Motorista / Condutor')]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.input-label','data' => ['for' => 'driver_id','value' => __('Motorista / Condutor Autorizado')]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('input-label'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['for' => 'driver_search','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(__('Motorista / Condutor'))]); ?>
+<?php $component->withAttributes(['for' => 'driver_id','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(__('Motorista / Condutor Autorizado'))]); ?>
 <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginale3da9d84bb64e4bc2eeebaafabfb2581)): ?>
@@ -453,47 +435,13 @@
 <?php $component = $__componentOriginale3da9d84bb64e4bc2eeebaafabfb2581; ?>
 <?php unset($__componentOriginale3da9d84bb64e4bc2eeebaafabfb2581); ?>
 <?php endif; ?>
-                        <?php if (isset($component)) { $__componentOriginal18c21970322f9e5c938bc954620c12bb = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginal18c21970322f9e5c938bc954620c12bb = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.text-input','data' => ['type' => 'text','id' => 'driver_search','class' => 'mt-1 block w-full text-sm sm:text-base','wire:model.live.debounce.300ms' => 'driver_search','@focus' => 'open = true','placeholder' => 'Nome ou CPF...','autocomplete' => 'off']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('text-input'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['type' => 'text','id' => 'driver_search','class' => 'mt-1 block w-full text-sm sm:text-base','wire:model.live.debounce.300ms' => 'driver_search','@focus' => 'open = true','placeholder' => 'Nome ou CPF...','autocomplete' => 'off']); ?>
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginal18c21970322f9e5c938bc954620c12bb)): ?>
-<?php $attributes = $__attributesOriginal18c21970322f9e5c938bc954620c12bb; ?>
-<?php unset($__attributesOriginal18c21970322f9e5c938bc954620c12bb); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginal18c21970322f9e5c938bc954620c12bb)): ?>
-<?php $component = $__componentOriginal18c21970322f9e5c938bc954620c12bb; ?>
-<?php unset($__componentOriginal18c21970322f9e5c938bc954620c12bb); ?>
-<?php endif; ?>
-
-                        <div x-show="open" x-transition
-                            class="absolute z-30 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                            <ul class="divide-y divide-gray-100">
-                                <!--[if BLOCK]><![endif]--><?php if(is_iterable($driver_results) && count($driver_results) > 0): ?>
-                                    <!--[if BLOCK]><![endif]--><?php $__currentLoopData = $driver_results; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $driver): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                        <li wire:click="selectDriver(<?php echo e($driver->id); ?>, '<?php echo e(addslashes($driver->name)); ?>')"
-                                            class="px-4 py-3 cursor-pointer hover:bg-blue-50 transition-colors">
-                                            <div class="font-medium text-sm text-gray-800"><?php echo e($driver->name); ?></div>
-                                            <div class="text-xs text-gray-500">
-                                                CPF: <?php echo e($driver->formatted_document); ?>
-
-                                            </div>
-                                        </li>
-                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                                <?php elseif(strlen($driver_search) >= 2): ?>
-                                    <li class="px-4 py-3 text-sm text-gray-500 text-center">Nenhum motorista
-                                        encontrado.</li>
-                                <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
-                            </ul>
-                        </div>
+                        <select id="driver_id" wire:model="driver_id"
+                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base">
+                            <option value="">Selecione o condutor...</option>
+                            <!--[if BLOCK]><![endif]--><?php $__currentLoopData = $authorizedDrivers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $driver): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <option value="<?php echo e($driver->id); ?>"><?php echo e($driver->name); ?></option>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><!--[if ENDBLOCK]><![endif]-->
+                        </select>
                         <?php if (isset($component)) { $__componentOriginalf94ed9c5393ef72725d159fe01139746 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalf94ed9c5393ef72725d159fe01139746 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.input-error','data' => ['messages' => $errors->get('driver_id'),'class' => 'mt-1']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
@@ -604,14 +552,14 @@
 <?php endif; ?>
                         <?php if (isset($component)) { $__componentOriginal18c21970322f9e5c938bc954620c12bb = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal18c21970322f9e5c938bc954620c12bb = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.text-input','data' => ['type' => 'text','id' => 'departure_odometer','class' => 'mt-1 block w-full font-mono text-sm sm:text-base','xOn:input' => '$event.target.value = formatNumber($event.target.value)','wire:model' => 'departure_odometer','placeholder' => 'Ex: 45.120']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.text-input','data' => ['type' => 'tel','id' => 'departure_odometer','class' => 'mt-1 block w-full font-mono text-sm sm:text-base','xOn:input' => '$event.target.value = formatNumber($event.target.value)','wire:model' => 'departure_odometer','placeholder' => 'Ex: 45.120']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('text-input'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['type' => 'text','id' => 'departure_odometer','class' => 'mt-1 block w-full font-mono text-sm sm:text-base','x-on:input' => '$event.target.value = formatNumber($event.target.value)','wire:model' => 'departure_odometer','placeholder' => 'Ex: 45.120']); ?>
+<?php $component->withAttributes(['type' => 'tel','id' => 'departure_odometer','class' => 'mt-1 block w-full font-mono text-sm sm:text-base','x-on:input' => '$event.target.value = formatNumber($event.target.value)','wire:model' => 'departure_odometer','placeholder' => 'Ex: 45.120']); ?>
 <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginal18c21970322f9e5c938bc954620c12bb)): ?>
@@ -685,14 +633,14 @@
                 <div class="mt-4">
                     <?php if (isset($component)) { $__componentOriginale3da9d84bb64e4bc2eeebaafabfb2581 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginale3da9d84bb64e4bc2eeebaafabfb2581 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.input-label','data' => ['for' => 'return_observation','value' => __('Previsão de Retorno / Observação (Opcional)')]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.input-label','data' => ['for' => 'return_observation','value' => __('Previsão de Retorno / Observação Inicial (Opcional)')]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('input-label'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['for' => 'return_observation','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(__('Previsão de Retorno / Observação (Opcional)'))]); ?>
+<?php $component->withAttributes(['for' => 'return_observation','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(__('Previsão de Retorno / Observação Inicial (Opcional)'))]); ?>
 <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginale3da9d84bb64e4bc2eeebaafabfb2581)): ?>
@@ -706,7 +654,7 @@
                     <textarea id="return_observation"
                         class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
                         wire:model="return_observation" rows="2" maxlength="1000"
-                        placeholder="Ex: Previsão de retorno na quinta-feira à tarde."></textarea>
+                        placeholder="Ex: Carro com arranhão na porta; Previsão de retorno amanhã."></textarea>
                 </div>
             </div>
 
@@ -733,7 +681,6 @@
 <?php $component = $__componentOriginal9f64f32e90b9102968f2bc548315018c; ?>
 <?php unset($__componentOriginal9f64f32e90b9102968f2bc548315018c); ?>
 <?php endif; ?>
-
     
     
     
@@ -835,6 +782,54 @@
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
 <?php $component->withAttributes(['messages' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($errors->get('arrival_odometer')),'class' => 'mt-2']); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalf94ed9c5393ef72725d159fe01139746)): ?>
+<?php $attributes = $__attributesOriginalf94ed9c5393ef72725d159fe01139746; ?>
+<?php unset($__attributesOriginalf94ed9c5393ef72725d159fe01139746); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalf94ed9c5393ef72725d159fe01139746)): ?>
+<?php $component = $__componentOriginalf94ed9c5393ef72725d159fe01139746; ?>
+<?php unset($__componentOriginalf94ed9c5393ef72725d159fe01139746); ?>
+<?php endif; ?>
+                    </div>
+
+                    
+                    <div class="mt-4 pt-4 border-t border-gray-100">
+                        <?php if (isset($component)) { $__componentOriginale3da9d84bb64e4bc2eeebaafabfb2581 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginale3da9d84bb64e4bc2eeebaafabfb2581 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.input-label','data' => ['for' => 'arrival_observation','value' => 'Observações do Retorno (Ocorrências, atrasos, etc.)','class' => 'font-bold text-gray-700']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('input-label'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['for' => 'arrival_observation','value' => 'Observações do Retorno (Ocorrências, atrasos, etc.)','class' => 'font-bold text-gray-700']); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginale3da9d84bb64e4bc2eeebaafabfb2581)): ?>
+<?php $attributes = $__attributesOriginale3da9d84bb64e4bc2eeebaafabfb2581; ?>
+<?php unset($__attributesOriginale3da9d84bb64e4bc2eeebaafabfb2581); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginale3da9d84bb64e4bc2eeebaafabfb2581)): ?>
+<?php $component = $__componentOriginale3da9d84bb64e4bc2eeebaafabfb2581; ?>
+<?php unset($__componentOriginale3da9d84bb64e4bc2eeebaafabfb2581); ?>
+<?php endif; ?>
+                        <textarea id="arrival_observation"
+                            class="mt-2 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 text-sm"
+                            wire:model="return_observation" rows="3" maxlength="1000"
+                            placeholder="Ex: Carro retornou com pneu esquerdo furado..."></textarea>
+                        <?php if (isset($component)) { $__componentOriginalf94ed9c5393ef72725d159fe01139746 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalf94ed9c5393ef72725d159fe01139746 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.input-error','data' => ['messages' => $errors->get('return_observation'),'class' => 'mt-1']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('input-error'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['messages' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($errors->get('return_observation')),'class' => 'mt-1']); ?>
 <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginalf94ed9c5393ef72725d159fe01139746)): ?>

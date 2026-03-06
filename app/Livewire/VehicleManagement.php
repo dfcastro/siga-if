@@ -11,7 +11,7 @@ use Illuminate\Support\Str;
 use Livewire\WithPagination;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth; // <-- Garanta que Auth está importado
+use Illuminate\Support\Facades\Auth;
 
 #[Layout('layouts.app')]
 class VehicleManagement extends Component
@@ -24,7 +24,6 @@ class VehicleManagement extends Component
     public string $color = '';
     public $vehicleId;
     public string $type = 'Particular';
-    // public $driver_id = '';
     public array $selected_drivers = [];
     public string $driver_search = '';
     public bool $show_driver_dropdown = false;
@@ -45,7 +44,7 @@ class VehicleManagement extends Component
     {
         return ['header' => 'Gerenciamento de Veículos'];
     }
-    
+
     public function mount()
     {
         $user = Auth::user();
@@ -55,6 +54,7 @@ class VehicleManagement extends Component
             $this->type = 'Oficial';
         }
     }
+
     // --- LÓGICA DE BUSCA DE MOTORISTA ---
     public function getFoundDriversProperty()
     {
@@ -77,19 +77,16 @@ class VehicleManagement extends Component
 
     public function selectDriver($id, $name)
     {
-        // Verifica se o motorista já está na lista para não duplicar
         $exists = collect($this->selected_drivers)->contains('id', $id);
 
         if (!$exists) {
             $this->selected_drivers[] = ['id' => $id, 'name' => $name];
         }
 
-        // Limpa o campo de busca, mas mantém a dropdown fechada
         $this->driver_search = '';
         $this->show_driver_dropdown = false;
     }
 
-    // Adicione esta nova função para remover a tag do motorista
     public function removeDriver($id)
     {
         $this->selected_drivers = collect($this->selected_drivers)
@@ -108,14 +105,6 @@ class VehicleManagement extends Component
         $this->resetPage('historyPage');
     }
 
-    // ### ADICIONE ESTA FUNÇÃO AQUI ###
-    /**
-     * Verifica se o usuário atual pode gerenciar um veículo específico ou um tipo de veículo.
-     *
-     * @param Vehicle|null $vehicle O veículo a ser verificado (para editar/excluir).
-     * @param string|null $requestedType O tipo de veículo solicitado (para criar).
-     * @return bool
-     */
     public function canManageVehicle(Vehicle $vehicle = null, string $requestedType = null): bool
     {
         $user = Auth::user();
@@ -123,41 +112,35 @@ class VehicleManagement extends Component
 
         if (!$targetType) {
             return false;
-        } // Se não houver tipo, nega
+        }
         if ($user->role === 'admin') {
             return true;
-        } // Admin pode tudo
+        }
 
         if ($user->role === 'fiscal') {
             if (!$user->fiscal_type) {
                 return false;
-            } // Fiscal sem tipo não pode
+            }
             if ($user->fiscal_type === 'official' && $targetType === 'Oficial') return true;
             if ($user->fiscal_type === 'private' && $targetType === 'Particular') return true;
             if ($user->fiscal_type === 'both') return true;
         }
 
         if ($user->role === 'porteiro') {
-            if ($targetType === 'Particular') return true; // Porteiro só Particular
+            if ($targetType === 'Particular') return true;
         }
 
-        return false; // Nega por padrão
+        return false;
     }
-    // ### FIM DA FUNÇÃO ADICIONADA ###
 
-    /**
-     * Verifica se o usuário tem permissão para visualizar o botão de "Novo Veículo".
-     */
     public function canCreateVehicle(): bool
     {
         $user = Auth::user();
 
-        // Admin e Porteiro sempre podem criar
         if (in_array($user->role, ['admin', 'porteiro'])) {
             return true;
         }
 
-        // Fiscal pode criar desde que tenha um tipo de fiscalização atribuído
         if ($user->role === 'fiscal' && in_array($user->fiscal_type, ['official', 'private', 'both'])) {
             return true;
         }
@@ -166,13 +149,12 @@ class VehicleManagement extends Component
     }
 
 
-    // --- RENDERIZAÇÃO (COM FILTRO) ---
+    // --- RENDERIZAÇÃO (COM FILTRO E HISTÓRICO APRIMORADO) ---
     public function render()
     {
         $query = Vehicle::with('drivers');
         $user = Auth::user();
 
-        // Filtro principal baseado no perfil
         if ($user->role === 'fiscal') {
             if ($user->fiscal_type === 'official') {
                 $query->where('type', 'Oficial');
@@ -183,7 +165,6 @@ class VehicleManagement extends Component
             $query->where('type', 'Particular');
         }
 
-        // Filtro de lixeira (aplicando permissão também)
         if ($this->filter === 'trashed') {
             $query->onlyTrashed();
             if ($user->role === 'fiscal' && $user->fiscal_type === 'official') {
@@ -197,7 +178,6 @@ class VehicleManagement extends Component
             }
         }
 
-        // Filtro de busca
         if (!empty($this->search)) {
             $query->where(function ($subQuery) {
                 $searchTerm = '%' . $this->search . '%';
@@ -211,11 +191,55 @@ class VehicleManagement extends Component
         }
         $vehicles = $query->orderBy('model', 'asc')->paginate(10);
 
-        // Lógica de Histórico
+        // ========================================================
+        // NOVA LÓGICA DE HISTÓRICO (Com Odômetro, Porteiros, etc)
+        // ========================================================
         $vehicleHistoryPaginator = null;
         if ($this->isHistoryModalOpen && $this->vehicleForHistory) {
-            $private = DB::table('private_entries')->join('drivers', 'private_entries.driver_id', '=', 'drivers.id')->select(DB::raw("'Particular' as type"), 'private_entries.entry_at as start_time', 'private_entries.exit_at as end_time', 'drivers.name as driver_name', 'private_entries.entry_reason as detail')->where('private_entries.vehicle_id', $this->vehicleForHistory->id);
-            $official = DB::table('official_trips')->join('drivers', 'official_trips.driver_id', '=', 'drivers.id')->select(DB::raw("'Oficial' as type"), 'official_trips.departure_datetime as start_time', 'official_trips.arrival_datetime as end_time', 'drivers.name as driver_name', 'official_trips.destination as detail')->where('official_trips.vehicle_id', $this->vehicleForHistory->id);
+
+            // Busca de Particulares com colunas nulas para parear com as Oficiais
+            $private = DB::table('private_entries')
+                ->join('drivers', 'private_entries.driver_id', '=', 'drivers.id')
+                ->leftJoin('users as guard_in', 'private_entries.guard_on_entry_id', '=', 'guard_in.id')
+                ->leftJoin('users as guard_out', 'private_entries.guard_on_exit_id', '=', 'guard_out.id')
+                ->select(
+                    DB::raw("'Particular' as type"),
+                    'private_entries.entry_at as start_time',
+                    'private_entries.exit_at as end_time',
+                    'drivers.name as driver_name',
+                    'private_entries.entry_reason as detail',
+                    DB::raw("NULL as departure_odometer"),
+                    DB::raw("NULL as arrival_odometer"),
+                    DB::raw("NULL as distance_traveled"),
+                    DB::raw("NULL as passengers"),
+                    DB::raw("NULL as return_observation"),
+                    'guard_in.name as guard_start',
+                    'guard_out.name as guard_end'
+                )
+                ->where('private_entries.vehicle_id', $this->vehicleForHistory->id);
+
+            
+            // Busca de Oficiais
+            $official = DB::table('official_trips')
+                ->join('drivers', 'official_trips.driver_id', '=', 'drivers.id')
+                ->leftJoin('users as guard_out', 'official_trips.guard_on_departure_id', '=', 'guard_out.id')
+                ->leftJoin('users as guard_in', 'official_trips.guard_on_arrival_id', '=', 'guard_in.id')
+                ->select(
+                    DB::raw("'Oficial' as type"),
+                    'official_trips.departure_datetime as start_time',
+                    'official_trips.arrival_datetime as end_time',
+                    'drivers.name as driver_name',
+                    'official_trips.destination as detail',
+                    'official_trips.departure_odometer',
+                    'official_trips.arrival_odometer',
+                    // CORREÇÃO: O Banco de dados faz a conta da distância na hora da busca
+                    DB::raw('(official_trips.arrival_odometer - official_trips.departure_odometer) as distance_traveled'),
+                    'official_trips.passengers',
+                    'official_trips.return_observation',
+                    'guard_out.name as guard_start',
+                    'guard_in.name as guard_end'
+                )
+                ->where('official_trips.vehicle_id', $this->vehicleForHistory->id);
 
             if (!empty($this->historySearch)) {
                 $searchTerm = '%' . $this->historySearch . '%';
@@ -223,7 +247,9 @@ class VehicleManagement extends Component
                 $official->where(fn($q) => $q->where('drivers.name', 'like', $searchTerm)->orWhere('official_trips.destination', 'like', $searchTerm));
             }
 
-            $vehicleHistoryPaginator = $private->unionAll($official)->orderBy('start_time', 'desc')->paginate(5, ['*'], 'historyPage');
+            $vehicleHistoryPaginator = $private->unionAll($official)
+                ->orderBy('start_time', 'desc')
+                ->paginate(5, ['*'], 'historyPage');
         }
 
         return view('livewire.vehicle-management', [
@@ -232,7 +258,7 @@ class VehicleManagement extends Component
         ]);
     }
 
-    // --- AÇÕES DO CRUD (usando a função canManageVehicle) ---
+    // --- AÇÕES DO CRUD ---
     public function store()
     {
         if (!$this->canManageVehicle(requestedType: $this->type)) {
@@ -244,7 +270,6 @@ class VehicleManagement extends Component
             'model' => 'required|string|max:25',
             'color' => 'required|string|max:20',
             'type' => 'required|string|in:Oficial,Particular',
-            // REMOVA a linha de validação do 'driver_id' daqui
         ], ['license_plate.regex' => 'O formato da placa é inválido.']);
 
         $vehicle = Vehicle::updateOrCreate(['id' => $this->vehicleId], [
@@ -254,15 +279,12 @@ class VehicleManagement extends Component
             'type'          => $validatedData['type'],
         ]);
 
-        // --- NOVA LÓGICA DE VÍNCULO MULTIPLO ---
         if ($validatedData['type'] === 'Particular' && count($this->selected_drivers) > 0) {
-            // Extrai apenas os IDs do array de selected_drivers
             $driverIds = array_column($this->selected_drivers, 'id');
-            $vehicle->drivers()->sync($driverIds); // Vincula todos os motoristas
+            $vehicle->drivers()->sync($driverIds);
         } else {
-            $vehicle->drivers()->detach(); // Limpa vínculos se for Oficial ou se não houver motoristas
+            $vehicle->drivers()->detach();
         }
-        // ---------------------------------------
 
         session()->flash('successMessage', $this->vehicleId ? 'Veículo atualizado!' : 'Veículo criado!');
         $this->closeModal();
@@ -278,7 +300,6 @@ class VehicleManagement extends Component
 
     public function edit($id)
     {
-        // Limpa qualquer mensagem de erro que tenha ficado presa de uma tentativa anterior
         $this->resetValidation();
 
         $vehicle = Vehicle::withTrashed()->findOrFail($id);
@@ -309,7 +330,6 @@ class VehicleManagement extends Component
         if ($user->role === 'fiscal') {
             if ($user->fiscal_type === 'official') $defaultType = 'Oficial';
         }
-        // Atualize a lista de resets adicionando o 'selected_drivers'
         $this->reset(['license_plate', 'model', 'color', 'vehicleId', 'driver_search', 'show_driver_dropdown', 'selected_drivers']);
         $this->type = $defaultType;
         $this->resetErrorBag();
@@ -320,8 +340,6 @@ class VehicleManagement extends Component
         $this->isModalOpen = false;
         $this->resetInputFields();
     }
-
-
 
     // --- MÉTODOS DE EXCLUSÃO ---
     public function confirmDelete($id)

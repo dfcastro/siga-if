@@ -3,19 +3,20 @@
 
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Relatório de Frota Oficial</title>
+    <title>Extrato de Frota Oficial</title>
     <style>
         body {
             font-family: 'Helvetica', sans-serif;
             font-size: 8px;
             margin: 10px;
-            color: #333;
+            color: #222;
         }
 
         .header-table {
             width: 100%;
-            border-bottom: 1px solid #333;
-            padding-bottom: 8px;
+            border-bottom: 2px solid #2c5282;
+            /* Cor mais institucional */
+            padding-bottom: 10px;
             margin-bottom: 15px;
         }
 
@@ -36,102 +37,86 @@
             text-align: center;
         }
 
-        .header-text h4,
-        .header-text h5 {
-            margin: 0;
-            font-weight: normal;
-        }
-
         .header-text h4 {
-            font-size: 10px;
+            font-size: 11px;
             font-weight: bold;
+            margin: 0;
+            text-transform: uppercase;
+            color: #1a202c;
         }
 
         .header-text h5 {
-            font-size: 8px;
+            font-size: 9px;
+            margin: 3px 0 0 0;
+            font-weight: normal;
+            color: #4a5568;
         }
 
-        .details {
+        .details-box {
+            background-color: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            padding: 8px 12px;
             margin-bottom: 15px;
-            border-collapse: collapse;
             width: 100%;
+            box-sizing: border-box;
         }
 
-        .details td {
-            border: 1px solid #ddd;
-            padding: 5px;
-            font-size: 12px;
-            background-color: #f9f9f9;
+        .details-box table {
+            width: 100%;
+            border: none;
+        }
+
+        .details-box td {
+            font-size: 9px;
+            border: none;
+            padding: 2px 0;
+            color: #2d3748;
         }
 
         table.main {
             width: 100%;
             border-collapse: collapse;
             table-layout: fixed;
-            margin-bottom: 40px;
-            /* Espaço antes da assinatura */
-            /* ### NOVO: Tentar forçar a não quebra antes/depois da tabela inteira ### */
-            page-break-before: auto;
-            page-break-after: auto;
-            page-break-inside: auto;
-
-            /* Pode remover se causar problemas */
+            margin-bottom: 30px;
         }
 
         th,
         td {
-            border: 1px solid #ccc;
-            padding: 4px;
+            border: 1px solid #cbd5e1;
+            padding: 5px 4px;
             text-align: center;
-            font-size: 10px;
+            font-size: 9px;
             vertical-align: middle;
             word-wrap: break-word;
-            /* ### NOVO: Tentar forçar a não quebra DENTRO das células ### */
-            page-break-inside: avoid !important;
         }
 
         th {
-            /* Estilos do TH mantidos */
-            background-color: #f2f2f2;
+            background-color: #edf2f7;
             font-weight: bold;
-            font-size: 7px;
+            font-size: 8px;
             text-transform: uppercase;
-            white-space: nowrap;
+            color: #4a5568;
         }
 
-        tr {
-            /* ### MODIFICADO: Mantém o avoid, mas remove !important por agora ### */
-            /* page-break-inside: avoid !important; */
-            page-break-inside: avoid;
-            /* ### NOVO: Tenta explicitamente impedir quebras antes/depois de CADA linha ### */
-            page-break-before: auto;
-            page-break-after: auto;
+        tr:nth-child(even) {
+            background-color: #fbfbfc;
         }
 
         thead {
             display: table-header-group;
-            /* ### NOVO: Tentar forçar a não quebra antes/depois do cabeçalho ### */
-            page-break-before: auto;
-            page-break-after: auto;
         }
 
-        tbody {
-            /* ### NOVO: Tentar forçar a não quebra antes/depois do corpo ### */
-            page-break-before: auto;
-            page-break-after: auto;
-        }
-
-        tfoot {
-            display: table-row-group;
-            /* ### NOVO: Tentar forçar a não quebra antes/depois do rodapé da tabela ### */
-            page-break-before: auto;
-            /* Pode ajudar a manter o tfoot junto */
-            page-break-after: auto;
+        tr {
+            page-break-inside: avoid;
         }
 
         .total-row td {
             font-weight: bold;
-            background-color: #f8f8f8;
+            background-color: #e2e8f0;
+            font-size: 10px;
+            color: #1a202c;
+            padding: 6px;
         }
 
         .no-break {
@@ -139,179 +124,183 @@
         }
 
         .observation-row td {
-            font-size: 7px;
-            color: #555;
-            padding: 2px 4px;
-            border-top: none;
-            background-color: #fdfdfd;
+            font-size: 8px;
+            color: #4a5568;
+            padding: 4px 6px;
+            background-color: #fffaf0;
+            border-top: 1px dashed #cbd5e1;
+            text-align: left;
         }
 
-        /* Estilos para Assinatura */
-        .signature-section {
+        /* Assinatura */
+        .signature-wrapper {
+            width: 100%;
+            margin-top: 50px;
+            page-break-inside: avoid;
+        }
+
+        .signature-box {
             width: 250px;
-            margin: 40px auto 0 auto;
-            /* Margem superior reduzida */
+            margin: 0 auto;
             text-align: center;
-            /* page-break-inside: avoid; */
-            /* REMOVIDO */
         }
 
         .signature-line {
-            border-top: 1px solid #333;
-            padding-top: 5px;
+            border-top: 1px solid #000;
+            margin-bottom: 5px;
+        }
+
+        .signature-text {
             font-size: 9px;
+            color: #333;
+        }
+
+        /* Rodapé de Auditoria */
+        .footer {
+            position: fixed;
+            bottom: -10px;
+            left: 0;
+            right: 0;
+            height: 20px;
+            font-size: 7px;
+            border-top: 1px solid #cbd5e1;
+            padding-top: 4px;
+            color: #718096;
+            display: flex;
+            justify-content: space-between;
         }
     </style>
 </head>
 
 <body>
-    {{-- Script PHP para rodapé --}}
     <script type="text/php">
-        if (isset($pdf)) { /* ... (script mantido) ... */ }
+        if (isset($pdf)) { 
+            $text = "Página {PAGE_NUM} de {PAGE_COUNT}";
+            $size = 7;
+            $font = $fontMetrics->getFont("Helvetica");
+            $width = $fontMetrics->get_text_width($text, $font, $size) / 2;
+            $x = ($pdf->get_width() - $width) - 20;
+            $y = $pdf->get_height() - 20;
+            $pdf->page_text($x, $y, $text, $font, $size, array(0.44, 0.50, 0.58));
+        }
     </script>
 
-    {{-- Cabeçalho --}}
-    @include('reports.pdf._header', ['title' => 'RELATÓRIO DE UTILIZAÇÃO DA FROTA OFICIAL'])
+    @include('reports.pdf._header', ['title' => 'EXTRATO DE AUDITORIA - FROTA OFICIAL'])
 
-    {{-- Detalhes do Filtro --}}
-    <table class="details">
-        <tr>
-            <td><strong>Período:</strong> {{ $startDate }} a {{ $endDate }}</td>
-            @if ($vehicle)
-                <td><strong>Veículo:</strong> {{ $vehicle->model }} ({{ $vehicle->license_plate }})</td>
-            @endif
-            @if ($driver)
-                <td><strong>Motorista:</strong> {{ $driver->name }}</td>
-            @endif
-        </tr>
-    </table>
+    <div class="details-box">
+        <table>
+            <tr>
+                <td style="width: 33%;"><strong>Período Base:</strong> {{ $startDate }} a {{ $endDate }}</td>
+                <td style="width: 33%;"><strong>Veículo Filtrado:</strong>
+                    {{ $vehicle ? $vehicle->license_plate . ' - ' . $vehicle->model : 'Todos os veículos' }}</td>
+                <td style="width: 34%;"><strong>Condutor Filtrado:</strong>
+                    {{ $driver ? $driver->name : 'Todos os servidores autorizados' }}</td>
+            </tr>
+        </table>
+    </div>
 
-    {{-- Tabela Principal --}}
     <table class="main">
         <colgroup>
-            {{-- ### MODIFICADO: Coluna KM (8%) movida para o final ### --}}
-            <col style="width: 15%;"> {{-- Veículo --}}
-            <col style="width: 15%;"> {{-- Condutor --}}
-            <col style="width: 15%;"> {{-- Partida --}}
-            <col style="width: 15%;"> {{-- Chegada --}}
-            <col style="width: 14%;"> {{-- Destino --}}
-            <col style="width: 9%;"> {{-- Porteiro (Partida) --}}
-            <col style="width: 9%;"> {{-- Porteiro (Chegada) --}}
-            <col style="width: 8%;"> {{-- KM Rodado (NOVO LUGAR) --}}
+            <col style="width: 15%;">
+            <col style="width: 15%;">
+            <col style="width: 14%;">
+            <col style="width: 14%;">
+            <col style="width: 16%;">
+            <col style="width: 9%;">
+            <col style="width: 9%;">
+            <col style="width: 8%;">
         </colgroup>
         <thead>
             <tr>
-                {{-- ### MODIFICADO: Coluna KM Rodado movida para o final ### --}}
-                <th>Veículo (Placa)</th>
-                <th>Condutor</th>
-                <th>Partida (Data/Hora - KM)</th>
-                <th>Chegada (Data/Hora - KM)</th>
-                <th>Destino</th>
-                <th>Porteiro (Partida)</th>
-                <th>Porteiro (Chegada)</th>
-                <th style="text-align: center;">KM Rodado</th> {{-- NOVO LUGAR e centralizado --}}
+                <th>Viatura (Placa)</th>
+                <th>Servidor / Condutor</th>
+                <th>Partida <br>(Data/Hora - KM)</th>
+                <th>Chegada <br>(Data/Hora - KM)</th>
+                <th>Destino Registrado</th>
+                <th>Porteiro<br>(Partida)</th>
+                <th>Porteiro<br>(Chegada)</th>
+                <th>Distância<br>Rodada</th>
             </tr>
         </thead>
         <tbody>
             @forelse ($trips as $trip)
                 <tr>
-                    {{-- Veículo --}}
-                    <td>{{ $trip->vehicle?->model ?? 'N/A' }}<br><small style="color: #555;"
-                            class="no-break">({{ $trip->vehicle?->license_plate ?? 'N/A' }})</small></td>
-
-                    {{-- ### MODIFICADO: Condutor agora inclui Passageiros ### --}}
+                    <td>
+                        <strong>{{ $trip->vehicle?->model ?? 'N/A' }}</strong><br>
+                        <span
+                            style="color: #4a5568; font-family: monospace;">{{ $trip->vehicle?->license_plate ?? 'N/A' }}</span>
+                    </td>
                     <td>
                         {{ $trip->driver?->name ?? 'N/A' }}
                         @if ($trip->passengers)
-                            <br><small style="color: #444; font-size: 7px;">
-                                <strong>Passag.:</strong> {{ $trip->passengers }}
-                            </small>
+                            <br><span style="color: #4a5568; font-size: 7px;">👤
+                                {{ Str::limit($trip->passengers, 30) }}</span>
                         @endif
                     </td>
-
-                    {{-- Partida --}}
                     <td class="no-break">
-                        {{ $trip->departure_datetime?->format('d/m H:i') }}<br><small>{{ number_format($trip->departure_odometer, 0, ',', '.') }}
-                            km</small></td>
-
-                    {{-- Chegada --}}
-                    <td class="no-break">
-                        {{ $trip->arrival_datetime?->format('d/m H:i') ?? '-' }}<br><small>{{ $trip->arrival_odometer ? number_format($trip->arrival_odometer, 0, ',', '.') . ' km' : '-' }}</small>
+                        {{ $trip->departure_datetime?->format('d/m/y H:i') }}<br>
+                        <span style="color: #718096;">KM:
+                            {{ number_format($trip->departure_odometer, 0, ',', '.') }}</span>
                     </td>
-
-                    {{-- Destino --}}
+                    <td class="no-break">
+                        {{ $trip->arrival_datetime?->format('d/m/y H:i') ?? 'Em viagem' }}<br>
+                        <span style="color: #718096;">KM:
+                            {{ $trip->arrival_odometer ? number_format($trip->arrival_odometer, 0, ',', '.') : '-' }}</span>
+                    </td>
                     <td>{{ $trip->destination }}</td>
-
-                    {{-- Porteiros --}}
                     <td>{{ $trip->guardDeparture?->name ?? 'N/A' }}</td>
                     <td>{{ $trip->guardArrival?->name ?? 'N/A' }}</td>
-
-                    {{-- ### MODIFICADO: KM Rodado movido para o final e centralizado ### --}}
-                    <td style="text-align: center;">{{ $trip->distance_traveled ?? 'N/A' }}</td>
+                    <td style="font-weight: bold;">
+                        {{ $trip->distance_traveled ? $trip->distance_traveled . ' km' : '-' }}</td>
                 </tr>
-
-                {{-- ### MODIFICADO: Linha de observação agora SÓ para Obs. Retorno ### --}}
                 @if ($trip->return_observation)
                     <tr class="observation-row">
-                        <td colspan="8"> {{-- Colspan 8 está correto --}}
-                            <strong>Obs. Retorno:</strong> {{ $trip->return_observation }}
+                        <td colspan="8">
+                            <strong>Observação no Retorno:</strong> {{ $trip->return_observation }}
                         </td>
                     </tr>
                 @endif
             @empty
                 <tr>
-                    <td colspan="8" style="text-align: center; padding: 20px;">Nenhuma viagem encontrada.</td>
+                    <td colspan="8" style="text-align: center; padding: 30px; color: #718096;">Nenhuma movimentação
+                        oficial encontrada para os filtros selecionados.</td>
                 </tr>
             @endforelse
         </tbody>
         @if ($trips->isNotEmpty())
             <tfoot class="total-row">
                 <tr>
-                    {{-- ### MODIFICADO: Colspan ajustado para 7 (para KM ficar na 8ª coluna) ### --}}
-
-                    {{-- O texto ocupa as 7 primeiras colunas --}}
-                    <td colspan="7" style="text-align: right; border-right: none;"><strong>Distância Total Rodada no
-                            Período:</strong></td>
-
-                    {{-- O valor formatado + " km" ocupam a 8ª coluna (KM Rodado) --}}
-                    <td style="text-align: center; border-left: none;">
-                        <strong>{{ number_format($totalKm, 0, ',', '.') }} km</strong>
+                    <td colspan="7" style="text-align: right; border-right: none;">Total de viagens listadas:
+                        {{ $trips->count() }} | <strong>Quilometragem Total do Período:</strong></td>
+                    <td style="text-align: center; border-left: none;">{{ number_format($totalKm, 0, ',', '.') }} km
                     </td>
                 </tr>
             </tfoot>
         @endif
     </table>
 
-    {{-- ### INÍCIO - SEÇÃO DE ASSINATURA CORRIGIDA ### --}}
-    <div
-        style="margin-top: 50px; /* Espaçamento */
-                page-break-inside: avoid;
-                width: 280px; /* Largura ajustada */
-                margin-left: auto;
-                margin-right: auto;
-                text-align: center;">
-
-        {{-- Apenas a linha --}}
-        <div style="border-top: 1px solid #333; height: 1px; margin-bottom: 5px;">
-            {{-- Linha sem texto interno para melhor alinhamento --}}
-        </div>
-
-        {{-- Texto abaixo da linha --}}
-        <div style="font-size: 9px;">
-            {{-- Usa a variável $generatorName passada pelo Controller --}}
-            {{ $generatorName ?? 'Usuário Desconhecido' }}<br>
-            <strong>Responsável pela Emissão</strong> {{-- Texto mais apropriado --}}
+    <div class="signature-wrapper">
+        <div class="signature-box">
+            <div class="signature-line"></div>
+            <div class="signature-text">
+                <strong>{{ $generatorName ?? 'Sistema' }}</strong><br>
+                Responsável pela Geração do Documento<br>
+                <span style="color: #718096; font-size: 7px;">Perfil:
+                    {{ Str::upper($generatorRole ?? 'Usuário') }}</span>
+            </div>
         </div>
     </div>
-    {{-- ### FIM - SEÇÃO DE ASSINATURA CORRIGIDA ### --}}
 
-
-    {{-- Rodapé da Página --}}
     <div class="footer">
-        <span class="generation-date">Gerado em: {{ now()->format('d/m/Y H:i') }}</span>
-        <span class="page-number"></span>
+        <table style="width: 100%; border: none; font-size: 7px; color: #718096;">
+            <tr>
+                <td style="text-align: left; border: none;">SIGA-IF | Sistema de Gestão de Frotas e Portaria</td>
+                <td style="text-align: center; border: none;">Documento de Auditoria - Gerado em
+                    {{ now()->format('d/m/Y \à\s H:i:s') }}</td>
+                <td style="text-align: right; border: none;"></td>
+            </tr>
+        </table>
     </div>
-
 </body>
 
 </html>

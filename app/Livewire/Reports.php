@@ -2,60 +2,51 @@
 
 namespace App\Livewire;
 
-
 use Livewire\Component;
 use App\Models\OfficialTrip;
 use App\Models\PrivateEntry;
 use App\Models\Vehicle;
 use App\Models\Driver;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth; // Adicionado, caso precise no futuro
+use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\WithPagination;
-use Illuminate\Support\Str; 
+use Illuminate\Support\Str;
 
 #[Layout('layouts.app')]
 class Reports extends Component
 {
     use WithPagination;
 
-    // --- Propriedades para os Filtros ---
-    public string $reportType = 'official'; // 'official' ou 'private' (valor ajustado)
-    // ### ALTERAÇÃO: Troca startDate/endDate por selectedMonth ###
-    // public $startDate;
-    // public $endDate;
+    public string $reportType = 'official';
     public string $selectedMonth;
 
-    // Mantidos como no seu original
-    public $selectedVehicle = '';
-    public $selectedDriver = '';
+    public $driver_id = null;
+    public $vehicle_id = null;
 
-    // --- Propriedades do Dashboard REMOVIDAS ---
+    public string $driver_search = '';
+    public string $driver_selected_text = '';
+    public array $driver_results = [];
 
-    /**
-     * Define o cabeçalho da página.
-     */
+    public string $vehicle_search = '';
+    public string $vehicle_selected_text = '';
+    public array $vehicle_results = [];
+
     public function layoutData()
     {
-        // Simplificado
-        return ['header' => 'Relatórios Gerenciais'];
+        return ['header' => 'Pesquisa e Extratos Avançados'];
     }
 
-    /**
-     * Inicializa o componente.
-     */
     public function mount()
     {
-        // ### ALTERAÇÃO: Define o MÊS ANTERIOR como padrão ###
         $this->selectedMonth = Carbon::now()->subMonthNoOverflow()->format('Y-m');
-        // Dashboard removido
+
+        $user = Auth::user();
+        if ($user->role === 'fiscal' && $user->fiscal_type === 'private') {
+            $this->reportType = 'private';
+        }
     }
 
-    /**
-     * Removemos generateReport, a filtragem é reativa.
-     * Adicionamos validação para o mês.
-     */
     protected function rules()
     {
         return [
@@ -64,7 +55,6 @@ class Reports extends Component
                 'date_format:Y-m',
                 function ($attribute, $value, $fail) {
                     try {
-                        // Impede seleção de mês futuro
                         if (Carbon::parse($value . '-01')->startOfMonth()->isFuture()) {
                             $fail('Não é possível selecionar um mês futuro.');
                         }
@@ -72,140 +62,184 @@ class Reports extends Component
                         $fail('Formato de mês inválido.');
                     }
                 }
-            ],
-            // Validação básica para filtros opcionais
-            'selectedVehicle' => 'nullable|exists:vehicles,id',
-            'selectedDriver' => 'nullable|exists:drivers,id',
+            ]
         ];
     }
 
-
-    /**
-     * Reseta filtros específicos ao mudar o tipo de relatório.
-     */
     public function updatedReportType()
     {
-        $this->reset('selectedVehicle', 'selectedDriver');
-        $this->resetPage();
+        $this->clearFilters();
     }
 
-    /**
-     * Reseta a paginação ao mudar filtros e valida o mês.
-     */
     public function updated($property)
     {
-        if (in_array($property, ['selectedMonth', 'selectedVehicle', 'selectedDriver'])) {
-            // Valida apenas o campo alterado
-            $this->validateOnly($property);
+        if (in_array($property, ['selectedMonth', 'driver_id', 'vehicle_id'])) {
+            if ($property === 'selectedMonth') $this->validateOnly($property);
             $this->resetPage();
         }
     }
 
-    /**
-     * Propriedade computada para veículos (mantida como no seu original).
-     * Retorna array [id => description] para o select.
-     */
-    public function getVehiclesProperty()
+    public function getOfficialVehiclesProperty()
     {
-        $query = Vehicle::query()->select('id', 'model', 'license_plate')->withTrashed(); // Inclui lixeira
-
-        if ($this->reportType === 'official') { // Usa 'official'
-            $query->where('type', 'Oficial');
-        }
-
-        // Usa mapWithKeys como no seu original
-        return $query->orderBy('model')->get()->mapWithKeys(function ($vehicle) {
-            return [$vehicle->id => "[{$vehicle->license_plate}] " . Str::limit($vehicle->model, 30)]; // Limita o nome
-        });
+        return Vehicle::withTrashed()->where('type', 'Oficial')->orderBy('model')->get();
     }
 
-    /**
-     * Propriedade computada para motoristas (mantida como no seu original).
-     * Retorna array [id => name] para o select.
-     */
-    public function getDriversProperty()
+    public function getOfficialDriversProperty()
     {
-        $query = Driver::query()->select('id', 'name')->withTrashed(); // Inclui lixeira
-
-        if ($this->reportType === 'official') { // Usa 'official'
-            $query->where('is_authorized', true);
-        }
-
-        // Usa pluck como no seu original
-        return $query->orderBy('name')->pluck('name', 'id');
+        return Driver::withTrashed()->where('is_authorized', true)->orderBy('name')->get();
     }
 
+    public function runSearch($model, $value)
+    {
+        $value = trim($value);
+
+        if (strlen($value) < 2) {
+            if ($model === 'driver_search') $this->driver_results = [];
+            if ($model === 'vehicle_search') $this->vehicle_results = [];
+            return;
+        }
+
+        if ($model === 'driver_search') {
+            $this->driver_results = Driver::withTrashed()
+                ->where('name', 'like', "%{$value}%")
+                ->limit(10)
+                ->get()
+                ->toArray();
+        }
+
+        if ($model === 'vehicle_search') {
+            $this->vehicle_results = Vehicle::withTrashed()
+                ->where('type', 'Particular')
+                ->where(function ($q) use ($value) {
+                    $q->where('model', 'like', "%{$value}%")
+                        ->orWhere('license_plate', 'like', "%{$value}%");
+                })
+                ->limit(10)
+                ->get()
+                ->toArray();
+        }
+    }
+
+    public function selectResult($model, $id, $text)
+    {
+        if ($model === 'driver_search') {
+            $this->driver_id = $id;
+            $this->driver_selected_text = $text;
+            $this->driver_results = [];
+            $this->driver_search = '';
+        } elseif ($model === 'vehicle_search') {
+            $this->vehicle_id = $id;
+            $this->vehicle_selected_text = $text;
+            $this->vehicle_results = [];
+            $this->vehicle_search = '';
+        }
+        $this->resetPage();
+    }
+
+    public function clearSelection($model)
+    {
+        if ($model === 'driver_search') {
+            $this->driver_id = null;
+            $this->driver_selected_text = '';
+            $this->driver_results = [];
+            $this->driver_search = '';
+        } elseif ($model === 'vehicle_search') {
+            $this->vehicle_id = null;
+            $this->vehicle_selected_text = '';
+            $this->vehicle_results = [];
+            $this->vehicle_search = '';
+        }
+        $this->resetPage();
+    }
+
+    public function clearFilters()
+    {
+        $this->selectedMonth = Carbon::now()->subMonthNoOverflow()->format('Y-m');
+        $this->driver_id = null;
+        $this->vehicle_id = null;
+        $this->driver_selected_text = '';
+        $this->vehicle_selected_text = '';
+        $this->resetPage();
+    }
 
     public function render()
     {
-        // --- LÓGICA DO DASHBOARD REMOVIDA ---
+        $user = Auth::user();
+        $isPorteiro = $user->role === 'porteiro';
 
-        // --- LÓGICA DA TABELA DE RELATÓRIOS DETALHADOS ---
+        $canViewPrivate = true;
+        $canViewOfficial = true;
+
+        if ($user->role === 'fiscal') {
+            if ($user->fiscal_type === 'private') $canViewOfficial = false;
+            if ($user->fiscal_type === 'official') $canViewPrivate = false;
+        }
+
         $results = null;
         $startDate = null;
         $endDate = null;
-        $pdfStartDate = null; // Data formatada para link PDF
-        $pdfEndDate = null;   // Data formatada para link PDF
+        $pdfStartDate = null;
+        $pdfEndDate = null;
 
-        // Tenta obter as datas do mês selecionado
         try {
-            // Garante que usa o mês validado mais recente
             $validatedMonth = $this->validateOnly('selectedMonth')['selectedMonth'] ?? $this->selectedMonth;
             $month = Carbon::parse($validatedMonth . '-01');
             $startDate = $month->copy()->startOfMonth();
             $endDate = $month->copy()->endOfMonth();
-            $pdfStartDate = $startDate->format('Y-m-d'); // Formato para URL
-            $pdfEndDate = $endDate->format('Y-m-d');     // Formato para URL
-
+            $pdfStartDate = $startDate->format('Y-m-d');
+            $pdfEndDate = $endDate->format('Y-m-d');
         } catch (\Exception $e) {
-            // Fallback em caso de erro no parse do mês
             $fallbackDate = Carbon::now()->subMonthNoOverflow();
             $startDate = $fallbackDate->copy()->startOfMonth();
             $endDate = $fallbackDate->copy()->endOfMonth();
             $pdfStartDate = $startDate->format('Y-m-d');
             $pdfEndDate = $endDate->format('Y-m-d');
-            // Atualiza a propriedade pública para refletir o fallback na UI
             $this->selectedMonth = $startDate->format('Y-m');
-            if (!session()->has('error')) {
-                session()->flash('error', 'Mês inválido, mostrando dados do mês anterior.');
-            }
         }
 
+        if ($startDate && $endDate) {
 
-        // Constrói a query baseada no tipo de relatório
-        if ($startDate && $endDate) { // Só executa a query se as datas forem válidas
+            // CONSERTEI AQUI: A divisão limpa entre as Abas
             if ($this->reportType === 'official') {
-                $query = OfficialTrip::with(['vehicle' => fn($q) => $q->withTrashed(), 'driver' => fn($q) => $q->withTrashed()])
+                $query = OfficialTrip::with(['vehicle' => fn($q) => $q->withTrashed(), 'driver' => fn($q) => $q->withTrashed(), 'guardDeparture', 'guardArrival'])
                     ->whereNotNull('arrival_datetime')
                     ->whereBetween('departure_datetime', [$startDate, $endDate]);
-            } else { // private
-                $query = PrivateEntry::with(['vehicle' => fn($q) => $q->withTrashed(), 'driver' => fn($q) => $q->withTrashed()])
+
+                // BARREIRA INVISÍVEL PARA O PORTEIRO (CHEGADAS)
+                if ($isPorteiro) {
+                    $query->where('guard_on_arrival_id', $user->id);
+                }
+            } else {
+                $query = PrivateEntry::with(['vehicle' => fn($q) => $q->withTrashed(), 'driver' => fn($q) => $q->withTrashed(), 'guardEntry', 'guardExit'])
                     ->whereNotNull('exit_at')
                     ->whereBetween('entry_at', [$startDate, $endDate]);
+
+                // BARREIRA INVISÍVEL PARA O PORTEIRO (SAÍDAS)
+                if ($isPorteiro) {
+                    $query->where('guard_on_exit_id', $user->id);
+                }
             }
 
-            // Aplica filtros opcionais (usando nomes originais das propriedades)
-            if ($this->selectedVehicle) {
-                $query->where('vehicle_id', $this->selectedVehicle);
+            if ($this->vehicle_id) {
+                $query->where('vehicle_id', $this->vehicle_id);
             }
-            if ($this->selectedDriver) {
-                $query->where('driver_id', $this->selectedDriver);
+            if ($this->driver_id) {
+                $query->where('driver_id', $this->driver_id);
             }
 
-            // Ordena e pagina
             $results = $query->orderBy($this->reportType === 'official' ? 'departure_datetime' : 'entry_at', 'desc')
                 ->paginate(15);
         } else {
-            // Se as datas não puderam ser calculadas, retorna coleção vazia paginada
             $results = collect()->paginate(15);
         }
 
-
         return view('livewire.reports', [
             'results' => $results,
-            'pdfStartDate' => $pdfStartDate, // Passa data formatada para link
-            'pdfEndDate' => $pdfEndDate,     // Passa data formatada para link
-            // As propriedades selectedVehicle e selectedDriver já são públicas
-        ])->layoutData(['header' => 'Relatórios Gerenciais']);
+            'pdfStartDate' => $pdfStartDate,
+            'pdfEndDate' => $pdfEndDate,
+            'canViewPrivate' => $canViewPrivate,
+            'canViewOfficial' => $canViewOfficial,
+            'isPorteiro' => $isPorteiro
+        ]);
     }
 }

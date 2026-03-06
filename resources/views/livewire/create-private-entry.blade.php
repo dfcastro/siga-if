@@ -79,7 +79,7 @@
                                         <ul class="divide-y divide-gray-100">
                                             @foreach ($searchResults as $result)
                                                 <li class="px-4 py-3 cursor-pointer hover:bg-green-50 text-sm transition-colors"
-                                                    wire:click="selectVehicle({{ $result['id'] }})">
+                                                    wire:click="selectVehicle('{{ $result['id'] }}')">
                                                     {{ $result['text'] }}
                                                 </li>
                                             @endforeach

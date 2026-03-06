@@ -79,7 +79,7 @@
                                         <ul class="divide-y divide-gray-100">
                                             <!--[if BLOCK]><![endif]--><?php $__currentLoopData = $searchResults; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $result): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                                 <li class="px-4 py-3 cursor-pointer hover:bg-green-50 text-sm transition-colors"
-                                                    wire:click="selectVehicle(<?php echo e($result['id']); ?>)">
+                                                    wire:click="selectVehicle('<?php echo e($result['id']); ?>')">
                                                     <?php echo e($result['text']); ?>
 
                                                 </li>
