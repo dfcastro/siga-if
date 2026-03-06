@@ -153,8 +153,14 @@ class DriverManagement extends Component
 
             if (!empty($this->historySearch)) {
                 $searchTerm = '%' . $this->historySearch . '%';
-                $official->where(fn($q) => $q->where('vehicles.license_plate', 'like', $searchTerm)->orWhere('official_trips.destination', 'like', $searchTerm));
-                $private->where(fn($q) => $q->where('vehicles.license_plate', 'like', $searchTerm)->orWhere('private_entries.entry_reason', 'like', $searchTerm));
+
+                $official->where(fn($q) => $q->where('vehicles.license_plate', 'like', $searchTerm)
+                    ->orWhere('vehicles.model', 'like', $searchTerm) // <-- Adicionado Modelo
+                    ->orWhere('official_trips.destination', 'like', $searchTerm));
+
+                $private->where(fn($q) => $q->where('vehicles.license_plate', 'like', $searchTerm)
+                    ->orWhere('vehicles.model', 'like', $searchTerm) // <-- Adicionado Modelo
+                    ->orWhere('private_entries.entry_reason', 'like', $searchTerm));
             }
 
             // O Oficial DEVE vir primeiro no UNION

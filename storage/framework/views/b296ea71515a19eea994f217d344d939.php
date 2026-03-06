@@ -728,7 +728,7 @@
                             </svg>
                         </div>
                         <input wire:model.live.debounce.300ms="historySearch" type="text"
-                            placeholder="Buscar veículo, destino..."
+                            placeholder="Buscar veículo, modelo, destino..."
                             class="block w-full border-gray-300 rounded-md shadow-sm pl-10 focus:border-ifnmg-green focus:ring-ifnmg-green text-sm">
                     </div>
                 </div>
