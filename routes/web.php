@@ -21,6 +21,11 @@ use App\Livewire\ReportStatus;
 */
 
 Route::get('/', function () {
+    // Se o usuário já estiver logado, manda direto pro painel!
+    if (Auth::check()) {
+        return redirect()->route('dashboard');
+    }
+    // Se não estiver, mostra a tela de login
     return view('auth/login');
 });
 

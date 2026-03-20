@@ -110,20 +110,17 @@ class VehicleManagement extends Component
         $user = Auth::user();
         $targetType = $vehicle ? $vehicle->type : $requestedType;
 
-        if (!$targetType) {
-            return false;
-        }
-        if ($user->role === 'admin') {
-            return true;
-        }
+        if (!$targetType) return false;
+        if ($user->role === 'admin') return true;
 
         if ($user->role === 'fiscal') {
-            if (!$user->fiscal_type) {
-                return false;
-            }
+            if (!$user->fiscal_type) return false;
+
+            // O Fiscal Oficial só mexe na Frota Oficial
             if ($user->fiscal_type === 'official' && $targetType === 'Oficial') return true;
-            if ($user->fiscal_type === 'private' && $targetType === 'Particular') return true;
-            if ($user->fiscal_type === 'both') return true;
+
+            // O Fiscal Particular (DIRETOR ADMIN) pode mexer em TUDO (Oficial e Particular)
+            if ($user->fiscal_type === 'private' || $user->fiscal_type === 'both') return true;
         }
 
         if ($user->role === 'porteiro') {
@@ -155,11 +152,10 @@ class VehicleManagement extends Component
         $query = Vehicle::with('drivers');
         $user = Auth::user();
 
+        // Se for Fiscal Oficial, vê só oficial. Se for Particular (Diretor), VÊ TUDO!
         if ($user->role === 'fiscal') {
             if ($user->fiscal_type === 'official') {
                 $query->where('type', 'Oficial');
-            } elseif ($user->fiscal_type === 'private') {
-                $query->where('type', 'Particular');
             }
         } elseif ($user->role === 'porteiro') {
             $query->where('type', 'Particular');
@@ -169,9 +165,6 @@ class VehicleManagement extends Component
             $query->onlyTrashed();
             if ($user->role === 'fiscal' && $user->fiscal_type === 'official') {
                 $query->where('type', 'Oficial');
-            }
-            if ($user->role === 'fiscal' && $user->fiscal_type === 'private') {
-                $query->where('type', 'Particular');
             }
             if ($user->role === 'porteiro') {
                 $query->where('type', 'Particular');
@@ -218,7 +211,7 @@ class VehicleManagement extends Component
                 )
                 ->where('private_entries.vehicle_id', $this->vehicleForHistory->id);
 
-            
+
             // Busca de Oficiais
             $official = DB::table('official_trips')
                 ->join('drivers', 'official_trips.driver_id', '=', 'drivers.id')

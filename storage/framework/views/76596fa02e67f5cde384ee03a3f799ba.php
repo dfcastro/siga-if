@@ -527,7 +527,7 @@
                                 <select wire:model.live="type" id="type"
                                     class="block mt-1 w-full border-gray-300 focus:border-ifnmg-green focus:ring-ifnmg-green rounded-md shadow-sm text-sm">
                                     <?php $user = auth()->user(); ?>
-                                    <!--[if BLOCK]><![endif]--><?php if($user->role === 'admin' || ($user->role === 'fiscal' && in_array($user->fiscal_type, ['official', 'both']))): ?>
+                                    <!--[if BLOCK]><![endif]--><?php if($user->role === 'admin' || ($user->role === 'fiscal')): ?>
                                         <option value="Oficial">Oficial</option>
                                     <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
                                     <!--[if BLOCK]><![endif]--><?php if(
