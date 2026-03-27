@@ -26,8 +26,10 @@ class CreatePrivateEntry extends Component
     public $selectedVehicleId = null;
     public $showExitConfirmationModal = false;
     public $entryToExit = null;
+    public string $observation = '';
     public array $predefinedReasons = [
         'Entrada de Servidor',
+        'Transporte de Alunos (Ônibus/Vans)',
         'Reunião',
         'Entrega de Material',
         'Visita Técnica',
@@ -91,7 +93,7 @@ class CreatePrivateEntry extends Component
     {
         $this->selected_driver_id = $id;
         $this->driver_search = $name;
-        $this->drivers = []; 
+        $this->drivers = [];
     }
 
     public function prepareNewVisitorForm()
@@ -170,14 +172,22 @@ class CreatePrivateEntry extends Component
 
             if ($existingDriver) {
                 $this->addError('new_visitor_document', "Este CPF já está cadastrado para: {$existingDriver->name}. Cancele este formulário e busque pelo nome dele.");
-                return; 
+                return;
             }
         }
 
         $this->validate();
 
         $driverId = $this->selected_driver_id;
-        $finalReason = $this->entry_reason === 'Outro' ? $this->other_reason : $this->entry_reason;
+        // --- LÓGICA BLINDADA DE MOTIVO + OBSERVAÇÃO ---
+        $baseReason = $this->entry_reason === 'Outro' ? $this->other_reason : $this->entry_reason;
+
+        // Só junta a observação se o motivo for de fato o Transporte de Alunos
+        if ($this->entry_reason === 'Transporte de Alunos (Ônibus/Vans)' && !empty($this->observation)) {
+            $finalReason = $baseReason . ' | Obs: ' . $this->observation;
+        } else {
+            $finalReason = $baseReason;
+        }
 
         // 1. Cria o visitante se for o caso
         if ($this->showNewVisitorForm) {
@@ -191,10 +201,7 @@ class CreatePrivateEntry extends Component
             $driverId = $newDriver->id;
         }
 
-        // =========================================================================
-        // MÁGICA DO VÍNCULO AUTOMÁTICO
-        // =========================================================================
-        
+
         // Se o porteiro digitou uma placa que não estava selecionada na busca...
         if (!$this->selectedVehicleId && !empty($this->license_plate)) {
             // Procura o carro. Se não existir, cadastra na hora!
@@ -230,6 +237,8 @@ class CreatePrivateEntry extends Component
             'driver_id' => $driverId,
         ]);
 
+
+
         $this->dispatch('stats-updated');
         $this->successMessage = 'Entrada do veículo ' . strtoupper($this->license_plate) . ' registrada com sucesso!';
         $this->resetForm();
@@ -239,6 +248,7 @@ class CreatePrivateEntry extends Component
     {
         $this->reset();
         $this->suggestedDrivers = [];
+        $this->observation = ''; // <-- LIMPA A OBSERVAÇÃO
     }
 
     public function render()
@@ -295,7 +305,7 @@ class CreatePrivateEntry extends Component
                 : 'Sem motorista vinculado';
 
             $formattedResults->push([
-                'id' => 'V_' . $vehicle->id, 
+                'id' => 'V_' . $vehicle->id,
                 'text' => "VEÍCULO: {$vehicle->license_plate} ({$vehicle->model}) - Motoristas: {$nomesProprietarios}"
             ]);
         }
@@ -310,7 +320,7 @@ class CreatePrivateEntry extends Component
                 }
             } else {
                 $formattedResults->push([
-                    'id' => 'D_' . $driver->id, 
+                    'id' => 'D_' . $driver->id,
                     'text' => "MOTORISTA: {$driver->name} (CPF: {$driver->formatted_document}) - Nenhum veículo vinculado"
                 ]);
             }
@@ -333,7 +343,7 @@ class CreatePrivateEntry extends Component
 
         if ($this->entryToExit) {
             $this->entryToExit->exit_at = now();
-            $this->entryToExit->guard_on_exit_id = auth()->id(); 
+            $this->entryToExit->guard_on_exit_id = auth()->id();
             $this->entryToExit->save();
 
             $this->successMessage = 'Saída do veículo ' . strtoupper($this->entryToExit->license_plate) . ' registrada com sucesso!';
