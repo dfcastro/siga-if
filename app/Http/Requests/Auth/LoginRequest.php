@@ -45,6 +45,12 @@ class LoginRequest extends FormRequest
                     ldap_set_option($ldap_conn, LDAP_OPT_PROTOCOL_VERSION, 3);
                     ldap_set_option($ldap_conn, LDAP_OPT_REFERRALS, 0);
 
+                    
+                    // Desiste se a rede não conectar em 3 segundos
+                    ldap_set_option($ldap_conn, LDAP_OPT_NETWORK_TIMEOUT, 3);
+                    // Desiste se o AD demorar mais de 3 segundos para responder à pesquisa
+                    ldap_set_option($ldap_conn, LDAP_OPT_TIMELIMIT, 3);
+                    // -------------------------------
                     // Conecta no AD com a conta de serviço do pfSense
                     if (@ldap_bind($ldap_conn, $ldap_bind_user, $ldap_bind_pass)) {
 
