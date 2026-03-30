@@ -38,7 +38,7 @@ class LoginRequest extends FormRequest
         $ldap_bind_user = config('services.ldap.username');
         $ldap_bind_pass = config('services.ldap.password');
 
-        if ($ldap_host && $ldap_bind_user) {
+        if ($ldap_host && $ldap_bind_user && function_exists('ldap_connect')) {
             try {
                 $ldap_conn = @ldap_connect($ldap_host);
                 if ($ldap_conn) {

@@ -34,12 +34,12 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
-
-        'ldap' => [
+    'ldap' => [
         'host' => env('LDAP_HOST'),
         'base_dn' => env('LDAP_BASE_DN'),
         'username' => env('LDAP_USERNAME'),
         'password' => env('LDAP_PASSWORD'),
     ],
+
 
 ];
