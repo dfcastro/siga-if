@@ -6,16 +6,17 @@
     <form method="POST" action="{{ route('login') }}">
         @csrf
 
+        
         <div>
-            <x-input-label for="email" value="Email" />
-            <x-text-input id="email" placeholder="Digite seu email" class="block mt-1 w-full" type="email"
+            <x-input-label for="email" value="Nome de Logon (Ex: CPF ou Usuário)" />
+            <x-text-input id="email" placeholder="Digite seu nome de logon da rede" class="block mt-1 w-full" type="text"
                 name="email" :value="old('email')" required autofocus autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+            <x-input-error :messages="$errors->get('email')" class="mt-2 font-bold" />
         </div>
 
         <div class="mt-4">
             <x-input-label for="password" value="Senha" />
-            <x-text-input id="password" placeholder="Digite sua senha" class="block mt-1 w-full" type="password"
+            <x-text-input id="password" placeholder="Digite sua senha do AD ou local" class="block mt-1 w-full" type="password"
                 name="password" required autocomplete="current-password" />
             <x-input-error :messages="$errors->get('password')" class="mt-2" />
         </div>
@@ -35,17 +36,15 @@
 
         {{-- MELHORIA: Exibição de erro específica para o reCAPTCHA --}}
         @if ($errors->has('g-recaptcha-response'))
-            <div class="text-sm text-red-600 mt-2 text-center">
+            <div class="text-sm text-red-600 mt-2 text-center font-bold">
                 Por favor, confirme que você não é um robô.
-            </div>
-        @endif
-
+            </div> @endif
 
         <div class="mt-6">
-            {{-- MELHORIA: Botão com largura total --}}
-            <x-primary-button class="w-full justify-center py-3">
-                ENTRAR
-            </x-primary-button>
+                {{-- MELHORIA: Botão com largura total --}}
+                <x-primary-button class="w-full justify-center py-3 text-lg font-black tracking-wide">
+                    ENTRAR
+                </x-primary-button>
         </div>
     </form>
 </x-guest-layout>
