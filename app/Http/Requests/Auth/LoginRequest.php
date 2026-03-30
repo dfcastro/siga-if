@@ -5,6 +5,7 @@ namespace App\Http\Requests\Auth;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash; // <-- Adicionado para verificar a senha local
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -29,14 +30,14 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        $username = $this->email; // Pode ser "daniel.castro", o CPF, ou o email inteiro
+        $username = $this->email;
         $password = $this->password;
 
         // === 1. TENTATIVA DE AUTENTICAÇÃO VIA ACTIVE DIRECTORY ===
-        $ldap_host = config('services.ldap.host');
-        $ldap_base_dn = config('services.ldap.base_dn');
-        $ldap_bind_user = config('services.ldap.username');
-        $ldap_bind_pass = config('services.ldap.password');
+        $ldap_host = config('services.ldap.host', '');
+        $ldap_base_dn = config('services.ldap.base_dn', '');
+        $ldap_bind_user = config('services.ldap.username', '');
+        $ldap_bind_pass = config('services.ldap.password', '');
 
         if ($ldap_host && $ldap_bind_user && function_exists('ldap_connect')) {
             try {
@@ -44,20 +45,12 @@ class LoginRequest extends FormRequest
                 if ($ldap_conn) {
                     ldap_set_option($ldap_conn, LDAP_OPT_PROTOCOL_VERSION, 3);
                     ldap_set_option($ldap_conn, LDAP_OPT_REFERRALS, 0);
-
-
-                    // Desiste se a rede não conectar em 3 segundos
                     ldap_set_option($ldap_conn, LDAP_OPT_NETWORK_TIMEOUT, 3);
-                    // Desiste se o AD demorar mais de 3 segundos para responder à pesquisa
                     ldap_set_option($ldap_conn, LDAP_OPT_TIMELIMIT, 3);
-                    // -------------------------------
-                    // Conecta no AD com a conta de serviço do pfSense
+
                     if (@ldap_bind($ldap_conn, $ldap_bind_user, $ldap_bind_pass)) {
 
-                        //  Extrai o domínio a partir do Base DN (Ex: DC=srv-debian,DC=ifnmg-almenara -> srv-debian.ifnmg-almenara)
-                        $ad_domain = str_ireplace(['DC=', ','], ['', '.'], $ldap_base_dn);
-
-                        // Filtro de busca "Teia de Aranha": Procura pelo CPF (sAMAccountName), pelo UPN ou forçando a junção do nome com o domínio
+                        $ad_domain = str_ireplace(['DC=', ','], ['', '.'], (string) $ldap_base_dn);
                         $filter = "(|(sAMAccountName={$username})(mail={$username})(userPrincipalName={$username})(userPrincipalName={$username}@{$ad_domain}))";
 
                         $search = @ldap_search($ldap_conn, $ldap_base_dn, $filter);
@@ -69,23 +62,18 @@ class LoginRequest extends FormRequest
                             $user_mail = $entries[0]['mail'][0] ?? null;
                             $user_sam = $entries[0]['samaccountname'][0] ?? null;
 
-                            // O AD prefere autenticar usando o UPN (ex: daniel.castro@srv-debian...). Se não tiver, usa o DN.
                             $login_attribute = $user_upn ? $user_upn : $user_dn;
 
-                            // Tenta logar usando a senha que a pessoa digitou na tela
                             if (@ldap_bind($ldap_conn, $login_attribute, $password)) {
 
-                                // O AD APROVOU A SENHA! Vamos achar o perfil importado no banco de dados do SIGA-IF
                                 $user = \App\Models\User::where('email', $username)
                                     ->orWhere('email', $user_mail)
                                     ->orWhere('email', $user_sam)
                                     ->orWhere('email', $user_upn)
-                                    // Considera também a formatação padrão do IF caso a importação tenha salvo assim
                                     ->orWhere('email', "{$username}@ifnmg.edu.br")
                                     ->first();
 
                                 if ($user) {
-                                    // Aprovado e importado! Libera a entrada.
                                     Auth::login($user, $this->boolean('remember'));
                                     RateLimiter::clear($this->throttleKey());
                                     return;
@@ -99,20 +87,30 @@ class LoginRequest extends FormRequest
                     }
                 }
             } catch (\Exception $e) {
-                // Se o AD cair ou a rede falhar, ele segue silenciosamente para tentar o login local no banco
+                // Se falhar no AD, segue silenciosamente para a validação local
             }
         }
 
-        // === 2. FALLBACK: AUTENTICAÇÃO LOCAL (Conta Admin Original) ===
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
-            RateLimiter::hit($this->throttleKey(), 300);
+        // === 2. FALLBACK: AUTENTICAÇÃO LOCAL INTELIGENTE ===
+        // Em vez do Auth::attempt estrito, buscamos o usuário de forma flexível
+        $localUser = \App\Models\User::where('email', $username)
+            ->orWhere('name', $username) // Permite logar digitando o Nome exato
+            ->orWhere('email', 'like', "{$username}@%") // Permite logar só com o prefixo (antes do @)
+            ->first();
 
-            throw ValidationException::withMessages([
-                'email' => trans('auth.failed'),
-            ]);
+        // Se encontrou o usuário e a senha local for compatível
+        if ($localUser && Hash::check($password, $localUser->password)) {
+            Auth::login($localUser, $this->boolean('remember'));
+            RateLimiter::clear($this->throttleKey());
+            return;
         }
 
-        RateLimiter::clear($this->throttleKey());
+        // Se chegou até aqui, as credenciais falharam tanto no AD quanto no Banco Local
+        RateLimiter::hit($this->throttleKey(), 300);
+
+        throw ValidationException::withMessages([
+            'email' => trans('auth.failed'),
+        ]);
     }
 
     public function ensureIsNotRateLimited(): void
