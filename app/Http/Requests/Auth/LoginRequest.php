@@ -33,10 +33,10 @@ class LoginRequest extends FormRequest
         $password = $this->password;
 
         // === 1. TENTATIVA DE AUTENTICAÇÃO VIA ACTIVE DIRECTORY ===
-        $ldap_host = env('LDAP_HOST');
-        $ldap_base_dn = env('LDAP_BASE_DN');
-        $ldap_bind_user = env('LDAP_USERNAME');
-        $ldap_bind_pass = env('LDAP_PASSWORD');
+        $ldap_host = config('services.ldap.host');
+        $ldap_base_dn = config('services.ldap.base_dn');
+        $ldap_bind_user = config('services.ldap.username');
+        $ldap_bind_pass = config('services.ldap.password');
 
         if ($ldap_host && $ldap_bind_user) {
             try {
@@ -45,7 +45,7 @@ class LoginRequest extends FormRequest
                     ldap_set_option($ldap_conn, LDAP_OPT_PROTOCOL_VERSION, 3);
                     ldap_set_option($ldap_conn, LDAP_OPT_REFERRALS, 0);
 
-                    
+
                     // Desiste se a rede não conectar em 3 segundos
                     ldap_set_option($ldap_conn, LDAP_OPT_NETWORK_TIMEOUT, 3);
                     // Desiste se o AD demorar mais de 3 segundos para responder à pesquisa
