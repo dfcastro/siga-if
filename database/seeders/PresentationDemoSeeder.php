@@ -189,9 +189,10 @@ class PresentationDemoSeeder extends Seeder
                         $distance = 105 + (($monthsAgo * 19 + $i * 37 + $vehicleIndex * 23) % 170);
                         $arrivalKm = $departureKm + $distance;
                         $departureGuard = (($i + $monthsAgo) % 3 === 0) ? $supportGuard : $guard;
+                        // Alterna somente entre os motoristas realmente vinculados a cada veículo oficial.
                         $driver = $officialVehicle->id === $official1->id
-                            ? $drivers[[$monthsAgo + $i, 4][($i + $monthsAgo) % 2]]
-                            : $drivers[(($i + $monthsAgo) % 2) ? 4 : 1];
+                            ? $drivers[(($i + $monthsAgo) % 2) === 0 ? 0 : 4]
+                            : $drivers[(($i + $monthsAgo) % 2) === 0 ? 1 : 4];
 
                         $this->officialTrip(
                             $officialVehicle,
