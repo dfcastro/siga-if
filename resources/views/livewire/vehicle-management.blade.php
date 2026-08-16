@@ -69,7 +69,7 @@
                                 clip-rule="evenodd" />
                         </svg></div>
                     <input wire:model.live.debounce.500ms="search" type="text"
-                        placeholder="Buscar por placa, modelo, cor ou motorista..."
+                        placeholder="Buscar por placa, modelo, cor ou proprietário..."
                         class="block w-full border-gray-300 rounded-md shadow-sm pl-10 focus:border-ifnmg-green focus:ring-ifnmg-green mb-4 md:mb-0 text-sm">
                 </div>
                 <div class="flex space-x-2 rounded-md shadow-sm" role="group">
@@ -103,7 +103,7 @@
                                 Tipo</th>
                             <th
                                 class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                Motoristas vinculados</th>
+                                Proprietário</th>
                             <th
                                 class="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
                                 Ações</th>
@@ -125,21 +125,9 @@
                                         {{ $vehicle->type }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 align-middle text-sm text-gray-600 max-w-sm">
-                                    @if ($vehicle->type === 'Oficial')
-                                        <span class="text-gray-400">—</span>
-                                    @elseif ($vehicle->drivers->isNotEmpty())
-                                        <div class="flex flex-wrap gap-1.5">
-                                            @foreach ($vehicle->drivers as $driver)
-                                                <span class="inline-flex items-center rounded-full border border-green-200 bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-800"
-                                                    title="{{ $driver->formatted_document }}">
-                                                    {{ $driver->name }}
-                                                </span>
-                                            @endforeach
-                                        </div>
-                                    @else
-                                        <span class="text-gray-400 italic">Nenhum motorista vinculado</span>
-                                    @endif
+                                <td class="px-6 py-4 align-middle text-sm text-gray-600 truncate max-w-xs"
+                                    title="{{ $vehicle->driver->name ?? '' }}">
+                                    {{ $vehicle->driver->name ?? ($vehicle->type == 'Oficial' ? '-' : 'N/A') }}
                                 </td>
                                 {{-- ### CÉLULA DE AÇÕES COM GRUPO DE BOTÕES ### --}}
                                 <td class="px-6 py-4 align-middle text-center whitespace-nowrap text-sm">
@@ -247,22 +235,10 @@
                                 </span>
                             </div>
                             <p class="text-sm text-gray-600">{{ $vehicle->model }} - {{ $vehicle->color }}</p>
-                            @if ($vehicle->type === 'Particular')
-                                <div class="mt-3">
-                                    <p class="text-xs font-bold uppercase tracking-wide text-gray-500">Motoristas vinculados</p>
-                                    @if ($vehicle->drivers->isNotEmpty())
-                                        <div class="mt-1.5 flex flex-wrap gap-1.5">
-                                            @foreach ($vehicle->drivers as $driver)
-                                                <span class="inline-flex rounded-full border border-green-200 bg-green-50 px-2 py-1 text-xs font-semibold text-green-800">
-                                                    {{ $driver->name }}
-                                                </span>
-                                            @endforeach
-                                        </div>
-                                    @else
-                                        <p class="mt-1 text-sm italic text-gray-400">Nenhum motorista vinculado</p>
-                                    @endif
-                                </div>
-                            @endif
+                            <p class="text-sm text-gray-600 mt-1">
+                                <strong>Proprietário:</strong>
+                                {{ $vehicle->driver->name ?? ($vehicle->type == 'Oficial' ? '-' : 'N/A') }}
+                            </p>
                         </div>
                         {{-- Botões Mobile com estilo melhorado --}}
                         <div class="mt-4 pt-4 border-t border-gray-100 flex flex-wrap gap-2 justify-end">
@@ -378,8 +354,7 @@
                             </div>
                             @if ($type === 'Particular')
                                 <div>
-                                    <x-input-label for="driver_search" value="Motoristas vinculados" />
-                                    <p class="mt-1 text-xs text-gray-500">Um veículo particular pode ter vários motoristas. Adicione ou remova vínculos sem duplicar o cadastro do veículo.</p>
+                                    <x-input-label for="driver_search" value="Proprietário(s) / Motorista(s)" />
 
                                     {{-- ÁREA DE TAGS (MOTORISTAS SELECIONADOS) --}}
                                     @if (count($selected_drivers) > 0)
