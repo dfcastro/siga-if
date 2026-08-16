@@ -1,18 +1,34 @@
 <div x-data="{ tab: 'entrada' }">
-    {{-- Seção de Mensagens de Alerta (Mantida e Estilizada) --}}
+    {{-- Confirmação global: recriada a cada operação para o Alpine reiniciar corretamente. --}}
     @if ($successMessage)
-        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 4000)" x-transition.opacity.duration.500ms
-            class="bg-green-50 border border-green-200 border-l-4 border-l-green-500 text-green-800 p-4 rounded-lg relative mb-6 shadow-sm flex items-center"
-            role="alert">
-            <div class="flex-shrink-0 w-10 h-10 rounded-full bg-green-100 flex items-center justify-center mr-4">
+        <div wire:key="operation-success-{{ $successMessageVersion }}"
+            x-data="{ show: true }"
+            x-show="show"
+            x-init="setTimeout(() => show = false, 7000)"
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0 translate-y-2 sm:translate-y-0 sm:translate-x-2"
+            x-transition:enter-end="opacity-100 translate-y-0 sm:translate-x-0"
+            x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            class="fixed top-4 left-4 right-4 sm:left-auto sm:right-6 sm:max-w-md z-[100] bg-green-50 border border-green-200 border-l-4 border-l-green-500 text-green-900 p-4 rounded-xl shadow-2xl flex items-start gap-3"
+            role="status" aria-live="polite">
+            <div class="flex-shrink-0 w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
                 <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                 </svg>
             </div>
-            <div>
-                <p class="font-bold text-sm uppercase tracking-wider text-green-900">Operação Concluída</p>
-                <p class="text-sm mt-0.5">{{ $successMessage }}</p>
+            <div class="min-w-0 flex-1">
+                <p class="font-black text-sm uppercase tracking-wider text-green-900">Operação concluída</p>
+                <p class="text-sm mt-1 font-medium">{{ $successMessage }}</p>
             </div>
+            <button type="button" @click="show = false"
+                class="flex-shrink-0 rounded-lg p-1.5 text-green-700 hover:bg-green-100 hover:text-green-900"
+                aria-label="Fechar aviso">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
         </div>
     @endif
 
@@ -185,6 +201,26 @@
                             </div>
                         </div>
 
+                        @if ($selectedVehicleInPatio)
+                            <div class="rounded-xl border-2 border-amber-300 bg-amber-50 p-5 shadow-sm">
+                                <div class="flex items-start gap-3">
+                                    <div class="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M12 8v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p class="font-black text-amber-900">Este veículo já está no pátio</p>
+                                        <p class="mt-1 text-sm text-amber-800">
+                                            Entrada aberta{{ $selectedVehicleOpenEntryAt ? ' desde ' . $selectedVehicleOpenEntryAt : '' }}.
+                                            O sistema não criará outra entrada. Você pode apenas cadastrar ou vincular outro motorista ao veículo.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+
                         {{-- DESTAQUE 3: ÁREA DO CONDUTOR / VISITANTE (Fundo sutil) --}}
                         <div class="bg-gray-50 p-5 sm:p-6 rounded-xl border border-gray-200">
                             <h3
@@ -192,11 +228,10 @@
                                 Identificação do Condutor</h3>
 
                             <div class="flex justify-between items-end mb-2">
-                                <label for="driver_search" class="block text-sm font-medium text-gray-700">Responsável
-                                    pela Entrada</label>
+                                <label for="driver_search" class="block text-sm font-medium text-gray-700">Motorista / Condutor do Veículo</label>
                                 @if ($selected_driver_id && !$showNewVisitorForm)
                                     <button type="button"
-                                        wire:click="$set('selected_driver_id', null); $set('driver_search', '')"
+                                        wire:click="clearDriverSelection"
                                         class="text-xs text-red-600 hover:text-red-800 font-bold bg-red-100 hover:bg-red-200 px-3 py-1 rounded-full transition-colors flex items-center gap-1">
                                         <svg class="w-3 h-3" fill="none" stroke="currentColor"
                                             viewBox="0 0 24 24">
@@ -246,7 +281,7 @@
                                                     d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z">
                                                 </path>
                                             </svg>
-                                            Dados do Novo Visitante
+                                            Dados do Novo Motorista
                                         </h4>
                                         <button type="button" wire:click="cancelNewVisitor"
                                             class="text-xs font-bold text-gray-400 hover:text-red-500 hover:bg-red-50 px-2 py-1 rounded transition-colors uppercase">Cancelar</button>
@@ -256,14 +291,14 @@
                                         <div class="md:col-span-2">
                                             <x-input-label for="new_visitor_name" value="Nome Completo"
                                                 class="text-xs font-bold text-gray-600" />
-                                            <x-text-input wire:model.live="new_visitor_name" id="new_visitor_name"
+                                            <x-text-input wire:model="new_visitor_name" id="new_visitor_name"
                                                 class="block mt-1 w-full bg-gray-50 focus:bg-white" type="text" />
                                             <x-input-error for="new_visitor_name" class="mt-1" />
                                         </div>
                                         <div>
                                             <x-input-label for="new_visitor_document" value="CPF"
                                                 class="text-xs font-bold text-gray-600" />
-                                            <x-text-input wire:model.live="new_visitor_document"
+                                            <x-text-input wire:model="new_visitor_document"
                                                 id="new_visitor_document"
                                                 class="block mt-1 w-full font-mono bg-gray-50 focus:bg-white"
                                                 type="tel" x-mask="999.999.999-99" />
@@ -277,6 +312,32 @@
                                                 type="tel" x-mask="(99) 99999-9999" />
                                             <x-input-error for="new_visitor_phone" class="mt-1" />
                                         </div>
+                                    </div>
+
+                                    <div class="mt-5 flex flex-col-reverse gap-2 border-t border-gray-100 pt-4 sm:flex-row sm:justify-end">
+                                        <button type="button" wire:click="cancelNewVisitor"
+                                            class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-50">
+                                            Cancelar
+                                        </button>
+                                        <button type="button" wire:click="registerNewDriver"
+                                            wire:loading.attr="disabled" wire:target="registerNewDriver"
+                                            class="inline-flex w-full items-center justify-center rounded-xl bg-blue-600 px-6 py-3 text-sm font-black text-white shadow-md transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto">
+                                            <svg wire:loading.remove wire:target="registerNewDriver" class="mr-2 h-5 w-5"
+                                                fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M5 13l4 4L19 7"></path>
+                                            </svg>
+                                            <svg wire:loading wire:target="registerNewDriver"
+                                                class="mr-2 h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                                                <circle class="opacity-25" cx="12" cy="12" r="10"
+                                                    stroke="currentColor" stroke-width="4"></circle>
+                                                <path class="opacity-75" fill="currentColor"
+                                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                                </path>
+                                            </svg>
+                                            <span wire:loading.remove wire:target="registerNewDriver">CONFIRMAR CADASTRO DO MOTORISTA</span>
+                                            <span wire:loading wire:target="registerNewDriver">CADASTRANDO...</span>
+                                        </button>
                                     </div>
                                 </div>
                             @else
@@ -325,7 +386,7 @@
                                                             <path stroke-linecap="round" stroke-linejoin="round"
                                                                 stroke-width="2" d="M12 4v16m8-8H4"></path>
                                                         </svg>
-                                                        Cadastrar Novo Visitante
+                                                        Cadastrar Novo Motorista
                                                     </button>
                                                 </div>
                                             @endif
@@ -333,10 +394,53 @@
                                     @endif
                                 </div>
                             @endif
+
+                            @if ($driverActionMessage)
+                                <div class="mt-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-900 shadow-sm">
+                                    <div class="flex items-start gap-2">
+                                        <svg class="mt-0.5 h-5 w-5 flex-shrink-0 text-green-600" fill="none"
+                                            stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M5 13l4 4L19 7"></path>
+                                        </svg>
+                                        <p class="font-semibold">{{ $driverActionMessage }}</p>
+                                    </div>
+                                </div>
+                            @endif
+
+                            @php
+                                $selectedDriverAlreadyLinked = $selected_driver_id
+                                    ? collect($suggestedDrivers)->contains(fn ($driver) => (string) $driver->id === (string) $selected_driver_id)
+                                    : false;
+                            @endphp
+
+                            @if ($selectedVehicleInPatio && $selected_driver_id && !$selectedDriverAlreadyLinked && !$showNewVisitorForm)
+                                <div class="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
+                                    <p class="mb-3 text-sm text-blue-900">
+                                        Este motorista já existe no sistema, mas ainda não está vinculado ao veículo selecionado.
+                                    </p>
+                                    <button type="button" wire:click="linkSelectedDriverToVehicle"
+                                        wire:loading.attr="disabled" wire:target="linkSelectedDriverToVehicle"
+                                        class="inline-flex w-full items-center justify-center rounded-lg bg-blue-600 px-5 py-3 text-sm font-black text-white shadow-sm hover:bg-blue-700 disabled:opacity-50 sm:w-auto">
+                                        <span wire:loading.remove wire:target="linkSelectedDriverToVehicle">Vincular motorista ao veículo</span>
+                                        <span wire:loading wire:target="linkSelectedDriverToVehicle">Vinculando...</span>
+                                    </button>
+                                </div>
+                            @elseif (!$selectedVehicleInPatio && $selectedVehicleId && $selected_driver_id && !$selectedDriverAlreadyLinked && !$showNewVisitorForm)
+                                <div class="mt-4 flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+                                    <svg class="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    <p>Ao liberar a entrada, este motorista também será vinculado ao veículo selecionado.</p>
+                                </div>
+                            @endif
+
                             <x-input-error for="selected_driver_id" class="mt-2 font-semibold" />
                         </div>
 
                         {{-- DESTAQUE 4: MOTIVO DA ENTRADA --}}
+                        @if (!$selectedVehicleInPatio)
                         <div>
                             <h3
                                 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4 border-b border-gray-100 pb-2">
@@ -384,31 +488,61 @@
                                 </div>
                             @endif
                         </div>
+                        @endif
                     </div>
 
-                    {{-- BOTÃO SALVAR GIGANTE --}}
-                    <div class="bg-gray-50 border-t border-gray-200 p-6 sm:p-8 flex justify-end rounded-b-xl">
-                        <button type="submit"
-                            class="w-full sm:w-1/3 flex items-center justify-center rounded-xl bg-ifnmg-green px-8 py-4 text-lg font-black text-white shadow-lg hover:bg-green-700 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 transition-all duration-300 transform active:scale-95"
-                            wire:loading.attr="disabled">
-                            <svg wire:loading wire:target="save" class="animate-spin -ml-1 mr-3 h-6 w-6 text-white"
-                                fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10"
-                                    stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor"
-                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                                </path>
-                            </svg>
-                            <span wire:loading.remove wire:target="save" class="mr-2">
-                                <svg class="w-6 h-6 inline-block" fill="none" stroke="currentColor"
+                    {{-- AÇÃO PRINCIPAL --}}
+                    @if ($selectedVehicleInPatio)
+                        <div class="rounded-b-xl border-t border-amber-200 bg-amber-50 p-6 sm:p-8">
+                            <div class="flex items-center gap-3 text-amber-900">
+                                <svg class="h-6 w-6 flex-shrink-0 text-amber-600" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M5 13l4 4L19 7"></path>
+                                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                 </svg>
-                            </span>
-                            <span>LIBERAR ENTRADA</span>
-                        </button>
-                    </div>
+                                <div>
+                                    <p class="font-black">Nenhuma nova entrada será liberada.</p>
+                                    <p class="text-sm">Se necessário, use a área de motorista acima para cadastrar ou vincular outro condutor.</p>
+                                </div>
+                            </div>
+                        </div>
+                    @elseif ($showNewVisitorForm)
+                        <div class="rounded-b-xl border-t border-blue-200 bg-blue-50 p-6 sm:p-8">
+                            <div class="flex items-start gap-3 text-blue-900">
+                                <svg class="mt-0.5 h-6 w-6 flex-shrink-0 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <div>
+                                    <p class="font-black">Conclua o cadastro do motorista primeiro.</p>
+                                    <p class="mt-1 text-sm">Use o botão <strong>“Confirmar cadastro do motorista”</strong> no bloco acima. Depois disso, o botão “Liberar entrada” será habilitado.</p>
+                                </div>
+                            </div>
+                        </div>
+                    @else
+                        <div class="bg-gray-50 border-t border-gray-200 p-6 sm:p-8 flex justify-end rounded-b-xl">
+                            <button type="submit"
+                                class="w-full sm:w-1/3 flex items-center justify-center rounded-xl bg-ifnmg-green px-8 py-4 text-lg font-black text-white shadow-lg hover:bg-green-700 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 transition-all duration-300 transform active:scale-95"
+                                wire:loading.attr="disabled" wire:target="save">
+                                <svg wire:loading wire:target="save" class="animate-spin -ml-1 mr-3 h-6 w-6 text-white"
+                                    fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10"
+                                        stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor"
+                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                    </path>
+                                </svg>
+                                <span wire:loading.remove wire:target="save" class="mr-2">
+                                    <svg class="w-6 h-6 inline-block" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                </span>
+                                <span>LIBERAR ENTRADA</span>
+                            </button>
+                        </div>
+                    @endif
                 </form>
             </div>
 

@@ -20,10 +20,7 @@ class CreatePrivateEntry extends Component
     public string $entry_reason = '';
     public string $other_reason = '';
     public string $successMessage = '';
-
     public int $successMessageVersion = 0;
-
-
     public string $exitSearch = '';
     public string $search = '';
     public $searchResults = [];
