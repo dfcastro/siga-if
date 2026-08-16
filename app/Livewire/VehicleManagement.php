@@ -177,11 +177,7 @@ class VehicleManagement extends Component
                 $subQuery->where('license_plate', 'like', $searchTerm)
                     ->orWhere('model', 'like', $searchTerm)
                     ->orWhere('color', 'like', $searchTerm)
-<<<<<<< HEAD
                     ->orWhereHas('drivers', function ($driverQuery) use ($searchTerm) {
-=======
-                    ->$subQuery->orWhereHas('drivers', function ($driverQuery) use ($searchTerm) {
->>>>>>> 6747cf9a527ece22b3b9e1b0b4ce6c30827846e1
                         $driverQuery->where('name', 'like', $searchTerm);
                     });
             });
@@ -283,7 +279,6 @@ class VehicleManagement extends Component
             $vehicle->drivers()->detach();
         }
 
-<<<<<<< HEAD
         $driverCount = $validatedData['type'] === 'Particular' ? count($this->selected_drivers) : 0;
         $action = $this->vehicleId ? 'atualizado' : 'cadastrado';
         $driverInfo = $validatedData['type'] === 'Particular'
@@ -294,9 +289,6 @@ class VehicleManagement extends Component
             'successMessage',
             "Veículo {$vehicle->license_plate} {$action} com sucesso." . $driverInfo
         );
-=======
-        session()->flash('successMessage', $this->vehicleId ? 'Veículo atualizado!' : 'Veículo criado!');
->>>>>>> 6747cf9a527ece22b3b9e1b0b4ce6c30827846e1
         $this->closeModal();
     }
     public function create()
