@@ -28,17 +28,17 @@ foreach ($attributes->all() as $__key => $__value) {
 
 unset($__defined_vars, $__key, $__value); ?>
 
-<?php if($for && $errors->has($for)): ?>
+<!--[if BLOCK]><![endif]--><?php if($for && $errors->has($for)): ?>
     <p <?php echo e($attributes->merge(['class' => 'text-sm text-red-600'])); ?>>
         <?php echo e($errors->first($for)); ?>
 
     </p>
 <?php elseif($messages): ?>
-    <?php $__currentLoopData = (array) $messages; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $message): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+    <!--[if BLOCK]><![endif]--><?php $__currentLoopData = (array) $messages; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $message): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
         <p <?php echo e($attributes->merge(['class' => 'text-sm text-red-600'])); ?>>
             <?php echo e($message); ?>
 
         </p>
         <?php break; ?> 
-    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-<?php endif; ?><?php /**PATH C:\Users\Daniel\Documents\Projetos\siga-if\resources\views/components/input-error.blade.php ENDPATH**/ ?>
+    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><!--[if ENDBLOCK]><![endif]-->
+<?php endif; ?><!--[if ENDBLOCK]><![endif]--><?php /**PATH C:\Users\Daniel\Documents\Projetos\siga-if\resources\views/components/input-error.blade.php ENDPATH**/ ?>
