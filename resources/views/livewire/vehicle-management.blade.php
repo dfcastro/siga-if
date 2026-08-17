@@ -1,22 +1,39 @@
-<div>
-    {{-- Alertas (mantidos como estão) --}}
-    @if (session('successMessage'))
-        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)" x-transition
-            class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-lg relative mb-6 shadow-md"
-            role="alert">
-            <div class="flex">
-                <div class="py-1"><svg class="h-6 w-6 text-green-500 mr-4" fill="none" stroke="currentColor"
-                        viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg></div>
-                <div>
-                    <p class="font-bold">Sucesso!</p>
-                    <p class="text-sm">{{ session('successMessage') }}</p>
-                </div>
+<div
+    x-data="{ toastVisible: false, toastMessage: '', toastTimer: null }"
+    @management-toast.window="
+        toastMessage = $event.detail.message;
+        toastVisible = true;
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toastVisible = false, 3500);
+    "
+>
+    {{-- Toast de sucesso: não altera o fluxo nem substitui o conteúdo da tela --}}
+    <div x-cloak x-show="toastVisible"
+        x-transition:enter="transition ease-out duration-200"
+        x-transition:enter-start="opacity-0 translate-y-2"
+        x-transition:enter-end="opacity-100 translate-y-0"
+        x-transition:leave="transition ease-in duration-150"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        class="fixed top-5 right-5 z-[100] w-[calc(100%-2rem)] max-w-sm rounded-xl border border-green-200 bg-white shadow-xl">
+        <div class="flex items-start gap-3 p-4">
+            <div class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
             </div>
+            <div class="min-w-0 flex-1">
+                <p class="font-bold text-gray-900">Sucesso!</p>
+                <p class="mt-0.5 text-sm text-gray-600" x-text="toastMessage"></p>
+            </div>
+            <button type="button" @click="toastVisible = false" class="text-gray-400 hover:text-gray-600" aria-label="Fechar aviso">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
         </div>
-    @endif
+    </div>
+    {{-- Alertas (mantidos como estão) --}}
     @if (session('error'))
         {{-- Adicionado alerta de erro se houver --}}
         <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" x-transition

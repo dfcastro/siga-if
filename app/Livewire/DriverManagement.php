@@ -292,8 +292,13 @@ class DriverManagement extends Component
             ]);
         }
 
-        session()->flash('success', $isPromoting ? 'Servidor atualizado e autorizado para a frota oficial!' : ($this->driverId ? 'Motorista atualizado!' : 'Motorista cadastrado!'));
+        $this->notifySuccess($isPromoting ? 'Servidor atualizado e autorizado para a frota oficial!' : ($this->driverId ? 'Motorista atualizado!' : 'Motorista cadastrado!'));
         $this->closeModal();
+    }
+
+    private function notifySuccess(string $message): void
+    {
+        $this->dispatch('management-toast', message: $message);
     }
 
     public function create()
@@ -373,7 +378,7 @@ class DriverManagement extends Component
         }
 
         $driver->delete();
-        session()->flash('success', 'Motorista movido para a lixeira com sucesso!');
+        $this->notifySuccess('Motorista movido para a lixeira com sucesso!');
         $this->closeConfirmModal();
     }
 
@@ -393,7 +398,7 @@ class DriverManagement extends Component
         }
 
         $driver->restore();
-        session()->flash('success', 'Motorista restaurado com sucesso!');
+        $this->notifySuccess('Motorista restaurado com sucesso!');
     }
 
     public function confirmForceDelete($id)
@@ -443,7 +448,7 @@ class DriverManagement extends Component
         }
 
         $driver->forceDelete();
-        session()->flash('success', 'Motorista excluído permanentemente.');
+        $this->notifySuccess('Motorista excluído permanentemente.');
         $this->closeConfirmModal();
     }
 }

@@ -31,7 +31,6 @@ class VehicleManagement extends Component
     public bool $isConfirmModalOpen = false;
     public $vehicleIdToDelete;
     public $vehiclePlateToDelete;
-    public string $successMessage = '';
     public string $search = '';
     public string $filter = 'active';
     public $isHistoryModalOpen = false;
@@ -285,12 +284,14 @@ class VehicleManagement extends Component
             ? ($driverCount === 1 ? ' 1 motorista vinculado.' : " {$driverCount} motoristas vinculados.")
             : '';
 
-        session()->flash(
-            'successMessage',
-            "Veículo {$vehicle->license_plate} {$action} com sucesso." . $driverInfo
-        );
+        $this->notifySuccess("Veículo {$vehicle->license_plate} {$action} com sucesso." . $driverInfo);
         $this->closeModal();
     }
+    private function notifySuccess(string $message): void
+    {
+        $this->dispatch('management-toast', message: $message);
+    }
+
     public function create()
     {
         if (!in_array(Auth::user()->role, ['admin', 'porteiro', 'fiscal'])) {
@@ -365,7 +366,7 @@ class VehicleManagement extends Component
             return;
         }
         $vehicle->delete();
-        session()->flash('successMessage', 'Veículo movido para a lixeira.');
+        $this->notifySuccess('Veículo movido para a lixeira.');
         $this->closeConfirmModal();
     }
 
@@ -383,7 +384,7 @@ class VehicleManagement extends Component
             return;
         }
         $vehicle->restore();
-        session()->flash('successMessage', 'Veículo restaurado.');
+        $this->notifySuccess('Veículo restaurado.');
     }
 
     public function confirmForceDelete($id)
@@ -417,7 +418,7 @@ class VehicleManagement extends Component
             return;
         }
         $vehicle->forceDelete();
-        session()->flash('successMessage', 'Veículo excluído permanentemente.');
+        $this->notifySuccess('Veículo excluído permanentemente.');
         $this->closeConfirmModal();
     }
 
