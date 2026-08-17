@@ -18,7 +18,7 @@ class Reports extends Component
     use WithPagination;
 
     public string $reportType = 'official';
-    public string $periodMode = 'today';
+    public string $periodMode = 'day';
     public string $selectedDate;
     public string $selectedMonth;
 
@@ -96,7 +96,7 @@ class Reports extends Component
 
     public function updated($property): void
     {
-        if ($property === 'selectedDate' && $this->periodMode === 'date') {
+        if ($property === 'selectedDate' && $this->periodMode === 'day') {
             $this->validateOnly('selectedDate');
             $this->resetPage();
         }
@@ -113,21 +113,27 @@ class Reports extends Component
 
     public function setPeriodMode(string $mode): void
     {
-        if (!in_array($mode, ['today', 'date', 'month'], true)) {
+        if (!in_array($mode, ['day', 'month'], true)) {
             return;
         }
 
         $this->periodMode = $mode;
 
-        if ($mode === 'today') {
-            $this->selectedDate = Carbon::today()->format('Y-m-d');
-        } elseif ($mode === 'date' && empty($this->selectedDate)) {
+        if ($mode === 'day' && empty($this->selectedDate)) {
             $this->selectedDate = Carbon::today()->format('Y-m-d');
         } elseif ($mode === 'month' && empty($this->selectedMonth)) {
             $this->selectedMonth = Carbon::today()->format('Y-m');
         }
 
         $this->resetValidation(['selectedDate', 'selectedMonth']);
+        $this->resetPage();
+    }
+
+    public function setToday(): void
+    {
+        $this->periodMode = 'day';
+        $this->selectedDate = Carbon::today()->format('Y-m-d');
+        $this->resetValidation(['selectedDate']);
         $this->resetPage();
     }
 
@@ -218,7 +224,7 @@ class Reports extends Component
 
     public function clearFilters(): void
     {
-        $this->periodMode = 'today';
+        $this->periodMode = 'day';
         $this->selectedDate = Carbon::today()->format('Y-m-d');
         $this->selectedMonth = Carbon::today()->format('Y-m');
         $this->driver_id = null;
@@ -247,28 +253,17 @@ class Reports extends Component
                 ];
             }
 
-            if ($this->periodMode === 'date') {
-                $this->validateOnly('selectedDate');
-                $date = Carbon::parse($this->selectedDate);
-
-                return [
-                    $date->copy()->startOfDay(),
-                    $date->copy()->endOfDay(),
-                    $date->format('d/m/Y'),
-                ];
-            }
-
-            $today = Carbon::today();
-            $this->selectedDate = $today->format('Y-m-d');
+            $this->validateOnly('selectedDate');
+            $date = Carbon::parse($this->selectedDate);
 
             return [
-                $today->copy()->startOfDay(),
-                $today->copy()->endOfDay(),
-                'Hoje - ' . $today->format('d/m/Y'),
+                $date->copy()->startOfDay(),
+                $date->copy()->endOfDay(),
+                $date->isToday() ? 'Hoje - ' . $date->format('d/m/Y') : $date->format('d/m/Y'),
             ];
         } catch (\Exception $e) {
             $today = Carbon::today();
-            $this->periodMode = 'today';
+            $this->periodMode = 'day';
             $this->selectedDate = $today->format('Y-m-d');
 
             return [

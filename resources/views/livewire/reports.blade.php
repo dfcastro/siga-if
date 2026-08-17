@@ -11,7 +11,7 @@
                     Consulta de Movimentações
                 </h1>
                 <p class="mt-1 text-sm text-gray-600">
-                    Consulte a rotina da portaria por hoje, data específica ou mês, inclusive movimentações ainda abertas.
+                    Consulte a rotina da portaria por dia ou mês, inclusive movimentações ainda abertas.
                 </p>
             </div>
 
@@ -61,13 +61,9 @@
             <div class="mb-5">
                 <label class="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-2">Período da consulta</label>
                 <div class="flex flex-wrap gap-2">
-                    <button type="button" wire:click="setPeriodMode('today')"
-                        class="px-4 py-2 rounded-lg border text-sm font-semibold transition-colors {{ $periodMode === 'today' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100' }}">
-                        Hoje
-                    </button>
-                    <button type="button" wire:click="setPeriodMode('date')"
-                        class="px-4 py-2 rounded-lg border text-sm font-semibold transition-colors {{ $periodMode === 'date' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100' }}">
-                        Data específica
+                    <button type="button" wire:click="setPeriodMode('day')"
+                        class="px-4 py-2 rounded-lg border text-sm font-semibold transition-colors {{ $periodMode === 'day' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100' }}">
+                        Dia
                     </button>
                     <button type="button" wire:click="setPeriodMode('month')"
                         class="px-4 py-2 rounded-lg border text-sm font-semibold transition-colors {{ $periodMode === 'month' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100' }}">
@@ -86,19 +82,22 @@
                         @error('selectedMonth')
                             <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span>
                         @enderror
-                    @elseif ($periodMode === 'date')
-                        <label for="report_date" class="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1">Data</label>
+                    @else
+                        <div class="flex items-center justify-between gap-2 mb-1">
+                            <label for="report_date" class="block text-xs font-bold text-gray-700 uppercase tracking-wide">Data</label>
+                            @if ($selectedDate !== Carbon\Carbon::today()->format('Y-m-d'))
+                                <button type="button" wire:click="setToday"
+                                    class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors">
+                                    Hoje
+                                </button>
+                            @endif
+                        </div>
                         <input type="date" wire:model.live="selectedDate" id="report_date"
                             max="{{ Carbon\Carbon::today()->format('Y-m-d') }}"
                             class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm @error('selectedDate') border-red-500 @enderror">
                         @error('selectedDate')
                             <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span>
                         @enderror
-                    @else
-                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1">Data</label>
-                        <div class="h-[38px] flex items-center px-3 rounded-md border border-indigo-200 bg-indigo-50 text-sm font-semibold text-indigo-800">
-                            {{ Carbon\Carbon::today()->format('d/m/Y') }}
-                        </div>
                     @endif
                 </div>
 
@@ -158,7 +157,7 @@
             </div>
 
             <div wire:loading
-                wire:target="reportType,periodMode,selectedDate,selectedMonth,previousPage,nextPage,gotoPage,driver_id,vehicle_id,setPeriodMode,clearFilters"
+                wire:target="reportType,periodMode,selectedDate,selectedMonth,previousPage,nextPage,gotoPage,driver_id,vehicle_id,setPeriodMode,setToday,clearFilters"
                 class="absolute inset-0 bg-gray-50 bg-opacity-70 flex items-center justify-center z-10 rounded-b-lg">
                 <div class="bg-white px-4 py-2 rounded-full shadow border flex items-center gap-2 text-indigo-600 font-semibold text-sm">
                     <svg class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
