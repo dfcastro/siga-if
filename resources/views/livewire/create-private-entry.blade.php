@@ -313,17 +313,18 @@
                                             <x-input-error for="new_visitor_phone" class="mt-1" />
                                         </div>
                                         <div class="md:col-span-2">
-                                            <x-input-label for="new_visitor_type" value="Tipo do Motorista"
+                                            <x-input-label for="new_visitor_type" value="Perfil do Motorista"
                                                 class="text-xs font-bold text-gray-600" />
                                             <select id="new_visitor_type" wire:model="new_visitor_type"
                                                 class="block mt-1 w-full rounded-lg border-gray-300 bg-gray-50 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                                <option value="Visitante">Visitante</option>
+                                                <option value="">Selecione o perfil...</option>
                                                 <option value="Aluno">Aluno</option>
                                                 <option value="Servidor">Servidor</option>
                                                 <option value="Terceirizado">Terceirizado</option>
+                                                <option value="Visitante">Visitante</option>
                                             </select>
                                             <p class="mt-1.5 text-xs text-gray-500">
-                                                Aluno, servidor e terceirizado terão o motivo da entrada sugerido automaticamente.
+                                                Selecione o vínculo do motorista com o campus. Para aluno, servidor e terceirizado, o motivo da entrada será sugerido automaticamente.
                                             </p>
                                             <x-input-error for="new_visitor_type" class="mt-1" />
                                         </div>

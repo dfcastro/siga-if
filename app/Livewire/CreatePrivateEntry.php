@@ -53,7 +53,7 @@ class CreatePrivateEntry extends Component
     public string $new_visitor_name = '';
     public string $new_visitor_document = '';
     public string $new_visitor_phone = '';
-    public string $new_visitor_type = 'Visitante';
+    public string $new_visitor_type = '';
 
     // --- Feedback e estado do veículo selecionado ---
     public string $driverActionMessage = '';
@@ -185,7 +185,7 @@ class CreatePrivateEntry extends Component
         $this->selected_driver_id = null;
         $this->clearAutoSuggestedEntryReason();
         $this->new_visitor_name = $this->driver_search;
-        $this->new_visitor_type = 'Visitante';
+        $this->new_visitor_type = '';
         $this->drivers = [];
         $this->driverActionMessage = '';
         $this->resetErrorBag(['selected_driver_id', 'new_visitor_name', 'new_visitor_document', 'new_visitor_phone', 'new_visitor_type']);
@@ -250,14 +250,19 @@ class CreatePrivateEntry extends Component
             $vehicle->load(['drivers' => fn ($query) => $query->orderBy('name')]);
             $this->suggestedDrivers = $vehicle->drivers;
 
-            $this->driverActionMessage = "Motorista {$newDriver->name} cadastrado e vinculado ao veículo {$vehicle->license_plate} com sucesso.";
+            $successText = "Motorista {$newDriver->name} cadastrado e vinculado ao veículo {$vehicle->license_plate} com sucesso.";
 
             if ($this->selectedVehicleInPatio) {
-                $this->driverActionMessage .= ' O veículo já está no pátio; nenhuma nova entrada foi criada.';
+                $successText .= ' O veículo já está no pátio; nenhuma nova entrada foi criada.';
             }
         } else {
-            $this->driverActionMessage = "Motorista {$newDriver->name} cadastrado com sucesso. O vínculo com o veículo será concluído ao liberar a entrada.";
+            $successText = "Motorista {$newDriver->name} cadastrado com sucesso. O vínculo com o veículo será concluído ao liberar a entrada.";
         }
+
+        // O cadastro é concluído sem interromper o fluxo da portaria: o novo
+        // motorista continua selecionado e o feedback aparece no toast global.
+        $this->driverActionMessage = '';
+        $this->showSuccessMessage($successText);
 
         // Mantém o novo motorista selecionado para a movimentação atual.
         $this->selected_driver_id = $newDriver->id;
