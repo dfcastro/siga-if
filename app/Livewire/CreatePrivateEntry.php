@@ -55,6 +55,10 @@ class CreatePrivateEntry extends Component
     public string $new_visitor_phone = '';
     public string $new_visitor_type = '';
 
+    // --- Reativação segura de cadastro encontrado na lixeira ---
+    public ?int $pendingInactiveDriverId = null;
+    public string $pendingInactiveDriverName = '';
+
     // --- Feedback e estado do veículo selecionado ---
     public string $driverActionMessage = '';
     public bool $selectedVehicleInPatio = false;
@@ -75,6 +79,17 @@ class CreatePrivateEntry extends Component
 
     public function updated($propertyName)
     {
+        // Se o porteiro alterar algum dado depois de o sistema localizar um
+        // cadastro inativo, a confirmação anterior deixa de ser válida.
+        if (in_array($propertyName, [
+            'new_visitor_name',
+            'new_visitor_document',
+            'new_visitor_phone',
+            'new_visitor_type',
+        ], true)) {
+            $this->clearPendingInactiveDriver();
+        }
+
         // Só valida propriedades que realmente pertencem ao formulário.
         // Isso evita validações desnecessárias em estados auxiliares do componente.
         if (array_key_exists($propertyName, $this->rules())) {
@@ -176,6 +191,7 @@ class CreatePrivateEntry extends Component
         $this->clearAutoSuggestedEntryReason();
         $this->reset('new_visitor_name', 'new_visitor_document', 'new_visitor_phone', 'new_visitor_type');
         $this->driverActionMessage = '';
+        $this->clearPendingInactiveDriver();
         $this->resetErrorBag(['selected_driver_id', 'new_visitor_name', 'new_visitor_document', 'new_visitor_phone', 'new_visitor_type']);
     }
 
@@ -188,12 +204,14 @@ class CreatePrivateEntry extends Component
         $this->new_visitor_type = '';
         $this->drivers = [];
         $this->driverActionMessage = '';
+        $this->clearPendingInactiveDriver();
         $this->resetErrorBag(['selected_driver_id', 'new_visitor_name', 'new_visitor_document', 'new_visitor_phone', 'new_visitor_type']);
     }
 
     public function cancelNewVisitor()
     {
         $this->showNewVisitorForm = false;
+        $this->clearPendingInactiveDriver();
         $this->reset('new_visitor_name', 'new_visitor_document', 'new_visitor_phone', 'new_visitor_type');
         $this->resetErrorBag(['new_visitor_name', 'new_visitor_document', 'new_visitor_phone', 'new_visitor_type']);
     }
@@ -225,23 +243,68 @@ class CreatePrivateEntry extends Component
         ]);
 
         $cleanDocument = preg_replace('/\D/', '', $this->new_visitor_document);
-        $existingDriver = Driver::where('document', $cleanDocument)->first();
+
+        // Consulta também cadastros excluídos logicamente. O CPF continua existindo
+        // fisicamente na tabela e pode possuir índice UNIQUE; ignorar um registro
+        // soft-deleted faria o INSERT seguinte estourar como erro 500.
+        $existingDriver = Driver::withTrashed()
+            ->where('document', $cleanDocument)
+            ->first();
 
         if ($existingDriver) {
-            $this->addError(
-                'new_visitor_document',
-                "Este CPF já está cadastrado para: {$existingDriver->name}. Cancele este formulário e busque pelo nome dele."
-            );
+            // Cadastro ativo: não altera nome, perfil, telefone ou autorização.
+            // Apenas reaproveita o motorista existente no fluxo atual.
+            if ($existingDriver->deleted_at === null) {
+                $this->useExistingDriver($existingDriver);
+                return;
+            }
+
+            // Porteiro não pode reativar motorista protegido pela autorização
+            // da frota oficial. A regra é a mesma de DriverManagement::canManageDriver().
+            if ((bool) $existingDriver->is_authorized) {
+                $this->clearPendingInactiveDriver();
+                $this->addError(
+                    'new_visitor_document',
+                    "Este CPF pertence ao motorista {$existingDriver->name}, que está inativo e possui autorização para conduzir a frota oficial. "
+                    . 'A reativação deve ser feita por um usuário responsável pela frota.'
+                );
+                return;
+            }
+
+            // Cadastro inativo comum: não restaura automaticamente. O porteiro
+            // precisa confirmar explicitamente a reativação na própria tela.
+            $this->pendingInactiveDriverId = $existingDriver->id;
+            $this->pendingInactiveDriverName = trim($existingDriver->name);
+            $this->resetErrorBag('new_visitor_document');
             return;
         }
 
-        $newDriver = Driver::create([
-            'name' => trim($this->new_visitor_name),
-            'document' => $cleanDocument,
-            'telefone' => $this->new_visitor_phone,
-            'type' => $this->new_visitor_type,
-            'is_authorized' => false,
-        ]);
+        try {
+            $newDriver = Driver::create([
+                'name' => trim($this->new_visitor_name),
+                'document' => $cleanDocument,
+                'telefone' => $this->new_visitor_phone,
+                'type' => $this->new_visitor_type,
+                'is_authorized' => false,
+            ]);
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Proteção adicional para concorrência ou inconsistência de dados: nunca
+            // deixa uma colisão de CPF virar uma página 500 para o porteiro.
+            report($e);
+
+            if (str_contains(strtolower($e->getMessage()), 'duplicate')
+                || in_array((string) $e->getCode(), ['23000', '23505'], true)) {
+                $this->addError(
+                    'new_visitor_document',
+                    'Não foi possível cadastrar: este CPF já possui um cadastro no sistema. '
+                    . 'Procure o motorista pelo nome ou restaure o cadastro se ele estiver inativo.'
+                );
+                return;
+            }
+
+            $this->driverActionMessage = 'Não foi possível cadastrar o motorista. O erro foi registrado para análise.';
+            return;
+        }
 
         $vehicle = $this->selectedVehicleId ? Vehicle::find($this->selectedVehicleId) : null;
 
@@ -271,6 +334,122 @@ class CreatePrivateEntry extends Component
         $this->suggestEntryReasonForDriver($newDriver);
         $this->reset('new_visitor_name', 'new_visitor_document', 'new_visitor_phone', 'new_visitor_type');
         $this->resetErrorBag(['selected_driver_id', 'new_visitor_name', 'new_visitor_document', 'new_visitor_phone', 'new_visitor_type']);
+    }
+
+    /**
+     * Reativa um motorista da lixeira somente quando ele não possui autorização
+     * para conduzir a frota oficial. O porteiro pode atualizar os dados comuns,
+     * mas a autorização de frota nunca é modificada por este fluxo.
+     */
+    public function reactivateInactiveDriver(): void
+    {
+        if (auth()->user()->role === 'fiscal') {
+            abort(403, 'Você não tem permissão para executar esta ação.');
+        }
+
+        if (!$this->pendingInactiveDriverId) {
+            $this->addError('new_visitor_document', 'Nenhum cadastro inativo está aguardando reativação.');
+            return;
+        }
+
+        $this->validate([
+            'new_visitor_name' => 'required|string|max:100',
+            'new_visitor_document' => ['required', new Cpf],
+            'new_visitor_phone' => 'nullable|string|max:20',
+            'new_visitor_type' => ['required', Rule::in(['Visitante', 'Aluno', 'Servidor', 'Terceirizado'])],
+        ]);
+
+        $cleanDocument = preg_replace('/\D/', '', $this->new_visitor_document);
+        $driver = Driver::withTrashed()->find($this->pendingInactiveDriverId);
+
+        if (!$driver || $driver->deleted_at === null || (string) $driver->document !== $cleanDocument) {
+            $this->clearPendingInactiveDriver();
+            $this->addError(
+                'new_visitor_document',
+                'O cadastro encontrado mudou desde a última consulta. Pesquise o CPF novamente antes de continuar.'
+            );
+            return;
+        }
+
+        if ((bool) $driver->is_authorized) {
+            $this->clearPendingInactiveDriver();
+            $this->addError(
+                'new_visitor_document',
+                "O motorista {$driver->name} possui autorização para conduzir a frota oficial. A reativação deve ser feita por um usuário responsável pela frota."
+            );
+            return;
+        }
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($driver) {
+            $driver->restore();
+            $driver->update([
+                'name' => trim($this->new_visitor_name),
+                'telefone' => $this->new_visitor_phone,
+                'type' => $this->new_visitor_type,
+                // Não alteramos is_authorized aqui por segurança.
+            ]);
+        });
+
+        $driver->refresh();
+        $this->finishDriverSelectionAfterRegistration(
+            $driver,
+            "Motorista {$driver->name} reativado com sucesso."
+        );
+    }
+
+    public function cancelInactiveDriverReactivation(): void
+    {
+        $this->clearPendingInactiveDriver();
+    }
+
+    /**
+     * Usa um CPF já ativo sem alterar os dados administrativos do motorista.
+     */
+    private function useExistingDriver(Driver $driver): void
+    {
+        $this->finishDriverSelectionAfterRegistration(
+            $driver,
+            "O CPF informado já estava cadastrado para {$driver->name}. O motorista existente foi selecionado."
+        );
+    }
+
+    /**
+     * Finaliza o fluxo de cadastro/reativação mantendo o porteiro na mesma tela.
+     */
+    private function finishDriverSelectionAfterRegistration(Driver $driver, string $message): void
+    {
+        $vehicle = $this->selectedVehicleId ? Vehicle::find($this->selectedVehicleId) : null;
+
+        if ($vehicle) {
+            $alreadyLinked = $vehicle->drivers()->where('drivers.id', $driver->id)->exists();
+            $vehicle->drivers()->syncWithoutDetaching([$driver->id]);
+            $vehicle->load(['drivers' => fn ($query) => $query->orderBy('name')]);
+            $this->suggestedDrivers = $vehicle->drivers;
+
+            if (!$alreadyLinked) {
+                $message .= " Vinculado ao veículo {$vehicle->license_plate}.";
+            }
+
+            if ($this->selectedVehicleInPatio) {
+                $message .= ' O veículo já está no pátio; nenhuma nova entrada foi criada.';
+            }
+        }
+
+        $this->selected_driver_id = $driver->id;
+        $this->driver_search = $driver->name;
+        $this->showNewVisitorForm = false;
+        $this->driverActionMessage = '';
+        $this->suggestEntryReasonForDriver($driver);
+        $this->showSuccessMessage($message);
+        $this->clearPendingInactiveDriver();
+        $this->reset('new_visitor_name', 'new_visitor_document', 'new_visitor_phone', 'new_visitor_type');
+        $this->resetErrorBag(['selected_driver_id', 'new_visitor_name', 'new_visitor_document', 'new_visitor_phone', 'new_visitor_type']);
+    }
+
+    private function clearPendingInactiveDriver(): void
+    {
+        $this->pendingInactiveDriverId = null;
+        $this->pendingInactiveDriverName = '';
     }
 
     /**
@@ -518,6 +697,8 @@ class CreatePrivateEntry extends Component
             'new_visitor_document',
             'new_visitor_phone',
             'new_visitor_type',
+            'pendingInactiveDriverId',
+            'pendingInactiveDriverName',
             'entryReasonAutoSuggested',
             'selectedVehicleInPatio',
             'selectedVehicleOpenEntryAt',

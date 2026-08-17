@@ -330,30 +330,64 @@
                                         </div>
                                     </div>
 
+                                    @if ($pendingInactiveDriverId)
+                                        <div class="mt-5 rounded-xl border border-amber-300 bg-amber-50 p-4 shadow-sm">
+                                            <div class="flex items-start gap-3">
+                                                <svg class="mt-0.5 h-6 w-6 flex-shrink-0 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M5.07 19h13.86c1.54 0 2.5-1.67 1.73-3L13.73 4c-.77-1.33-2.69-1.33-3.46 0L3.34 16c-.77 1.33.19 3 1.73 3z"></path>
+                                                </svg>
+                                                <div class="min-w-0 flex-1">
+                                                    <p class="font-black text-amber-900">Cadastro inativo encontrado</p>
+                                                    <p class="mt-1 text-sm text-amber-800">
+                                                        O CPF informado pertence a <strong>{{ $pendingInactiveDriverName }}</strong>, que está na lixeira.
+                                                        Como ele não possui autorização para conduzir a frota oficial, você pode reativá-lo por aqui.
+                                                    </p>
+                                                    <p class="mt-1 text-xs text-amber-700">
+                                                        Ao reativar, nome, telefone e perfil serão atualizados com os dados preenchidos acima.
+                                                    </p>
+                                                    <div class="mt-3 flex flex-col gap-2 sm:flex-row">
+                                                        <button type="button" wire:click="cancelInactiveDriverReactivation"
+                                                            class="inline-flex items-center justify-center rounded-lg border border-amber-300 bg-white px-4 py-2 text-sm font-bold text-amber-800 hover:bg-amber-100">
+                                                            Manter inativo
+                                                        </button>
+                                                        <button type="button" wire:click="reactivateInactiveDriver"
+                                                            wire:loading.attr="disabled" wire:target="reactivateInactiveDriver"
+                                                            class="inline-flex items-center justify-center rounded-lg bg-amber-600 px-4 py-2 text-sm font-black text-white shadow-sm hover:bg-amber-700 disabled:opacity-50">
+                                                            <span wire:loading.remove wire:target="reactivateInactiveDriver">REATIVAR MOTORISTA</span>
+                                                            <span wire:loading wire:target="reactivateInactiveDriver">REATIVANDO...</span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endif
+
                                     <div class="mt-5 flex flex-col-reverse gap-2 border-t border-gray-100 pt-4 sm:flex-row sm:justify-end">
                                         <button type="button" wire:click="cancelNewVisitor"
                                             class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-50">
                                             Cancelar
                                         </button>
-                                        <button type="button" wire:click="registerNewDriver"
-                                            wire:loading.attr="disabled" wire:target="registerNewDriver"
-                                            class="inline-flex w-full items-center justify-center rounded-xl bg-blue-600 px-6 py-3 text-sm font-black text-white shadow-md transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto">
-                                            <svg wire:loading.remove wire:target="registerNewDriver" class="mr-2 h-5 w-5"
-                                                fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M5 13l4 4L19 7"></path>
-                                            </svg>
-                                            <svg wire:loading wire:target="registerNewDriver"
-                                                class="mr-2 h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                                                <circle class="opacity-25" cx="12" cy="12" r="10"
-                                                    stroke="currentColor" stroke-width="4"></circle>
-                                                <path class="opacity-75" fill="currentColor"
-                                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                                                </path>
-                                            </svg>
-                                            <span wire:loading.remove wire:target="registerNewDriver">CONFIRMAR CADASTRO DO MOTORISTA</span>
-                                            <span wire:loading wire:target="registerNewDriver">CADASTRANDO...</span>
-                                        </button>
+                                        @if (!$pendingInactiveDriverId)
+                                            <button type="button" wire:click="registerNewDriver"
+                                                wire:loading.attr="disabled" wire:target="registerNewDriver"
+                                                class="inline-flex w-full items-center justify-center rounded-xl bg-blue-600 px-6 py-3 text-sm font-black text-white shadow-md transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto">
+                                                <svg wire:loading.remove wire:target="registerNewDriver" class="mr-2 h-5 w-5"
+                                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M5 13l4 4L19 7"></path>
+                                                </svg>
+                                                <svg wire:loading wire:target="registerNewDriver"
+                                                    class="mr-2 h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                                                    <circle class="opacity-25" cx="12" cy="12" r="10"
+                                                        stroke="currentColor" stroke-width="4"></circle>
+                                                    <path class="opacity-75" fill="currentColor"
+                                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                                    </path>
+                                                </svg>
+                                                <span wire:loading.remove wire:target="registerNewDriver">CONFIRMAR CADASTRO DO MOTORISTA</span>
+                                                <span wire:loading wire:target="registerNewDriver">CADASTRANDO...</span>
+                                            </button>
+                                        @endif
                                     </div>
                                 </div>
                             @else
