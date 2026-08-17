@@ -27,6 +27,21 @@
             </div>
         @endif
 
+        @if (session()->has('error'))
+            <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 6000)" x-transition
+                class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg relative mb-6 shadow-sm flex items-center"
+                role="alert">
+                <svg class="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <div>
+                    <p class="font-bold text-sm">Não foi possível concluir a operação</p>
+                    <p class="text-xs mt-0.5">{{ session('error') }}</p>
+                </div>
+            </div>
+        @endif
+
         <div class="bg-white rounded-t-xl shadow-sm border-b border-gray-200 px-2 sm:px-6 pt-2">
             <nav class="-mb-px flex space-x-2 sm:space-x-8 overflow-x-auto" aria-label="Tabs">
                 <button wire:click="$set('activeTab', 'pending')"
@@ -89,16 +104,10 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium space-x-2">
                                     <button wire:click="viewDetails({{ $sub->id }})"
-                                        class="inline-flex items-center px-3 py-1.5 bg-white border border-gray-300 rounded text-gray-700 hover:bg-gray-50 transition shadow-sm">
-                                        👁 Detalhes
+                                        wire:loading.attr="disabled" wire:target="viewDetails({{ $sub->id }})"
+                                        class="inline-flex items-center px-3 py-1.5 bg-white border border-gray-300 rounded text-gray-700 hover:bg-gray-50 transition shadow-sm disabled:opacity-60 disabled:cursor-wait">
+                                        👁 {{ $activeTab === 'pending' ? 'Analisar Relatório' : 'Ver Relatório' }}
                                     </button>
-                                    @if ($activeTab === 'pending')
-                                        <button wire:click="approve({{ $sub->id }})"
-                                            class="inline-flex items-center px-3 py-1.5 bg-green-600 border border-transparent rounded text-white hover:bg-green-700 transition shadow-sm"
-                                            title="Confirmar ciência dos dados">
-                                            ✓ Dar Visto
-                                        </button>
-                                    @endif
                                 </td>
                             </tr>
                         @empty
@@ -144,16 +153,10 @@
 
                             <div class="mt-4 flex flex-col gap-2">
                                 <button wire:click="viewDetails({{ $sub->id }})"
-                                    class="w-full flex justify-center items-center px-4 py-2 bg-gray-50 border border-gray-300 rounded-md text-sm font-bold text-gray-700 hover:bg-gray-100 transition shadow-sm">
-                                    👁 Ver Detalhes
+                                    wire:loading.attr="disabled" wire:target="viewDetails({{ $sub->id }})"
+                                    class="w-full flex justify-center items-center px-4 py-2 bg-gray-50 border border-gray-300 rounded-md text-sm font-bold text-gray-700 hover:bg-gray-100 transition shadow-sm disabled:opacity-60 disabled:cursor-wait">
+                                    👁 {{ $activeTab === 'pending' ? 'Analisar Relatório' : 'Ver Relatório' }}
                                 </button>
-
-                                @if ($activeTab === 'pending')
-                                    <button wire:click="approve({{ $sub->id }})"
-                                        class="w-full flex justify-center items-center px-4 py-2 bg-green-600 border border-transparent rounded-md text-sm font-bold text-white hover:bg-green-700 transition shadow-sm">
-                                        ✓ Dar Visto e Arquivar
-                                    </button>
-                                @endif
                             </div>
                         </div>
                     </div>
@@ -397,11 +400,72 @@
                 Fechar
             </button>
             @if ($selectedSubmission && $selectedSubmission->status === 'pending')
-                <button wire:click="approve({{ $selectedSubmission->id }})"
-                    class="w-full sm:w-auto px-6 py-2.5 bg-green-600 border border-transparent rounded-md text-sm font-bold text-white hover:bg-green-700 shadow-sm transition">
+                <button wire:click="requestApproval({{ $selectedSubmission->id }})"
+                    wire:loading.attr="disabled" wire:target="requestApproval({{ $selectedSubmission->id }})"
+                    class="w-full sm:w-auto px-6 py-2.5 bg-green-600 border border-transparent rounded-md text-sm font-bold text-white hover:bg-green-700 shadow-sm transition disabled:opacity-60 disabled:cursor-wait">
                     ✓ Dar Visto e Arquivar
                 </button>
             @endif
         </div>
     </x-modal>
+
+    {{-- CONFIRMAÇÃO DO VISTO: o fiscal só chega aqui após abrir e analisar o relatório. --}}
+    <x-confirmation-dialog wire:model.live="isApprovalConfirmationOpen">
+        <x-slot name="title">
+            <div class="flex items-center gap-2 text-gray-900">
+                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                </svg>
+                Confirmar Visto e Arquivamento
+            </div>
+        </x-slot>
+
+        <x-slot name="content">
+            @if ($selectedSubmission)
+                <p class="text-sm text-gray-700">
+                    Você confirma que analisou este relatório e deseja registrar o visto?
+                </p>
+
+                <div class="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm space-y-2">
+                    <div class="flex justify-between gap-4">
+                        <span class="text-gray-500">Referência</span>
+                        <strong class="text-gray-900 text-right">{{ $selectedSubmission->start_date?->translatedFormat('F/Y') }}</strong>
+                    </div>
+                    <div class="flex justify-between gap-4">
+                        <span class="text-gray-500">Tipo</span>
+                        <strong class="text-gray-900 text-right">
+                            @if ($selectedSubmission->type === 'private')
+                                Veículos Particulares
+                            @else
+                                Veículo Oficial{{ $selectedSubmission->vehicle?->license_plate ? ' - ' . $selectedSubmission->vehicle->license_plate : '' }}
+                            @endif
+                        </strong>
+                    </div>
+                    <div class="flex justify-between gap-4">
+                        <span class="text-gray-500">Submetido por</span>
+                        <strong class="text-gray-900 text-right">{{ $selectedSubmission->guardUser?->name ?? 'Usuário Removido' }}</strong>
+                    </div>
+                </div>
+
+                <div class="mt-4 rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
+                    <strong>Importante:</strong> ao confirmar, o relatório será considerado aprovado e arquivado. O visto ficará registrado em seu nome.
+                </div>
+            @endif
+        </x-slot>
+
+        <x-slot name="footer">
+            <div class="flex flex-col-reverse sm:flex-row w-full sm:w-auto gap-2 sm:gap-3">
+                <button wire:click="cancelApproval" wire:loading.attr="disabled"
+                    class="w-full sm:w-auto inline-flex justify-center rounded-md bg-white px-4 py-2.5 text-sm font-bold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-60">
+                    Cancelar
+                </button>
+                <button wire:click="confirmApproval" wire:loading.attr="disabled" wire:target="confirmApproval"
+                    class="w-full sm:w-auto inline-flex justify-center rounded-md bg-green-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-wait">
+                    <span wire:loading.remove wire:target="confirmApproval">Confirmar Visto e Arquivar</span>
+                    <span wire:loading wire:target="confirmApproval">Registrando...</span>
+                </button>
+            </div>
+        </x-slot>
+    </x-confirmation-dialog>
 </div>

@@ -168,8 +168,7 @@
         <x-slot name="content">
             <p class="text-base text-gray-600">{{ $confirmationMessage }}</p>
             <div class="mt-4 p-3 bg-gray-50 rounded-md border border-gray-100 text-sm text-gray-500">
-                <p><strong>Importante:</strong> Após a submissão, os registros deste período ficarão bloqueados para
-                    edição até que o fiscal analise.</p>
+                <p><strong>Importante:</strong> após a submissão, estes registros ficarão vinculados ao fechamento mensal e não poderão ser enviados novamente em outro relatório. Os registros finalizados permanecem preservados.</p>
             </div>
         </x-slot>
         <x-slot name="footer">
@@ -178,9 +177,10 @@
                     class="w-full sm:w-auto inline-flex justify-center rounded-md bg-white px-4 py-2.5 text-sm font-bold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Cancelar
                 </button>
-                <button wire:click="executeConfirmedAction" wire:loading.attr="disabled"
-                    class="w-full sm:w-auto inline-flex justify-center rounded-md bg-ifnmg-green px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
-                    Confirmar Envio
+                <button wire:click="executeConfirmedAction" wire:loading.attr="disabled" wire:target="executeConfirmedAction"
+                    class="w-full sm:w-auto inline-flex justify-center rounded-md bg-ifnmg-green px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-wait">
+                    <span wire:loading.remove wire:target="executeConfirmedAction">Confirmar Envio</span>
+                    <span wire:loading wire:target="executeConfirmedAction">Enviando...</span>
                 </button>
             </div>
         </x-slot>
