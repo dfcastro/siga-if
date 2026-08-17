@@ -312,6 +312,21 @@
                                                 type="tel" x-mask="(99) 99999-9999" />
                                             <x-input-error for="new_visitor_phone" class="mt-1" />
                                         </div>
+                                        <div class="md:col-span-2">
+                                            <x-input-label for="new_visitor_type" value="Tipo do Motorista"
+                                                class="text-xs font-bold text-gray-600" />
+                                            <select id="new_visitor_type" wire:model="new_visitor_type"
+                                                class="block mt-1 w-full rounded-lg border-gray-300 bg-gray-50 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                <option value="Visitante">Visitante</option>
+                                                <option value="Aluno">Aluno</option>
+                                                <option value="Servidor">Servidor</option>
+                                                <option value="Terceirizado">Terceirizado</option>
+                                            </select>
+                                            <p class="mt-1.5 text-xs text-gray-500">
+                                                Aluno, servidor e terceirizado terão o motivo da entrada sugerido automaticamente.
+                                            </p>
+                                            <x-input-error for="new_visitor_type" class="mt-1" />
+                                        </div>
                                     </div>
 
                                     <div class="mt-5 flex flex-col-reverse gap-2 border-t border-gray-100 pt-4 sm:flex-row sm:justify-end">
@@ -456,6 +471,15 @@
                                         <option value="Outro" class="font-bold text-gray-900">✏️ Outro (Digitar
                                             Manualmente)</option>
                                     </select>
+                                    @if ($entryReasonAutoSuggested)
+                                        <p class="mt-2 flex items-center gap-1.5 text-xs font-semibold text-green-700">
+                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M5 13l4 4L19 7"></path>
+                                            </svg>
+                                            Motivo sugerido automaticamente pelo tipo do motorista. Você pode alterar se necessário.
+                                        </p>
+                                    @endif
                                     @error('entry_reason')
                                         <p class="text-red-500 text-xs mt-1.5 font-semibold">{{ $message }}</p>
                                     @enderror

@@ -29,15 +29,18 @@ class CreatePrivateEntry extends Component
     public $entryToExit = null;
     public string $observation = '';
     public array $predefinedReasons = [
-        'Entrada de Servidor',
+        'Aluno',
+        'Servidor',
+        'Terceirizado',
+        'Pais/Responsáveis - Buscar ou trazer aluno',
         'Transporte de Alunos (Ônibus/Vans)',
         'Reunião',
         'Entrega de Material',
         'Visita Técnica',
         'Evento',
         'Prestação de Serviço',
-        'Pais de aluno, buscar aluno, trazer aluno,etc',
     ];
+    public bool $entryReasonAutoSuggested = false;
 
     // --- PROPRIEDADES REFINADAS E UNIFICADAS PARA O MOTORISTA ---
     public $selected_driver_id = null;
@@ -50,6 +53,7 @@ class CreatePrivateEntry extends Component
     public string $new_visitor_name = '';
     public string $new_visitor_document = '';
     public string $new_visitor_phone = '';
+    public string $new_visitor_type = 'Visitante';
 
     // --- Feedback e estado do veículo selecionado ---
     public string $driverActionMessage = '';
@@ -82,6 +86,7 @@ class CreatePrivateEntry extends Component
     {
         $this->selected_driver_id = null;
         $this->showNewVisitorForm = false;
+        $this->clearAutoSuggestedEntryReason();
 
         if (strlen($value) >= 2) {
             $cleanSearch = preg_replace('/\D/', '', $value);
@@ -100,11 +105,66 @@ class CreatePrivateEntry extends Component
 
     public function selectDriver($id, $name)
     {
-        $this->selected_driver_id = $id;
-        $this->driver_search = $name;
+        $driver = Driver::find($id);
+
+        if (!$driver) {
+            $this->addError('selected_driver_id', 'O motorista selecionado não foi encontrado.');
+            return;
+        }
+
+        $this->selected_driver_id = $driver->id;
+        $this->driver_search = $driver->name;
         $this->drivers = [];
         $this->showNewVisitorForm = false;
         $this->driverActionMessage = '';
+
+        $this->suggestEntryReasonForDriver($driver);
+    }
+
+    /**
+     * Sugere o motivo da entrada com base no vínculo do motorista.
+     * A sugestão nunca sobrescreve uma escolha feita manualmente pelo porteiro.
+     */
+    private function suggestEntryReasonForDriver(Driver $driver): void
+    {
+        $reasonByType = [
+            'Aluno' => 'Aluno',
+            'Servidor' => 'Servidor',
+            'Terceirizado' => 'Terceirizado',
+        ];
+
+        $suggestedReason = $reasonByType[$driver->type] ?? null;
+
+        if (!$suggestedReason) {
+            $this->clearAutoSuggestedEntryReason();
+            return;
+        }
+
+        if ($this->entry_reason === '' || $this->entryReasonAutoSuggested) {
+            $this->entry_reason = $suggestedReason;
+            $this->other_reason = '';
+            $this->observation = '';
+            $this->entryReasonAutoSuggested = true;
+            $this->resetErrorBag(['entry_reason', 'other_reason']);
+        }
+    }
+
+    private function clearAutoSuggestedEntryReason(): void
+    {
+        if (!$this->entryReasonAutoSuggested) {
+            return;
+        }
+
+        $this->entry_reason = '';
+        $this->other_reason = '';
+        $this->observation = '';
+        $this->entryReasonAutoSuggested = false;
+    }
+
+    public function updatedEntryReason(): void
+    {
+        // Alteração vinda da interface = decisão manual do porteiro.
+        $this->entryReasonAutoSuggested = false;
     }
 
     public function clearDriverSelection()
@@ -113,26 +173,29 @@ class CreatePrivateEntry extends Component
         $this->driver_search = '';
         $this->drivers = [];
         $this->showNewVisitorForm = false;
-        $this->reset('new_visitor_name', 'new_visitor_document', 'new_visitor_phone');
+        $this->clearAutoSuggestedEntryReason();
+        $this->reset('new_visitor_name', 'new_visitor_document', 'new_visitor_phone', 'new_visitor_type');
         $this->driverActionMessage = '';
-        $this->resetErrorBag(['selected_driver_id', 'new_visitor_name', 'new_visitor_document', 'new_visitor_phone']);
+        $this->resetErrorBag(['selected_driver_id', 'new_visitor_name', 'new_visitor_document', 'new_visitor_phone', 'new_visitor_type']);
     }
 
     public function prepareNewVisitorForm()
     {
         $this->showNewVisitorForm = true;
         $this->selected_driver_id = null;
+        $this->clearAutoSuggestedEntryReason();
         $this->new_visitor_name = $this->driver_search;
+        $this->new_visitor_type = 'Visitante';
         $this->drivers = [];
         $this->driverActionMessage = '';
-        $this->resetErrorBag(['selected_driver_id', 'new_visitor_name', 'new_visitor_document', 'new_visitor_phone']);
+        $this->resetErrorBag(['selected_driver_id', 'new_visitor_name', 'new_visitor_document', 'new_visitor_phone', 'new_visitor_type']);
     }
 
     public function cancelNewVisitor()
     {
         $this->showNewVisitorForm = false;
-        $this->reset('new_visitor_name', 'new_visitor_document', 'new_visitor_phone');
-        $this->resetErrorBag(['new_visitor_name', 'new_visitor_document', 'new_visitor_phone']);
+        $this->reset('new_visitor_name', 'new_visitor_document', 'new_visitor_phone', 'new_visitor_type');
+        $this->resetErrorBag(['new_visitor_name', 'new_visitor_document', 'new_visitor_phone', 'new_visitor_type']);
     }
 
     /**
@@ -158,6 +221,7 @@ class CreatePrivateEntry extends Component
             'new_visitor_name' => 'required|string|max:100',
             'new_visitor_document' => ['required', new Cpf],
             'new_visitor_phone' => 'nullable|string|max:20',
+            'new_visitor_type' => ['required', Rule::in(['Visitante', 'Aluno', 'Servidor', 'Terceirizado'])],
         ]);
 
         $cleanDocument = preg_replace('/\D/', '', $this->new_visitor_document);
@@ -175,7 +239,7 @@ class CreatePrivateEntry extends Component
             'name' => trim($this->new_visitor_name),
             'document' => $cleanDocument,
             'telefone' => $this->new_visitor_phone,
-            'type' => 'Visitante',
+            'type' => $this->new_visitor_type,
             'is_authorized' => false,
         ]);
 
@@ -199,8 +263,9 @@ class CreatePrivateEntry extends Component
         $this->selected_driver_id = $newDriver->id;
         $this->driver_search = $newDriver->name;
         $this->showNewVisitorForm = false;
-        $this->reset('new_visitor_name', 'new_visitor_document', 'new_visitor_phone');
-        $this->resetErrorBag(['selected_driver_id', 'new_visitor_name', 'new_visitor_document', 'new_visitor_phone']);
+        $this->suggestEntryReasonForDriver($newDriver);
+        $this->reset('new_visitor_name', 'new_visitor_document', 'new_visitor_phone', 'new_visitor_type');
+        $this->resetErrorBag(['selected_driver_id', 'new_visitor_name', 'new_visitor_document', 'new_visitor_phone', 'new_visitor_type']);
     }
 
     /**
@@ -276,6 +341,7 @@ class CreatePrivateEntry extends Component
                 } else {
                     $this->selected_driver_id = null;
                     $this->driver_search = '';
+                    $this->clearAutoSuggestedEntryReason();
                 }
             }
         } elseif (str_starts_with($resultId, 'D_')) {
@@ -446,6 +512,8 @@ class CreatePrivateEntry extends Component
             'new_visitor_name',
             'new_visitor_document',
             'new_visitor_phone',
+            'new_visitor_type',
+            'entryReasonAutoSuggested',
             'selectedVehicleInPatio',
             'selectedVehicleOpenEntryAt',
         ]);
