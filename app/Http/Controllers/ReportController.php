@@ -24,7 +24,7 @@ class ReportController extends Controller
         $request->validate([
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
-            'vehicle_id' => 'required|exists:vehicles,id',
+            'vehicle_id' => 'nullable|exists:vehicles,id',
             'driver_id' => 'nullable|exists:drivers,id',
         ]);
 
@@ -38,18 +38,18 @@ class ReportController extends Controller
             'guardDeparture',
             'guardArrival'
         ])
-            ->where('vehicle_id', $request->vehicle_id)
-            ->whereBetween('departure_datetime', [$startDate->startOfDay(), $endDate->endOfDay()])
-            ->whereNotNull('arrival_datetime');
+            ->whereBetween('departure_datetime', [$startDate->startOfDay(), $endDate->endOfDay()]);
+
+        if ($request->filled('vehicle_id')) {
+            $query->where('vehicle_id', $request->vehicle_id);
+        }
 
         if ($request->filled('driver_id')) {
             $query->where('driver_id', $request->driver_id);
         }
 
-        // BARRICADA INVISÍVEL DE SEGURANÇA: Se for porteiro, filtra apenas os registros finalizados por ELE.
-        if ($user->role === 'porteiro') {
-            $query->where('guard_on_arrival_id', $user->id);
-        }
+        // Consulta operacional: exibe todas as movimentações do período, inclusive as ainda em viagem.
+        // O fechamento mensal do porteiro continua separado em GuardReport e mantém suas regras próprias.
 
         $trips = $query->orderBy('departure_datetime')->get();
 
@@ -67,7 +67,7 @@ class ReportController extends Controller
             return $trip;
         });
 
-        $vehicle = Vehicle::withTrashed()->find($request->vehicle_id);
+        $vehicle = $request->filled('vehicle_id') ? Vehicle::withTrashed()->find($request->vehicle_id) : null;
         $driver = $request->filled('driver_id') ? Driver::withTrashed()->find($request->driver_id) : null;
         $totalKm = $trips->sum('distance_traveled');
 
@@ -84,7 +84,7 @@ class ReportController extends Controller
 
         $pdf = Pdf::loadView('reports.pdf.official', $data);
         $pdf->setPaper('a4', 'landscape');
-        $fileName = 'extrato_oficial_' . Str::slug($vehicle->license_plate ?? 'veiculo') . '_' . $startDate->format('Ym') . '.pdf';
+        $fileName = 'consulta_frota_' . Str::slug($vehicle->license_plate ?? 'todos-veiculos') . '_' . $startDate->format('Ymd') . '_' . $endDate->format('Ymd') . '.pdf';
 
         return $pdf->stream($fileName);
     }
@@ -111,8 +111,7 @@ class ReportController extends Controller
             'guardEntry',
             'guardExit'
         ])
-            ->whereBetween('entry_at', [$startDate->startOfDay(), $endDate->endOfDay()])
-            ->whereNotNull('exit_at');
+            ->whereBetween('entry_at', [$startDate->startOfDay(), $endDate->endOfDay()]);
 
         if ($request->filled('vehicle_id')) {
             $query->where('vehicle_id', $request->vehicle_id);
@@ -121,10 +120,8 @@ class ReportController extends Controller
             $query->where('driver_id', $request->driver_id);
         }
 
-        // BARRICADA INVISÍVEL DE SEGURANÇA: Se for porteiro, filtra apenas os registros finalizados por ELE.
-        if ($user->role === 'porteiro') {
-            $query->where('guard_on_exit_id', $user->id);
-        }
+        // Consulta operacional: exibe todas as movimentações do período, inclusive veículos ainda no campus.
+        // A submissão mensal permanece responsável por aplicar as regras de fechamento por porteiro.
 
         $entries = $query->orderBy('entry_at')->get();
 
@@ -152,7 +149,7 @@ class ReportController extends Controller
 
         $pdf = Pdf::loadView('reports.pdf.private', $data);
         $pdf->setPaper('a4', 'landscape');
-        $fileName = 'extrato_particulares_' . $startDate->format('Ym') . '_' . now()->format('His') . '.pdf';
+        $fileName = 'consulta_particulares_' . $startDate->format('Ymd') . '_' . $endDate->format('Ymd') . '_' . now()->format('His') . '.pdf';
 
         return $pdf->stream($fileName);
     }

@@ -634,7 +634,7 @@
                             </svg>
                         </div>
                         <input type="text" wire:model.live.debounce.300ms="exitSearch"
-                            placeholder="Buscar placa ou nome..."
+                            placeholder="Buscar placa, modelo ou motorista..."
                             class="block w-full rounded-xl border-gray-300 pl-11 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-base py-3 bg-white">
                     </div>
                 </div>

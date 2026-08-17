@@ -112,7 +112,7 @@
 
                                 {{-- Ações Comuns --}}
                                 <x-dropdown-link :href="route('reports.status')">Acompanhar Status</x-dropdown-link>
-                                <x-dropdown-link :href="route('reports')">Pesquisa e Extratos (PDF)</x-dropdown-link>
+                                <x-dropdown-link :href="route('reports')">Consulta de Movimentações</x-dropdown-link>
                             </x-slot>
                         </x-dropdown>
                     </div>
@@ -224,8 +224,7 @@
             @endif
 
             <x-responsive-nav-link :href="route('reports.status')" :active="request()->routeIs('reports.status')">Acompanhar Status</x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('reports')" :active="request()->routeIs('reports')">Pesquisa e Extratos
-                (PDF)</x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('reports')" :active="request()->routeIs('reports')">Consulta de Movimentações</x-responsive-nav-link>
         </div>
 
         {{-- Área do Usuário Mobile --}}

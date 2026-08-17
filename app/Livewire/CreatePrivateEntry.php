@@ -714,6 +714,11 @@ class CreatePrivateEntry extends Component
                 $searchTerm = '%' . $this->exitSearch . '%';
                 $query->where(function ($subQuery) use ($searchTerm) {
                     $subQuery->where('license_plate', 'like', $searchTerm)
+                        ->orWhere('vehicle_model', 'like', $searchTerm)
+                        ->orWhereHas('vehicle', function ($vehicleQuery) use ($searchTerm) {
+                            $vehicleQuery->where('license_plate', 'like', $searchTerm)
+                                ->orWhere('model', 'like', $searchTerm);
+                        })
                         ->orWhereHas('driver', function ($driverQuery) use ($searchTerm) {
                             $driverQuery->where('name', 'like', $searchTerm);
                         });

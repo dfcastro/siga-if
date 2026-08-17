@@ -2,16 +2,15 @@
 
 namespace App\Livewire;
 
-use Livewire\Component;
+use App\Models\Driver;
 use App\Models\OfficialTrip;
 use App\Models\PrivateEntry;
 use App\Models\Vehicle;
-use App\Models\Driver;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
+use Livewire\Component;
 use Livewire\WithPagination;
-use Illuminate\Support\Str;
 
 #[Layout('layouts.app')]
 class Reports extends Component
@@ -19,6 +18,8 @@ class Reports extends Component
     use WithPagination;
 
     public string $reportType = 'official';
+    public string $periodMode = 'today';
+    public string $selectedDate;
     public string $selectedMonth;
 
     public $driver_id = null;
@@ -32,14 +33,15 @@ class Reports extends Component
     public string $vehicle_selected_text = '';
     public array $vehicle_results = [];
 
-    public function layoutData()
+    public function layoutData(): array
     {
-        return ['header' => 'Pesquisa e Extratos Avançados'];
+        return ['header' => 'Consulta de Movimentações'];
     }
 
-    public function mount()
+    public function mount(): void
     {
-        $this->selectedMonth = Carbon::now()->subMonthNoOverflow()->format('Y-m');
+        $this->selectedDate = Carbon::today()->format('Y-m-d');
+        $this->selectedMonth = Carbon::today()->format('Y-m');
 
         $user = Auth::user();
         if ($user->role === 'fiscal' && $user->fiscal_type === 'private') {
@@ -47,55 +49,115 @@ class Reports extends Component
         }
     }
 
-    protected function rules()
+    protected function rules(): array
     {
         return [
+            'selectedDate' => [
+                'required',
+                'date_format:Y-m-d',
+                function ($attribute, $value, $fail) {
+                    try {
+                        if (Carbon::parse($value)->startOfDay()->isAfter(Carbon::today())) {
+                            $fail('Não é possível selecionar uma data futura.');
+                        }
+                    } catch (\Exception $e) {
+                        $fail('Formato de data inválido.');
+                    }
+                },
+            ],
             'selectedMonth' => [
                 'required',
                 'date_format:Y-m',
                 function ($attribute, $value, $fail) {
                     try {
-                        if (Carbon::parse($value . '-01')->startOfMonth()->isFuture()) {
+                        if (Carbon::parse($value . '-01')->startOfMonth()->isAfter(Carbon::today()->startOfMonth())) {
                             $fail('Não é possível selecionar um mês futuro.');
                         }
                     } catch (\Exception $e) {
                         $fail('Formato de mês inválido.');
                     }
-                }
-            ]
+                },
+            ],
         ];
     }
 
-    public function updatedReportType()
+    public function updatedReportType(): void
     {
-        $this->clearFilters();
+        $this->driver_id = null;
+        $this->vehicle_id = null;
+        $this->driver_search = '';
+        $this->vehicle_search = '';
+        $this->driver_selected_text = '';
+        $this->vehicle_selected_text = '';
+        $this->driver_results = [];
+        $this->vehicle_results = [];
+        $this->resetPage();
     }
 
-    public function updated($property)
+    public function updated($property): void
     {
-        if (in_array($property, ['selectedMonth', 'driver_id', 'vehicle_id'])) {
-            if ($property === 'selectedMonth') $this->validateOnly($property);
+        if ($property === 'selectedDate' && $this->periodMode === 'date') {
+            $this->validateOnly('selectedDate');
+            $this->resetPage();
+        }
+
+        if ($property === 'selectedMonth' && $this->periodMode === 'month') {
+            $this->validateOnly('selectedMonth');
+            $this->resetPage();
+        }
+
+        if (in_array($property, ['driver_id', 'vehicle_id'], true)) {
             $this->resetPage();
         }
     }
 
+    public function setPeriodMode(string $mode): void
+    {
+        if (!in_array($mode, ['today', 'date', 'month'], true)) {
+            return;
+        }
+
+        $this->periodMode = $mode;
+
+        if ($mode === 'today') {
+            $this->selectedDate = Carbon::today()->format('Y-m-d');
+        } elseif ($mode === 'date' && empty($this->selectedDate)) {
+            $this->selectedDate = Carbon::today()->format('Y-m-d');
+        } elseif ($mode === 'month' && empty($this->selectedMonth)) {
+            $this->selectedMonth = Carbon::today()->format('Y-m');
+        }
+
+        $this->resetValidation(['selectedDate', 'selectedMonth']);
+        $this->resetPage();
+    }
+
     public function getOfficialVehiclesProperty()
     {
-        return Vehicle::withTrashed()->where('type', 'Oficial')->orderBy('model')->get();
+        return Vehicle::withTrashed()
+            ->where('type', 'Oficial')
+            ->orderBy('model')
+            ->get();
     }
 
     public function getOfficialDriversProperty()
     {
-        return Driver::withTrashed()->where('is_authorized', true)->orderBy('name')->get();
+        return Driver::withTrashed()
+            ->where('is_authorized', true)
+            ->orderBy('name')
+            ->get();
     }
 
-    public function runSearch($model, $value)
+    public function runSearch($model, $value): void
     {
         $value = trim($value);
 
         if (strlen($value) < 2) {
-            if ($model === 'driver_search') $this->driver_results = [];
-            if ($model === 'vehicle_search') $this->vehicle_results = [];
+            if ($model === 'driver_search') {
+                $this->driver_results = [];
+            }
+            if ($model === 'vehicle_search') {
+                $this->vehicle_results = [];
+            }
             return;
         }
 
@@ -120,7 +182,7 @@ class Reports extends Component
         }
     }
 
-    public function selectResult($model, $id, $text)
+    public function selectResult($model, $id, $text): void
     {
         if ($model === 'driver_search') {
             $this->driver_id = $id;
@@ -133,10 +195,11 @@ class Reports extends Component
             $this->vehicle_results = [];
             $this->vehicle_search = '';
         }
+
         $this->resetPage();
     }
 
-    public function clearSelection($model)
+    public function clearSelection($model): void
     {
         if ($model === 'driver_search') {
             $this->driver_id = null;
@@ -149,76 +212,100 @@ class Reports extends Component
             $this->vehicle_results = [];
             $this->vehicle_search = '';
         }
+
         $this->resetPage();
     }
 
-    public function clearFilters()
+    public function clearFilters(): void
     {
-        $this->selectedMonth = Carbon::now()->subMonthNoOverflow()->format('Y-m');
+        $this->periodMode = 'today';
+        $this->selectedDate = Carbon::today()->format('Y-m-d');
+        $this->selectedMonth = Carbon::today()->format('Y-m');
         $this->driver_id = null;
         $this->vehicle_id = null;
+        $this->driver_search = '';
+        $this->vehicle_search = '';
         $this->driver_selected_text = '';
         $this->vehicle_selected_text = '';
+        $this->driver_results = [];
+        $this->vehicle_results = [];
+        $this->resetValidation();
         $this->resetPage();
+    }
+
+    private function resolvePeriod(): array
+    {
+        try {
+            if ($this->periodMode === 'month') {
+                $this->validateOnly('selectedMonth');
+                $month = Carbon::parse($this->selectedMonth . '-01');
+
+                return [
+                    $month->copy()->startOfMonth(),
+                    $month->copy()->endOfMonth(),
+                    $month->translatedFormat('F/Y'),
+                ];
+            }
+
+            if ($this->periodMode === 'date') {
+                $this->validateOnly('selectedDate');
+                $date = Carbon::parse($this->selectedDate);
+
+                return [
+                    $date->copy()->startOfDay(),
+                    $date->copy()->endOfDay(),
+                    $date->format('d/m/Y'),
+                ];
+            }
+
+            $today = Carbon::today();
+            $this->selectedDate = $today->format('Y-m-d');
+
+            return [
+                $today->copy()->startOfDay(),
+                $today->copy()->endOfDay(),
+                'Hoje - ' . $today->format('d/m/Y'),
+            ];
+        } catch (\Exception $e) {
+            $today = Carbon::today();
+            $this->periodMode = 'today';
+            $this->selectedDate = $today->format('Y-m-d');
+
+            return [
+                $today->copy()->startOfDay(),
+                $today->copy()->endOfDay(),
+                'Hoje - ' . $today->format('d/m/Y'),
+            ];
+        }
     }
 
     public function render()
     {
         $user = Auth::user();
-        $isPorteiro = $user->role === 'porteiro';
 
         $canViewPrivate = true;
         $canViewOfficial = true;
 
         if ($user->role === 'fiscal') {
-            if ($user->fiscal_type === 'private') $canViewOfficial = false;
-            if ($user->fiscal_type === 'official') $canViewPrivate = false;
-        }
-
-        $results = null;
-        $startDate = null;
-        $endDate = null;
-        $pdfStartDate = null;
-        $pdfEndDate = null;
-
-        try {
-            $validatedMonth = $this->validateOnly('selectedMonth')['selectedMonth'] ?? $this->selectedMonth;
-            $month = Carbon::parse($validatedMonth . '-01');
-            $startDate = $month->copy()->startOfMonth();
-            $endDate = $month->copy()->endOfMonth();
-            $pdfStartDate = $startDate->format('Y-m-d');
-            $pdfEndDate = $endDate->format('Y-m-d');
-        } catch (\Exception $e) {
-            $fallbackDate = Carbon::now()->subMonthNoOverflow();
-            $startDate = $fallbackDate->copy()->startOfMonth();
-            $endDate = $fallbackDate->copy()->endOfMonth();
-            $pdfStartDate = $startDate->format('Y-m-d');
-            $pdfEndDate = $endDate->format('Y-m-d');
-            $this->selectedMonth = $startDate->format('Y-m');
-        }
-
-        if ($startDate && $endDate) {
-
-            // CONSERTEI AQUI: A divisão limpa entre as Abas
-            if ($this->reportType === 'official') {
-                $query = OfficialTrip::with(['vehicle' => fn($q) => $q->withTrashed(), 'driver' => fn($q) => $q->withTrashed(), 'guardDeparture', 'guardArrival'])
-                    ->whereNotNull('arrival_datetime')
-                    ->whereBetween('departure_datetime', [$startDate, $endDate]);
-
-                // BARREIRA INVISÍVEL PARA O PORTEIRO (CHEGADAS)
-                if ($isPorteiro) {
-                    $query->where('guard_on_arrival_id', $user->id);
-                }
-            } else {
-                $query = PrivateEntry::with(['vehicle' => fn($q) => $q->withTrashed(), 'driver' => fn($q) => $q->withTrashed(), 'guardEntry', 'guardExit'])
-                    ->whereNotNull('exit_at')
-                    ->whereBetween('entry_at', [$startDate, $endDate]);
-
-                // BARREIRA INVISÍVEL PARA O PORTEIRO (SAÍDAS)
-                if ($isPorteiro) {
-                    $query->where('guard_on_exit_id', $user->id);
-                }
+            if ($user->fiscal_type === 'private') {
+                $canViewOfficial = false;
+                $this->reportType = 'private';
             }
+            if ($user->fiscal_type === 'official') {
+                $canViewPrivate = false;
+                $this->reportType = 'official';
+            }
+        }
+
+        [$startDate, $endDate, $periodLabel] = $this->resolvePeriod();
+
+        if ($this->reportType === 'official') {
+            $query = OfficialTrip::with([
+                'vehicle' => fn ($q) => $q->withTrashed(),
+                'driver' => fn ($q) => $q->withTrashed(),
+                'guardDeparture',
+                'guardArrival',
+            ])->whereBetween('departure_datetime', [$startDate, $endDate]);
 
             if ($this->vehicle_id) {
                 $query->where('vehicle_id', $this->vehicle_id);
@@ -227,19 +314,49 @@ class Reports extends Component
                 $query->where('driver_id', $this->driver_id);
             }
 
-            $results = $query->orderBy($this->reportType === 'official' ? 'departure_datetime' : 'entry_at', 'desc')
+            $total = (clone $query)->count();
+            $open = (clone $query)->whereNull('arrival_datetime')->count();
+            $completed = $total - $open;
+
+            $results = $query
+                ->orderBy('departure_datetime', 'desc')
                 ->paginate(15);
         } else {
-            $results = collect()->paginate(15);
+            $query = PrivateEntry::with([
+                'vehicle' => fn ($q) => $q->withTrashed(),
+                'driver' => fn ($q) => $q->withTrashed(),
+                'guardEntry',
+                'guardExit',
+            ])->whereBetween('entry_at', [$startDate, $endDate]);
+
+            if ($this->vehicle_id) {
+                $query->where('vehicle_id', $this->vehicle_id);
+            }
+            if ($this->driver_id) {
+                $query->where('driver_id', $this->driver_id);
+            }
+
+            $total = (clone $query)->count();
+            $open = (clone $query)->whereNull('exit_at')->count();
+            $completed = $total - $open;
+
+            $results = $query
+                ->orderBy('entry_at', 'desc')
+                ->paginate(15);
         }
 
         return view('livewire.reports', [
             'results' => $results,
-            'pdfStartDate' => $pdfStartDate,
-            'pdfEndDate' => $pdfEndDate,
+            'pdfStartDate' => $startDate->format('Y-m-d'),
+            'pdfEndDate' => $endDate->format('Y-m-d'),
+            'periodLabel' => $periodLabel,
+            'summary' => [
+                'total' => $total,
+                'completed' => $completed,
+                'open' => $open,
+            ],
             'canViewPrivate' => $canViewPrivate,
             'canViewOfficial' => $canViewOfficial,
-            'isPorteiro' => $isPorteiro
         ]);
     }
 }
