@@ -221,7 +221,7 @@
                     </div>
                 </div>
 
-                {{-- DESKTOP DETAILS (COM ESPAÇAMENTO IN/OUT CORRIGIDO) --}}
+                {{-- DETALHES DESKTOP --}}
                 <div
                     class="hidden md:block overflow-x-auto border border-gray-200 rounded-lg shadow-sm relative min-h-[100px]">
                     <div wire:loading wire:target="detailSearch"
@@ -274,11 +274,11 @@
                                             {{ $detail->driver?->name ?? 'N/D' }}</td>
                                         <td class="px-4 py-3 text-sm text-gray-600">
                                             <div class="flex items-center gap-1"><span
-                                                    class="w-8 inline-block text-green-500 font-bold text-xs">IN</span>
+                                                    class="w-16 shrink-0 inline-block text-green-500 font-bold text-xs">ENTRADA</span>
                                                 {{ $detail->entry_at ? $detail->entry_at->format('d/m/y H:i') : '-' }}
                                             </div>
                                             <div class="flex items-center gap-1 mt-0.5"><span
-                                                    class="w-8 inline-block text-red-500 font-bold text-xs">OUT</span>
+                                                    class="w-16 shrink-0 inline-block text-red-500 font-bold text-xs">SAÍDA</span>
                                                 {{ $detail->exit_at ? $detail->exit_at->format('d/m/y H:i') : '-' }}
                                             </div>
                                         </td>
@@ -296,11 +296,11 @@
                                             <div class="font-medium text-gray-800 mb-1">{{ $detail->destination }}
                                             </div>
                                             <div class="flex items-center gap-1 text-xs"><span
-                                                    class="w-8 inline-block text-blue-500 font-bold">OUT</span>
+                                                    class="w-16 shrink-0 inline-block text-blue-500 font-bold">SAÍDA</span>
                                                 {{ $detail->departure_datetime ? \Carbon\Carbon::parse($detail->departure_datetime)->format('d/m H:i') : '-' }}
                                             </div>
                                             <div class="flex items-center gap-1 mt-0.5 text-xs"><span
-                                                    class="w-8 inline-block text-green-500 font-bold">IN</span>
+                                                    class="w-16 shrink-0 inline-block text-green-500 font-bold">RETORNO</span>
                                                 {{ $detail->arrival_datetime ? \Carbon\Carbon::parse($detail->arrival_datetime)->format('d/m H:i') : '-' }}
                                             </div>
                                         </td>
@@ -352,9 +352,9 @@
                                 </div>
                                 <div
                                     class="bg-gray-50 rounded p-2 flex justify-between text-xs font-medium text-gray-600">
-                                    <span><span class="text-green-500 mr-1">IN:</span>
+                                    <span><span class="text-green-500 mr-1">ENTRADA:</span>
                                         {{ $detail->entry_at ? $detail->entry_at->format('d/m H:i') : '-' }}</span>
-                                    <span><span class="text-red-500 mr-1">OUT:</span>
+                                    <span><span class="text-red-500 mr-1">SAÍDA:</span>
                                         {{ $detail->exit_at ? $detail->exit_at->format('d/m H:i') : '-' }}</span>
                                 </div>
                             @else
@@ -378,9 +378,9 @@
                                 </div>
                                 <div
                                     class="bg-gray-50 rounded p-2 flex justify-between text-xs font-medium text-gray-600">
-                                    <span><span class="text-red-500 mr-1">OUT:</span>
+                                    <span><span class="text-red-500 mr-1">SAÍDA:</span>
                                         {{ $detail->departure_datetime ? \Carbon\Carbon::parse($detail->departure_datetime)->format('d/m H:i') : '-' }}</span>
-                                    <span><span class="text-green-500 mr-1">IN:</span>
+                                    <span><span class="text-green-500 mr-1">RETORNO:</span>
                                         {{ $detail->arrival_datetime ? \Carbon\Carbon::parse($detail->arrival_datetime)->format('d/m H:i') : '-' }}</span>
                                 </div>
                             @endif

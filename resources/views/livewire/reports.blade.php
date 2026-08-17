@@ -223,11 +223,11 @@
                                     </td>
                                     <td class="px-5 py-4 text-sm text-gray-600 min-w-[220px]">
                                         @if ($reportType === 'private')
-                                            <div><span class="font-bold text-green-600">IN</span> {{ $result->entry_at?->format('d/m/y H:i') }} <span class="text-xs text-gray-400">• {{ $result->guardEntry?->name ?? 'N/D' }}</span></div>
-                                            <div class="mt-1"><span class="font-bold text-red-600">OUT</span> {{ $result->exit_at?->format('d/m/y H:i') ?? '-' }} <span class="text-xs text-gray-400">• {{ $result->guardExit?->name ?? '-' }}</span></div>
+                                            <div><span class="font-bold text-green-600">ENTRADA</span> {{ $result->entry_at?->format('d/m/y H:i') }} <span class="text-xs text-gray-400">• {{ $result->guardEntry?->name ?? 'N/D' }}</span></div>
+                                            <div class="mt-1"><span class="font-bold text-red-600">SAÍDA</span> {{ $result->exit_at?->format('d/m/y H:i') ?? '-' }} <span class="text-xs text-gray-400">• {{ $result->guardExit?->name ?? '-' }}</span></div>
                                         @else
-                                            <div><span class="font-bold text-blue-600">OUT</span> {{ $result->departure_datetime?->format('d/m/y H:i') }} <span class="text-xs text-gray-400">• {{ $result->guardDeparture?->name ?? 'N/D' }}</span></div>
-                                            <div class="mt-1"><span class="font-bold text-green-600">IN</span> {{ $result->arrival_datetime?->format('d/m/y H:i') ?? '-' }} <span class="text-xs text-gray-400">• {{ $result->guardArrival?->name ?? '-' }}</span></div>
+                                            <div><span class="font-bold text-blue-600">SAÍDA</span> {{ $result->departure_datetime?->format('d/m/y H:i') }} <span class="text-xs text-gray-400">• {{ $result->guardDeparture?->name ?? 'N/D' }}</span></div>
+                                            <div class="mt-1"><span class="font-bold text-green-600">RETORNO</span> {{ $result->arrival_datetime?->format('d/m/y H:i') ?? '-' }} <span class="text-xs text-gray-400">• {{ $result->guardArrival?->name ?? '-' }}</span></div>
                                         @endif
                                     </td>
                                     <td class="px-5 py-4 text-sm text-gray-700 max-w-md">
@@ -287,11 +287,11 @@
 
                                 <div class="bg-gray-50 rounded p-2 text-xs text-gray-600 border border-gray-100 space-y-1">
                                     @if ($reportType === 'private')
-                                        <div><span class="font-bold text-green-600">IN:</span> {{ $result->entry_at?->format('d/m H:i') }} • {{ $result->guardEntry?->name ?? 'N/D' }}</div>
-                                        <div><span class="font-bold text-red-600">OUT:</span> {{ $result->exit_at?->format('d/m H:i') ?? '-' }} • {{ $result->guardExit?->name ?? '-' }}</div>
+                                        <div><span class="font-bold text-green-600">ENTRADA:</span> {{ $result->entry_at?->format('d/m H:i') }} • {{ $result->guardEntry?->name ?? 'N/D' }}</div>
+                                        <div><span class="font-bold text-red-600">SAÍDA:</span> {{ $result->exit_at?->format('d/m H:i') ?? '-' }} • {{ $result->guardExit?->name ?? '-' }}</div>
                                     @else
-                                        <div><span class="font-bold text-blue-600">OUT:</span> {{ $result->departure_datetime?->format('d/m H:i') }} • {{ $result->guardDeparture?->name ?? 'N/D' }}</div>
-                                        <div><span class="font-bold text-green-600">IN:</span> {{ $result->arrival_datetime?->format('d/m H:i') ?? '-' }} • {{ $result->guardArrival?->name ?? '-' }}</div>
+                                        <div><span class="font-bold text-blue-600">SAÍDA:</span> {{ $result->departure_datetime?->format('d/m H:i') }} • {{ $result->guardDeparture?->name ?? 'N/D' }}</div>
+                                        <div><span class="font-bold text-green-600">RETORNO:</span> {{ $result->arrival_datetime?->format('d/m H:i') ?? '-' }} • {{ $result->guardArrival?->name ?? '-' }}</div>
                                     @endif
                                 </div>
                             </div>
